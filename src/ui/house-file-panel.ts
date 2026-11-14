@@ -163,6 +163,8 @@ export function mountHouseFiles(container: HTMLElement, houseFiles: HouseFiles, 
     const memoryOnly = entry !== null && houseFiles.memoryOnly(id);
     const open = el('button', isOpen ? undefined : 'soglia-hf-primary', isOpen ? (intro ? hf.selected : hf.opened) : intro ? hf.select : hf.open);
     open.type = 'button';
+    // Several rows have the same button text: the name of the house tells them apart for a screen reader and for the QA.
+    open.setAttribute('aria-label', `${open.textContent}: ${name}`);
     open.disabled = isOpen || memoryOnly;
     open.addEventListener('click', () => navigate(id));
     li.append(open);
@@ -170,6 +172,7 @@ export function mountHouseFiles(container: HTMLElement, houseFiles: HouseFiles, 
       const confirming = pendingRemove === id;
       const remove = el('button', 'soglia-hf-danger', confirming ? hf.confirmRemove : hf.remove);
       remove.type = 'button';
+      remove.setAttribute('aria-label', `${remove.textContent}: ${name}`);
       remove.addEventListener('click', () => onRemove(entry));
       li.append(remove);
     }

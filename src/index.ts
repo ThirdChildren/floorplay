@@ -21,7 +21,7 @@ import { loadInfoPoints } from './data/load-issues';
 import { createHouseFiles } from './data/house-files';
 import { createSafeStorage } from './data/storage';
 import { createHouseFilePanel } from './ui/house-file-panel';
-import { createIntroScreen } from './ui/intro-screen';
+import { createIntroScreen, type IntroScreen } from './ui/intro-screen';
 import { describeError, slog, swarn } from './log';
 import { formatParamsLine, hasInvalidHouse, mergeParams, parseParams } from './logic/params';
 import { mergeCatalog, menuSections } from './logic/catalog';
@@ -84,6 +84,9 @@ import { installAccess } from './systems/access';
 import { createCoach } from './systems/coach';
 import { createRotateButton } from './systems/rotate-button';
 
+/** The start screen, kept here so the last-resort handler of `start()` can tell it that the app failed. */
+let introScreen: IntroScreen | null = null;
+
 async function start(): Promise<void> {
   const devFile = await loadDevParamsFile();
   const devFileParams = devFile ? devFile.parsed : null;
@@ -123,6 +126,7 @@ async function start(): Promise<void> {
   const intro = params.intro
     ? createIntroScreen({ store, houseFiles, sizeStore: catalogSizes, houseId: params.house })
     : null;
+  introScreen = intro;
   slog(`intro ${intro ? 'shown' : 'skipped reason=intro0'}`);
   // The sizes are read once, here: the page works with them from now on, and the start screen compares against them.
   const catalogLoad = catalogRequest.then((result) => {
@@ -377,4 +381,5 @@ async function start(): Promise<void> {
 start().catch((error: unknown) => {
   // The last resort: one prefixed warning with the message intact, not a bare `console.error` (T5.R6).
   swarn(`start failed: ${describeError(error)}`);
+  introScreen?.setStartFailure();
 });

@@ -91,6 +91,36 @@ Vale per `house.staging[].rotationDeg`, per lo stato dell'app e per il catalogo 
 - Le `rotationDeg` di `staging.scandinavian` non seguono ancora il fronte (sedie e armadio guardano il lato
   sbagliato): non cambiano l'impronta e si rivedono in M5.
 
+### Size overrides of the catalog (browser storage, start screen)
+
+The user can change the width, depth and height of the `furniture` items of the catalog on the start screen (Furniture). The sizes are
+kept in `localStorage`, key **`soglia:v1:catalog-sizes`**, never in `catalog.json`:
+
+```json
+{ "version": 1, "sizes": { "bed-double": [170, 200, 95] } }
+```
+
+- Values are **whole centimetres** `[width, depth, height]`. An item that equals its catalog size has no entry; no entry at all means no key.
+- Limits per side (`src/logic/catalog-sizes.ts`, `limitsCm`): a quarter to three times the catalog size, and at most 5-400 cm
+  (width, depth) and 1-300 cm (height). A flat piece (the rug, height <= 2 cm) stays flat (1-2 cm); a piece that is not flat stays at
+  least 3 cm tall.
+- The overrides are read **once, when the page loads**, and applied to a copy of the catalog (`applyCatalogSizes`): `size` becomes the
+  new size in metres and `defaultSize` keeps the size of the file. Menu cards, placement, collisions and the model (the glTF is scaled
+  from `defaultSize` to `size`) all use the new size. Pieces saved in an older state keep working: a saved piece stores only its catalog
+  id, position and rotation.
+- **`reset=1` does not remove the sizes** (nor the loaded house files): they are the user's settings, not the saved state of a house.
+  Use "Reset all to default" on the start screen, or remove the key, to get the catalog sizes back.
+- A missing, full or blocked `localStorage` keeps the sizes in memory for this page only; the start screen then says that they cannot be
+  applied (applying needs a reload).
+
+## URL parameters of the page
+
+Besides the parameters in `CLAUDE.md` (`house`, `role`, `reset`, `seed`, `time`, `debug`, ...), **`intro=0|1`** (default `1`) controls the
+start screen. With `intro=1` the page opens on the start screen (Load house file, Furniture, Enter VR) and the immersive session is
+started only by its **Enter VR** button (the session is not offered to the browser). With `intro=0` there is no start screen: the
+session is offered to the browser as before (`xr enter` of the CLI accepts it) and the floating box of the houses is on the page.
+Automated QA that does not use the start screen must set `intro=0` (in the URL or in `dev-params.local.txt`).
+
 ## my furniture (`public/demo/my-furniture.json`)
 
 Come `catalog.items`, con `owner: "me"`. In MR le misure possono arrivare dal pizzico sugli spigoli.

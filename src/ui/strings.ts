@@ -34,6 +34,7 @@ export const introStrings = {
     starting: 'Starting VR...',
     failed: 'VR did not start. Press Enter VR to try again.',
     'house-missing': 'The selected house could not be opened, so VR cannot start. Choose another house.',
+    'start-failed': 'Something went wrong while starting. Reload the page to try again.',
     'sizes-unsaved': 'Some furniture sizes could not be saved, so VR uses the catalog sizes.',
     unsupported: 'This browser cannot start VR. Open this page in the Meta Quest Browser.',
     'no-api': 'This browser has no WebXR, so VR cannot start. Open this page in the Meta Quest Browser.',

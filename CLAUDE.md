@@ -123,7 +123,10 @@ qa/device/          prove sul visore + DEBT.md (prove rimandate)
   e cronologie.
 - **Parametri URL per i test**: `?house=apartment-a&role=tenant&reset=1&seed=1&time=2026-12-21T10:00`
   caricano stati noti. `?debug=1` mostra le statistiche (draw call, triangoli, fps) e le scrive in
-  console con prefisso `[soglia:stats]`.
+  console con prefisso `[soglia:stats]`. **`?intro=0`** salta la schermata iniziale (QA automatica,
+  vecchio ingresso con la sessione offerta al browser); senza, la pagina apre la schermata iniziale e
+  la sessione parte solo dal pulsante Enter VR. `reset=1` non cancella le case caricate da file né le
+  misure dei mobili (`soglia:v1:catalog-sizes`). Vedi `docs/DATA_FORMATS.md`.
 - Log utili alla QA con prefisso `[soglia]` e nessun errore in console nel percorso normale.
 
 ## Due livelli di verifica

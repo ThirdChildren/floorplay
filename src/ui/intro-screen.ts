@@ -50,6 +50,8 @@ export interface IntroScreen {
   setMode(mode: ImmersiveMode): void;
   /** The world is built: Enter VR can work. */
   setWorld(world: World): void;
+  /** The app failed to start: Enter VR stays off and the screen says so. */
+  setStartFailure(): void;
   dispose(): void;
 }
 
@@ -75,7 +77,7 @@ const STYLE = `
   background:transparent;color:var(--fg);font:700 1em/1.25 system-ui,sans-serif;text-align:left;cursor:pointer}
 .soglia-intro button .soglia-intro-hint{display:block;margin-top:2px;font-weight:400;font-size:.8em}
 .soglia-intro button.soglia-intro-primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
-.soglia-intro button[disabled]{opacity:.6;border-style:dashed;cursor:default}
+.soglia-intro button[disabled],.soglia-intro .soglia-hf button[disabled]{opacity:1;background:var(--panel);color:#cfd6de;border:4px dashed #8f9eae;cursor:default}
 .soglia-intro button:focus-visible,.soglia-intro input:focus-visible{outline:5px solid #00e5ff;outline-offset:3px}
 .soglia-intro-note{min-height:1.4em;margin:-4px 0 12px}
 .soglia-intro-note.soglia-intro-bad{color:var(--bad);font-weight:700}
@@ -180,6 +182,7 @@ export function createIntroScreen(deps: IntroDeps): IntroScreen {
   let world: World | null = null;
   let starting = false;
   let failed = false;
+  let startFailure = false;
   let catalog: CatalogState = { kind: 'loading' };
   let overrides: SizeOverrides = NO_OVERRIDES;
   let applied: SizeOverrides = NO_OVERRIDES;
@@ -257,12 +260,17 @@ export function createIntroScreen(deps: IntroDeps): IntroScreen {
     cardDetails.textContent = house ? hf.details(house.areaM2, house.rooms.length) : houseKnown ? t.houseFailed : '';
     card.classList.toggle('soglia-intro-bad', houseKnown && house === null);
     const state = enterVrState({ support, worldReady: world !== null, houseOk: house !== null, starting, failed });
-    enterButton.disabled = !state.enabled;
-    enterButton.setAttribute('aria-disabled', String(!state.enabled));
     let note: keyof typeof t.enterNote = state.note;
     if (state.note === 'ready' && !sizeStore.persisted()) note = 'sizes-unsaved';
+    let enabled = state.enabled;
+    if (startFailure) {
+      enabled = false;
+      note = 'start-failed';
+    }
+    enterButton.disabled = !enabled;
+    enterButton.setAttribute('aria-disabled', String(!enabled));
     enterNote.textContent = t.enterNote[note];
-    enterNote.classList.toggle('soglia-intro-bad', !state.enabled && state.note !== 'loading' && state.note !== 'checking' && state.note !== 'starting');
+    enterNote.classList.toggle('soglia-intro-bad', !enabled && note !== 'loading' && note !== 'checking' && note !== 'starting');
   };
 
   const renderFurnitureSummary = (): void => {
@@ -353,6 +361,8 @@ export function createIntroScreen(deps: IntroDeps): IntroScreen {
         const showError = (message: string): void => {
           err.textContent = message;
           input.setAttribute('aria-invalid', 'true');
+          // The message sits under the row: bring it into view on a small window.
+          if (typeof err.scrollIntoView === 'function') err.scrollIntoView({ block: 'nearest' });
         };
         less.addEventListener('click', () => {
           err.textContent = '';
@@ -559,6 +569,10 @@ export function createIntroScreen(deps: IntroDeps): IntroScreen {
         () => xr.removeEventListener('sessionend', onEnd),
       );
       if (xr.isPresenting) root.hidden = true;
+      renderHome();
+    },
+    setStartFailure() {
+      startFailure = true;
       renderHome();
     },
     dispose() {
