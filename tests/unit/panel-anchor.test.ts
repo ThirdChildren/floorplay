@@ -154,3 +154,25 @@ describe('panelAnchorPitchRad', () => {
     expect(panelAnchorPitchRad(Number.POSITIVE_INFINITY)).toBe(0);
   });
 });
+
+describe('a gaze steeper than the window (looking down at the table at -35 degrees)', () => {
+  it('keeps every point of the normal panels between 0.5 and 0.8 m from the eyes (large text: documented to reach 0.87 m at the corners)', () => {
+    const corner = out();
+    for (const { extent, large } of PANELS) {
+      for (const pitch of [-25, -30, -35]) {
+        const a = pinnedPanelAnchor(HEAD, 0.4, pitch * DEG, extent, large, out());
+        for (const [dx, dy] of [
+          [-extent.halfWidth, extent.bottom],
+          [extent.halfWidth, extent.bottom],
+          [-extent.halfWidth, extent.top],
+          [extent.halfWidth, extent.top],
+        ]) {
+          pinnedPanelPoint(a, 0.4, dx, dy, corner);
+          const d = dist(corner, HEAD);
+          expect(d).toBeGreaterThanOrEqual(0.5);
+          expect(d).toBeLessThanOrEqual(large ? 0.87 : 0.8);
+        }
+      }
+    }
+  });
+});
