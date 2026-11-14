@@ -7,6 +7,11 @@
 
 import type { PanelExtent } from './menu';
 import {
+  PANEL_DISTANCE,
+  PANEL_DROP,
+  PANEL_PITCH_MAX_DEG,
+  PANEL_PITCH_MIN_DEG,
+  VIEW_CONE_HALF_ANGLE_DEG,
   PINNED_DISTANCE,
   PINNED_DISTANCE_LARGE,
   PINNED_DROP,
@@ -82,6 +87,49 @@ export function pinnedMenuAnchor(
   out.y = hy - drop + Math.tan(pinnedAnchorPitchRad(pitchRad)) * distance;
   out.z = hz - Math.cos(yaw) * distance;
   return out;
+}
+
+/** The pitch (radians) the pinned panels follow for a gaze pitch of `pitchRad`: clamped to `PANEL_PITCH_MIN_DEG` .. `PANEL_PITCH_MAX_DEG`; 0 when not finite. */
+export function panelAnchorPitchRad(pitchRad: number): number {
+  if (!Number.isFinite(pitchRad)) return 0;
+  return Math.max(PANEL_PITCH_MIN_DEG * DEG_TO_RAD, Math.min(PANEL_PITCH_MAX_DEG * DEG_TO_RAD, pitchRad));
+}
+
+/**
+ * Where a pinned panel (the menu, the View panel, the Issues panel) opens: `PANEL_DISTANCE` (about half a metre) in front of the head along
+ * the horizontal gaze, its bottom `PANEL_DROP` below the eyes (so its middle is a little below them) and raised or lowered by
+ * `distance * tan(pitch)` (the horizontal distance stays the same, so no point of the panel comes nearer than `distance`), the pitch of the gaze clamped to `PANEL_PITCH_MIN_DEG` .. `PANEL_PITCH_MAX_DEG`; the large-text panels use
+ * `PINNED_DISTANCE_LARGE` and `PINNED_DROP_LARGE`. Then slid, only if it is needed, to the nearest place where the WHOLE panel (`extent`
+ * from the anchor) is inside the 30 degree view cone (`uprightAnchorInCone`): a panel never opens at the edge of the view, whatever the
+ * pitch of the head. A head or yaw that is not finite falls back to a seated user at the origin looking along -z, a pitch that is not
+ * finite to a level gaze. Writes into `out` and returns it; allocates nothing but the closure of `uprightAnchorInCone` (made once, when
+ * the panel opens).
+ */
+export function pinnedPanelAnchor(
+  head: Readonly<Point3Like>,
+  yawRad: number,
+  pitchRad: number,
+  extent: Readonly<PanelExtent>,
+  large: boolean,
+  out: Point3Like,
+): Point3Like {
+  const distance = large ? PINNED_DISTANCE_LARGE : PANEL_DISTANCE;
+  const drop = large ? PINNED_DROP_LARGE : PANEL_DROP;
+  const usable = Number.isFinite(head.x + head.y + head.z);
+  const yaw = Number.isFinite(yawRad) ? yawRad : 0;
+  const pitch = panelAnchorPitchRad(pitchRad);
+  const hx = usable ? head.x : FALLBACK_HEAD.x;
+  const hy = usable ? head.y : FALLBACK_HEAD.y;
+  const hz = usable ? head.z : FALLBACK_HEAD.z;
+  // The normal panels keep their horizontal distance (no point comes nearer than `distance`); the big ones (large text) move along the gaze
+  // instead, so that looking down at the table does not push their bottom corners beyond the 0.8 m of rule 8.
+  const horizontal = large ? Math.cos(pitch) * distance : distance;
+  const rise = large ? Math.sin(pitch) * distance : Math.tan(pitch) * distance;
+  out.x = hx - Math.sin(yaw) * horizontal;
+  out.y = hy - drop + rise;
+  out.z = hz - Math.cos(yaw) * horizontal;
+  const safeHead = Number.isFinite(head.x + head.y + head.z) ? head : FALLBACK_HEAD;
+  return uprightAnchorInCone(out, yaw, Number.isFinite(pitchRad) ? pitchRad : 0, safeHead, extent, VIEW_CONE_HALF_ANGLE_DEG, out);
 }
 
 /**

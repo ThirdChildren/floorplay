@@ -1,9 +1,7 @@
 // Every user-visible string of the app lives here (plain, short English).
 
-import { fitMessage, type FitItem, type FitResult, type FitTexts } from '../logic/fit-check';
 import { formatSize, formatSizeCompact, lowerName, type ReasonKind } from '../logic/furniture-label';
 import { CATEGORY_LABELS, PHRASES } from '../logic/issue-text';
-import { measureLabelText } from '../logic/measure-tool';
 import { MAX_FILE_BYTES, MAX_HOUSE_FILES, type HouseFileReject } from '../logic/house-file';
 import { formatRoomLabel } from '../logic/room-label';
 
@@ -14,20 +12,6 @@ const reason = {
   overlapsFurniture: (name: string): string => `Overlaps the ${lowerName(name)}`,
   outside: 'Outside the house',
 } as const;
-
-/** The sentences of the FitCheck (D34). Lengths are whole centimetres, `name` is the short lower case name. */
-const fitTexts: FitTexts = {
-  wontFitNarrow: (doorCm, name, sideCm) =>
-    `Won't fit: the door is ${doorCm} cm wide, the ${name}'s shortest side is ${sideCm} cm`,
-  wontFitMobility: (doorCm, name, needCm) => `Won't fit: the door is ${doorCm} cm wide, the ${name} needs ${needCm} cm`,
-  wontFitLow: (doorCm, name, needCm) => `Won't fit: the door is ${doorCm} cm high, the ${name} needs ${needCm} cm`,
-  disassembledNarrow: (doorCm, name, sideCm) =>
-    `Fits when disassembled: the door is ${doorCm} cm wide, the ${name}'s shortest side is ${sideCm} cm`,
-  disassembledLow: (doorCm, name, needCm) =>
-    `Fits when disassembled: the door is ${doorCm} cm high, the ${name} needs ${needCm} cm`,
-  fits: (narrowestCm) => `Fits: the narrowest door on the way is ${narrowestCm} cm wide`,
-  noRoute: 'No route from the entrance to this room',
-};
 
 /** One decimal at most: 62.5, 114.4, 80. */
 function formatArea(areaM2: number): string {
@@ -98,12 +82,10 @@ export const strings = {
     recenter: 'Recenter',
     /** The fourth button of the bar at real scale (T3.12); the menu does not use it before that task. */
     tabletop: 'Tabletop',
-    /** Short on purpose: the four tabs share one row of the menu at 2.4 cm text (D37). */
+    /** Short on purpose: the tabs share one row of the menu at 2.4 cm text (D37). */
     tabs: {
       items: 'Items',
       mine: 'Mine',
-      fit: 'Fit',
-      measure: 'Measure',
     },
     /** Shown in the header when the catalog is missing; one line at 2.4 cm text. */
     catalogUnavailable: 'Catalog not loaded',
@@ -182,9 +164,12 @@ export const strings = {
     button: 'View',
     title: 'View',
     close: 'Close',
-    rows: { zoom: 'Zoom', turn: 'Turn', month: 'Month', hour: 'Hour', contrast: 'Contrast', text: 'Text' },
-    /** The values of the two switches (D58). */
-    switches: { on: 'On', off: 'Off', normal: 'Normal', large: 'Large' },
+    rows: { zoom: 'Zoom', turn: 'Turn', month: 'Month', hour: 'Hour', contrast: 'Contrast', text: 'Text', hand: 'Hand' },
+    /** The values of the switches (D58); `left` and `right` are the two values of the Hand row (which hand the Menu, Issues and View buttons are for). */
+    switches: { on: 'On', off: 'Off', normal: 'Normal', large: 'Large', left: 'Left', right: 'Right' },
+    /** The two buttons of the Hand row: `L` picks the left hand, `R` the right hand. */
+    handLess: 'L',
+    handMore: 'R',
     less: '-',
     more: '+',
     /** `Sun 14° SE` (`deg` when the local panel font has no degree sign). */
@@ -308,11 +293,6 @@ export const strings = {
     },
   },
   reason,
-  /** The tape measure (T3.14, D36): the hint while it is on, and the label of a measure ("140 cm"). */
-  measure: {
-    hint: 'Pinch two points',
-    label: (cm: number): string => measureLabelText(cm),
-  },
   /** The debug statistics panel in the headset (`ui:debug-hud`, only with `debug=1`; M6, T6.A8). One short line each. */
   debug: {
     hud: {
@@ -326,13 +306,6 @@ export const strings = {
       noPinch: 'pinch none yet',
       tailTitle: 'log',
     },
-  },
-  /** FitCheck texts (T3.7): `message` is the first line of the label, `note` the fixed second line. */
-  fit: {
-    ...fitTexts,
-    /** Corridors are not checked: the house file has no corridor data. */
-    note: 'Simplified check',
-    message: (result: FitResult, item: Pick<FitItem, 'name' | 'kind'>): string => fitMessage(result, item, fitTexts),
   },
   /** The text of a reason; `withName` is the catalog name of the piece it overlaps (for `overlaps-furniture`). */
   reasonText: (kind: ReasonKind, withName?: string): string => {

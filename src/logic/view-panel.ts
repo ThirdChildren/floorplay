@@ -10,17 +10,20 @@
 
 import { MENU_EXTENT, MENU_PANEL, MIN_TEXT_SIZE, type HalfSize, type Offset, type PanelExtent } from './menu';
 import { ISSUE_BAR_BUTTON_WIDTH, ISSUE_BAR_HEIGHT, ISSUE_BODY_BORDER, ISSUE_HEADER_HEIGHT, ISSUE_SECTION_GAP } from './issue-panel';
-import { setContrast, setLargeText, setMiniature, stepSunTime, type Action, type AppState } from './state';
+import { setContrast, setLargeText, setLeftHandMenu, setMiniature, stepSunTime, type Action, type AppState } from './state';
 import { compassName, localToUtcMs, sunPosition } from './sun';
 import { MONTH_NAMES, hourLabel, monthLabel, stepHour, stepMonth } from './sun-time';
 import { formatTurn, formatZoom, stepTurn, stepZoom } from './view-steps';
 
-/** The rows of the panel, top to bottom: the four that step a value, then the two accessibility switches (T5.11, D58). */
-export const VIEW_ROWS = ['zoom', 'turn', 'month', 'hour', 'contrast', 'text'] as const;
+/**
+ * The rows of the panel, top to bottom: the four that step a value, then the three accessibility switches (T5.11, D58; `hand` is the
+ * hand the fixed Menu / Issues / View buttons are for: `-` (on the left) picks the left hand, `+` (on the right) the right hand).
+ */
+export const VIEW_ROWS = ['zoom', 'turn', 'month', 'hour', 'contrast', 'text', 'hand'] as const;
 export type ViewRowId = (typeof VIEW_ROWS)[number];
 
-/** The rows that are an on/off switch: `-` turns it off, `+` on, and the value between them flips it (`ui:view-contrast`, `ui:view-text`). */
-export const VIEW_TOGGLE_ROWS = ['contrast', 'text'] as const;
+/** The rows that are an on/off switch: `-` turns it off, `+` on, and the value between them flips it (`ui:view-contrast`, `ui:view-text`, `ui:view-hand`). */
+export const VIEW_TOGGLE_ROWS = ['contrast', 'text', 'hand'] as const;
 export type ViewToggleRowId = (typeof VIEW_TOGGLE_ROWS)[number];
 
 export function isToggleRow(row: ViewRowId): row is ViewToggleRowId {
@@ -65,10 +68,10 @@ export type ViewPanelCloseVia = 'button' | 'close' | 'menu' | 'panel' | 'suspend
 
 // --- Layout (UIKit units are centimetres; public/ui/view-panel.uikitml says the same, a test keeps them equal) --------------
 
-/** Width and height of the panel in UIKit units: those of the menu. */
-export const VIEW_PANEL = { width: MENU_PANEL.width, height: MENU_PANEL.height } as const;
+/** Width and height of the panel in UIKit units: the width of the menu, and a taller panel (seven rows: the hand row was added in UI fix 1). */
+export const VIEW_PANEL = { width: MENU_PANEL.width, height: 41.2 } as const;
 /** Extent of the panel from its frame (the bottom centre), metres: the cone and distance checks use it. */
-export const VIEW_PANEL_EXTENT: PanelExtent = MENU_EXTENT;
+export const VIEW_PANEL_EXTENT: PanelExtent = { halfWidth: MENU_EXTENT.halfWidth, bottom: MENU_EXTENT.bottom, top: MENU_EXTENT.bottom + VIEW_PANEL.height / 100 };
 export const VIEW_HEADER_HEIGHT = ISSUE_HEADER_HEIGHT;
 export const VIEW_BAR_HEIGHT = ISSUE_BAR_HEIGHT;
 export const VIEW_SECTION_GAP = ISSUE_SECTION_GAP;
@@ -85,8 +88,8 @@ export const VIEW_LABEL_WIDTH = 11;
 /** Space left of the label inside its cell (the layout file says the same). */
 export const VIEW_LABEL_PADDING = 0.4;
 export const VIEW_BUTTON_WIDTH = 6;
-export const VIEW_VALUE_WIDTH = 10.8;
-export const VIEW_CELL_GAP = 0.4;
+export const VIEW_VALUE_WIDTH = 10;
+export const VIEW_CELL_GAP = 0.6;
 /** Width of a row (what the cells add up to) and of the body inside its border. */
 export const VIEW_ROW_WIDTH = VIEW_LABEL_WIDTH + VIEW_BUTTON_WIDTH + VIEW_VALUE_WIDTH + VIEW_BUTTON_WIDTH + 3 * VIEW_CELL_GAP;
 export const VIEW_BODY_INNER_WIDTH = VIEW_PANEL.width - 2 * VIEW_BODY_BORDER;
@@ -179,7 +182,7 @@ export const VIEW_LAYOUT_NORMAL: ViewLayout = {
   barHeight: VIEW_BAR_HEIGHT,
   sectionGap: VIEW_SECTION_GAP,
   bodyBorder: VIEW_BODY_BORDER,
-  bodyHeight: 26.6,
+  bodyHeight: 30.2,
   bodyPaddingTop: VIEW_BODY_PADDING_TOP,
   summaryHeight: VIEW_SUMMARY_HEIGHT,
   rowHeight: VIEW_ROW_HEIGHT,
@@ -190,10 +193,10 @@ export const VIEW_LAYOUT_NORMAL: ViewLayout = {
   valueWidth: VIEW_VALUE_WIDTH,
   cellGap: VIEW_CELL_GAP,
   closeWidth: ISSUE_BAR_BUTTON_WIDTH,
-  noteWidth: 26.6,
+  noteWidth: 26.2,
 };
 
-/** Text of 3.0 cm. A line of it is 3.3 cm, so the rows are 3.8 cm: still one pinch target each, and six of them fit. */
+/** Text of 3.0 cm. A line of it is 3.3 cm, so the rows are 3.8 cm: still one pinch target each, and seven of them fit. */
 export const VIEW_LARGE_TEXT_SIZE = 3;
 
 export const VIEW_LAYOUT_LARGE: ViewLayout = {
@@ -202,12 +205,12 @@ export const VIEW_LAYOUT_LARGE: ViewLayout = {
   textSize: VIEW_LARGE_TEXT_SIZE,
   titleSize: 3.25,
   width: 40,
-  height: 41,
+  height: 45.1,
   headerHeight: 4.4,
   barHeight: 5.8,
   sectionGap: 0.4,
   bodyBorder: 0.4,
-  bodyHeight: 30,
+  bodyHeight: 34.1,
   bodyPaddingTop: 0.4,
   summaryHeight: 3.8,
   rowHeight: 3.8,
@@ -215,10 +218,10 @@ export const VIEW_LAYOUT_LARGE: ViewLayout = {
   labelWidth: 13.4,
   labelPadding: 0.4,
   buttonWidth: 6,
-  valueWidth: 12,
-  cellGap: 0.4,
+  valueWidth: 11.6,
+  cellGap: 0.6,
   closeWidth: 10,
-  noteWidth: 29.6,
+  noteWidth: 29.2,
 };
 
 export function viewLayout(large: boolean): ViewLayout {
@@ -282,8 +285,15 @@ export interface ViewTexts {
   readonly sunDown: string;
   /** `15°` or `15 deg`. */
   readonly turn: (degrees: string) => string;
-  /** The values of the two switches. */
-  readonly switches: { readonly on: string; readonly off: string; readonly normal: string; readonly large: string };
+  /** The values of the three switches (`left` and `right` are the two values of the hand row). */
+  readonly switches: {
+    readonly on: string;
+    readonly off: string;
+    readonly normal: string;
+    readonly large: string;
+    readonly left: string;
+    readonly right: string;
+  };
 }
 
 export interface ViewRowModel {
@@ -307,6 +317,8 @@ export interface ViewInputs {
   /** The accessibility preferences (T5.11); absent means off. */
   readonly contrast?: boolean;
   readonly largeText?: boolean;
+  /** The menu buttons are for the left hand (UI fix 1); absent means the right hand. */
+  readonly leftHandMenu?: boolean;
 }
 
 /** The line that says where the sun is: `Sun 14° SE` (altitude rounded to the nearest whole degree, like the log reads it), or that it is below the horizon. */
@@ -334,6 +346,8 @@ export function buildViewModel(inputs: Readonly<ViewInputs>, texts: ViewTexts): 
         return inputs.contrast === true ? texts.switches.on : texts.switches.off;
       case 'text':
         return inputs.largeText === true ? texts.switches.large : texts.switches.normal;
+      case 'hand':
+        return inputs.leftHandMenu === true ? texts.switches.left : texts.switches.right;
     }
   };
   return {
@@ -351,11 +365,11 @@ export interface ViewStep {
   readonly extra: string;
 }
 
-/** The step that sets a switch row on or off; `value` is what the `view step` line says (`on`, `off`, `large`, `normal`). */
+/** The step that sets a switch row on or off; `value` is what the `view step` line says (`on`, `off`, `large`, `normal`, `left`, `right`). */
 function switchStep(row: ViewToggleRowId, on: boolean): ViewStep {
-  return row === 'contrast'
-    ? { action: setContrast(on), value: on ? 'on' : 'off', extra: '' }
-    : { action: setLargeText(on), value: on ? 'large' : 'normal', extra: '' };
+  if (row === 'contrast') return { action: setContrast(on), value: on ? 'on' : 'off', extra: '' };
+  if (row === 'hand') return { action: setLeftHandMenu(on), value: on ? 'left' : 'right', extra: '' };
+  return { action: setLargeText(on), value: on ? 'large' : 'normal', extra: '' };
 }
 
 /**
@@ -363,7 +377,7 @@ function switchStep(row: ViewToggleRowId, on: boolean): ViewStep {
  * wraps in the same year), `zoom` goes one rung of the ladder and `turn` 15 degrees. The `value` is what the row will show after it.
  */
 export function viewStepFor(
-  state: Pick<AppState, 'miniature' | 'sunTime'> & { readonly prefs?: Pick<AppState['prefs'], 'contrast' | 'largeText'> },
+  state: Pick<AppState, 'miniature' | 'sunTime'> & { readonly prefs?: Pick<AppState['prefs'], 'contrast' | 'largeText' | 'leftHandMenu'> },
   row: ViewRowId,
   delta: -1 | 1,
 ): ViewStep {
@@ -371,6 +385,9 @@ export function viewStepFor(
     case 'contrast':
     case 'text':
       return switchStep(row, delta > 0);
+    case 'hand':
+      // `-` is the left button of the row and picks the left hand, `+` the right hand.
+      return switchStep(row, delta < 0);
     case 'hour': {
       const action = stepSunTime('hour', delta);
       return { action, value: hourLabel(stepHour(state.sunTime, delta)), extra: '' };
@@ -396,10 +413,11 @@ export function viewStepFor(
 
 /** A press on the value of a switch row flips it: the same step as `-` or `+`, whichever is the other way. */
 export function viewToggleFor(
-  state: { readonly prefs?: Pick<AppState['prefs'], 'contrast' | 'largeText'> },
+  state: { readonly prefs?: Pick<AppState['prefs'], 'contrast' | 'largeText' | 'leftHandMenu'> },
   row: ViewToggleRowId,
 ): ViewStep {
-  const on = row === 'contrast' ? state.prefs?.contrast === true : state.prefs?.largeText === true;
+  const on =
+    row === 'contrast' ? state.prefs?.contrast === true : row === 'hand' ? state.prefs?.leftHandMenu === true : state.prefs?.largeText === true;
   return switchStep(row, !on);
 }
 

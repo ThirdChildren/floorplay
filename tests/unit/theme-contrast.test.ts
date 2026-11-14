@@ -4,11 +4,8 @@ import {
   HIGH_CONTRAST_PIN_SCALE,
   contrastRatio,
   floorColor,
-  fitColors,
-  getFitColors,
   getPalette,
   getUiColors,
-  highContrastFitColors,
   highContrastPalette,
   highContrastUiColors,
   isHighContrast,
@@ -35,6 +32,8 @@ const textPairs = (c: UiColors): [string, string, string][] => [
   ['ink on surface', c.ink, c.surface],
   ['soft ink on surface', c.inkSoft, c.surface],
   ['selected text on selected background', c.activeInk, c.active],
+  ['text on the primary button', c.primaryInk, c.primary],
+  ['ink on the secondary button', c.ink, c.secondary],
 ];
 
 describe('the contrast ratio', () => {
@@ -71,14 +70,22 @@ describe('the pairs of text and background of the panels', () => {
     expect(contrastRatio(highContrastUiColors.border, highContrastUiColors.surface)).toBeGreaterThanOrEqual(AAA);
     expect(contrastRatio(highContrastUiColors.active, highContrastUiColors.surface)).toBeGreaterThanOrEqual(AAA);
   });
+  it('have a primary button and a secondary button that stand out from the surface and from each other (UI fix 3)', () => {
+    // The border (3:1) is what keeps a button on the surface apart; the fill of the main one is also 3:1.
+    expect(contrastRatio(uiColors.primary, uiColors.surface)).toBeGreaterThanOrEqual(GRAPHICS);
+    expect(contrastRatio(highContrastUiColors.primary, highContrastUiColors.surface)).toBeGreaterThanOrEqual(AAA);
+    expect(uiColors.primary).not.toBe(uiColors.secondary);
+    expect(uiColors.primary).not.toBe(uiColors.active);
+    expect(uiColors.secondary).not.toBe(uiColors.surface);
+    expect(highContrastUiColors.primary).not.toBe(highContrastUiColors.secondary);
+    expect(highContrastUiColors.primary).not.toBe(highContrastUiColors.active);
+    expect(highContrastUiColors.secondary).not.toBe(highContrastUiColors.surface);
+    // The dark border is 3:1 against the secondary fill as well, in both sets.
+    expect(contrastRatio(uiColors.border, uiColors.secondary)).toBeGreaterThanOrEqual(GRAPHICS);
+    expect(contrastRatio(highContrastUiColors.border, highContrastUiColors.secondary)).toBeGreaterThanOrEqual(AAA);
+  });
   it('the high-contrast set is the one in the spec: black, white, yellow', () => {
     expect(highContrastUiColors).toMatchObject({ surface: '#000000', ink: '#ffffff', border: '#ffd400' });
-  });
-  it('the four borders of the FitCheck label stand out from the surface, in both sets', () => {
-    for (const key of Object.keys(fitColors) as (keyof typeof fitColors)[]) {
-      expect(contrastRatio(fitColors[key], uiColors.surface), `normal ${key}`).toBeGreaterThanOrEqual(GRAPHICS);
-      expect(contrastRatio(highContrastFitColors[key], highContrastUiColors.surface), `high ${key}`).toBeGreaterThanOrEqual(AAA);
-    }
   });
 });
 
@@ -95,15 +102,28 @@ describe('every colour of the UIKitML files', () => {
     for (const c of colors) {
       setAccessibility({ contrast: false, largeText: false });
       expect(themedColor('color', c)).toBe(c);
+      if (c === uiColors.primaryInk) {
+        // The text of a primary button: on the primary fill, in both sets.
+        expect(contrastRatio(c, uiColors.primary), `${file} ${c} on primary, normal`).toBeGreaterThanOrEqual(AA);
+        setAccessibility({ contrast: true, largeText: false });
+        expect(contrastRatio(themedColor('color', c), highContrastUiColors.primary), `${file} ${c} on primary, high`).toBeGreaterThanOrEqual(AAA);
+        continue;
+      }
       expect(contrastRatio(c, '#ffffff'), `${file} ${c} normal`).toBeGreaterThanOrEqual(AA);
+      expect(contrastRatio(c, uiColors.secondary), `${file} ${c} on secondary, normal`).toBeGreaterThanOrEqual(AA);
       setAccessibility({ contrast: true, largeText: false });
       expect(contrastRatio(themedColor('color', c), highContrastUiColors.surface), `${file} ${c} high`).toBeGreaterThanOrEqual(AAA);
+      expect(contrastRatio(themedColor('color', c), highContrastUiColors.secondary), `${file} ${c} on secondary, high`).toBeGreaterThanOrEqual(AAA);
     }
   });
   it('the white surface turns black and the dark border turns yellow; nothing else that is not text changes', () => {
     setAccessibility({ contrast: true, largeText: false });
     expect(themedColor('backgroundColor', '#ffffff')).toBe('#000000');
     expect(themedColor('borderColor', '#1a1a1a')).toBe('#ffd400');
+    // The two button fills and the text on the primary one follow (UI fix 3).
+    expect(themedColor('backgroundColor', uiColors.primary)).toBe(highContrastUiColors.primary);
+    expect(themedColor('backgroundColor', uiColors.secondary)).toBe(highContrastUiColors.secondary);
+    expect(themedColor('color', uiColors.primaryInk)).toBe(highContrastUiColors.primaryInk);
     // A status dot and the violet baseline keep their meaning.
     expect(themedColor('backgroundColor', '#9b59d0')).toBe('#9b59d0');
     expect(themedColor('backgroundColor', '#8a8f98')).toBe('#8a8f98');
@@ -143,12 +163,10 @@ describe('what the getters answer', () => {
     expect(isHighContrast()).toBe(false);
     expect(getPalette()).toBe(palette);
     expect(getUiColors()).toBe(uiColors);
-    expect(getFitColors()).toBe(fitColors);
     expect(setAccessibility({ contrast: true, largeText: false })).toBe(true);
     expect(isHighContrast()).toBe(true);
     expect(getPalette()).toBe(highContrastPalette);
     expect(getUiColors()).toBe(highContrastUiColors);
-    expect(getFitColors()).toBe(highContrastFitColors);
     expect(floorColor('wood')).toBe(highContrastPalette.floor.wood);
     expect(floorColor(undefined)).toBe(highContrastPalette.floor.concrete);
   });
