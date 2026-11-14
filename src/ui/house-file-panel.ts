@@ -1,7 +1,10 @@
-// The home panel of the web page (HF1): a plain DOM box, outside the headset. It shows the open home, lets the user
+// The homes section of the web page (HF1): plain DOM, outside the headset. It shows the open home, lets the user
 // choose a home (demo or loaded), load a house JSON file (file picker or drop on the page) and remove a loaded home.
-// It is hidden while an immersive session runs (the file picker does not exist there) and comes back when the session ends.
 // Everything the file contains is shown with `textContent` only, never as HTML. Text comes from `strings.houseFile`.
+//
+// `mountHouseFiles` builds the section inside any container: the start screen (`src/ui/intro-screen.ts`) uses it, and a house that
+// is loaded there is selected at once (the page opens it). `createHouseFilePanel` is the old floating box for `intro=0` (automated
+// QA): it is hidden while an immersive session runs (the file picker does not exist there) and comes back when the session ends.
 
 import type { World } from '@iwsdk/core';
 import { slog } from '../log';
@@ -18,10 +21,11 @@ export interface HouseFilePanel {
 }
 
 const STYLE = `
-.soglia-hf{position:fixed;top:12px;left:12px;z-index:20;box-sizing:border-box;width:min(94vw,480px);max-height:92vh;overflow:auto;
-  padding:16px;background:#000;color:#fff;border:3px solid #fff;border-radius:12px;font:20px/1.35 system-ui,sans-serif}
-.soglia-hf[hidden]{display:none}
-.soglia-hf.soglia-hf-drag{border-color:#ffd400;background:#1a1a00}
+.soglia-hf{box-sizing:border-box;color:#fff;font:20px/1.35 system-ui,sans-serif}
+.soglia-hf-float{position:fixed;top:12px;left:12px;z-index:20;width:min(94vw,480px);max-height:92vh;overflow:auto;
+  padding:16px;background:#000;border:3px solid #fff;border-radius:12px}
+.soglia-hf[hidden],.soglia-hf-float[hidden]{display:none}
+.soglia-hf-float.soglia-hf-drag,.soglia-hf-drag .soglia-hf-droparea{border-color:#ffd400;background:#1a1a00}
 .soglia-hf h2{margin:0 0 8px;font-size:24px}
 .soglia-hf p{margin:0 0 10px}
 .soglia-hf-cur{font-weight:700}
@@ -70,21 +74,48 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, t
   return node;
 }
 
-export function createHouseFilePanel(world: World, houseFiles: HouseFiles, currentId: string): HouseFilePanel {
+export interface HouseFileSection {
+  /** The home that is open (or selected) now; null when it could not be loaded. */
+  setCurrent(house: House | null): void;
+  dispose(): void;
+}
+
+export interface HouseFileSectionOptions {
+  /** The id of the home that is open now. */
+  currentId: string;
+  /**
+   * `intro`: the start screen. A file that was kept becomes the selected house at once (the page opens it, so Enter VR uses it).
+   * `panel`: the floating box of `intro=0`, where the user presses Open.
+   */
+  mode: 'intro' | 'panel';
+  /** Adds a heading with the title of the section (the start screen has its own). */
+  heading?: boolean;
+  /** Replaced in tests. */
+  navigate?: (id: string) => void;
+}
+
+function defaultNavigate(id: string): void {
+  const search = houseSwitchSearch(window.location.search, id);
+  window.location.assign(`${window.location.pathname}${search}${window.location.hash}`);
+}
+
+export function mountHouseFiles(container: HTMLElement, houseFiles: HouseFiles, options: HouseFileSectionOptions): HouseFileSection {
+  const { currentId, mode } = options;
+  const intro = mode === 'intro';
+  const navigate = options.navigate ?? defaultNavigate;
   const style = el('style');
   style.textContent = STYLE;
 
   const root = el('section', 'soglia-hf');
   root.setAttribute('aria-label', hf.title);
-  root.dataset.soglia = 'house-file-panel';
-  const heading = el('h2', undefined, hf.title);
+  root.dataset.soglia = intro ? 'house-files' : 'house-file-panel';
   const current = el('p', 'soglia-hf-cur', hf.noneOpen);
   const details = el('p');
   const list = el('ul');
   list.setAttribute('aria-label', hf.listLabel);
   const loadButton = el('button', 'soglia-hf-primary', hf.load);
   loadButton.type = 'button';
-  const dropHint = el('p', undefined, hf.dropHint);
+  const dropHint = el('p', 'soglia-hf-droparea', hf.dropHint);
   const status = el('p', 'soglia-hf-status');
   status.setAttribute('aria-live', 'polite');
   const errorBox = el('div', 'soglia-hf-error');
@@ -95,9 +126,10 @@ export function createHouseFilePanel(world: World, houseFiles: HouseFiles, curre
   input.accept = '.json,application/json';
   input.hidden = true;
   // The feedback sits right under the Load button: in a small window it is seen without scrolling the list.
-  root.append(heading, current, details, loadButton, dropHint, input, status, errorBox, list);
-  document.head.append(style);
-  document.body.append(root);
+  if (options.heading) root.append(el('h2', undefined, hf.title));
+  root.append(current, details, loadButton, dropHint, input, status, errorBox, list);
+  if (!document.head.contains(style)) document.head.append(style);
+  container.append(root);
 
   let openHouse: House | null = null;
   let pendingRemove: string | null = null;
@@ -121,11 +153,6 @@ export function createHouseFilePanel(world: World, houseFiles: HouseFiles, curre
     errorBox.hidden = false;
   };
 
-  const navigate = (id: string): void => {
-    const search = houseSwitchSearch(window.location.search, id);
-    window.location.assign(`${window.location.pathname}${search}${window.location.hash}`);
-  };
-
   const row = (id: string, name: string, tag: string, entry: HouseFileEntry | null): HTMLLIElement => {
     const li = el('li');
     li.dataset.houseId = id;
@@ -134,7 +161,7 @@ export function createHouseFilePanel(world: World, houseFiles: HouseFiles, curre
     li.append(label);
     const isOpen = id === currentId;
     const memoryOnly = entry !== null && houseFiles.memoryOnly(id);
-    const open = el('button', isOpen ? undefined : 'soglia-hf-primary', isOpen ? hf.opened : hf.open);
+    const open = el('button', isOpen ? undefined : 'soglia-hf-primary', isOpen ? (intro ? hf.selected : hf.opened) : intro ? hf.select : hf.open);
     open.type = 'button';
     open.disabled = isOpen || memoryOnly;
     open.addEventListener('click', () => navigate(id));
@@ -150,7 +177,7 @@ export function createHouseFilePanel(world: World, houseFiles: HouseFiles, curre
   };
 
   const render = (): void => {
-    current.textContent = openHouse ? `${hf.current}: ${openHouse.title}` : hf.noneOpen;
+    current.textContent = openHouse ? `${intro ? hf.selectedNow : hf.current}: ${openHouse.title}` : hf.noneOpen;
     details.textContent = openHouse ? hf.details(openHouse.areaM2, openHouse.rooms.length) : '';
     list.replaceChildren();
     for (const id of KNOWN_HOUSES) list.append(row(id, demoName(id), hf.demoTag, null));
@@ -204,10 +231,17 @@ export function createHouseFilePanel(world: World, houseFiles: HouseFiles, curre
     }
     const { entry } = result;
     slog(`house file loaded id=${entry.id} rooms=${entry.rooms} areaM2=${entry.areaM2}`);
-    if (result.persisted) {
-      status.textContent = result.replaced ? hf.replaced(entry.title) : hf.loaded(entry.title);
-    } else {
+    if (!result.persisted) {
+      // A house kept in memory only would be gone after the reload that opens it: it cannot be selected.
       showError(hf.notSaved, []);
+    } else if (intro) {
+      status.textContent = hf.loadedSelecting(entry.title);
+      slog(`house file selected id=${entry.id}`);
+      render();
+      navigate(entry.id);
+      return;
+    } else {
+      status.textContent = result.replaced ? hf.replaced(entry.title) : hf.loaded(entry.title);
     }
     render();
   };
@@ -233,16 +267,17 @@ export function createHouseFilePanel(world: World, houseFiles: HouseFiles, curre
   const cleanups: Array<() => void> = [];
   if (typeof window.addEventListener === 'function' && 'ondrop' in window) {
     const hasFiles = (e: DragEvent): boolean => Array.from(e.dataTransfer?.types ?? []).includes('Files');
+    const dragTarget = intro ? container : root;
     const onDragOver = (e: DragEvent): void => {
       if (!hasFiles(e)) return;
       e.preventDefault();
-      root.classList.add('soglia-hf-drag');
+      dragTarget.classList.add('soglia-hf-drag');
     };
-    const onDragLeave = (): void => root.classList.remove('soglia-hf-drag');
+    const onDragLeave = (): void => dragTarget.classList.remove('soglia-hf-drag');
     const onDrop = (e: DragEvent): void => {
       if (!hasFiles(e)) return;
       e.preventDefault();
-      root.classList.remove('soglia-hf-drag');
+      dragTarget.classList.remove('soglia-hf-drag');
       pick(e.dataTransfer?.files?.[0]);
     };
     window.addEventListener('dragover', onDragOver);
@@ -257,18 +292,6 @@ export function createHouseFilePanel(world: World, houseFiles: HouseFiles, curre
     slog('feature drag-and-drop unavailable');
   }
 
-  // Hidden while the session is immersive: the file picker cannot open there, and the box would not be seen anyway.
-  const xr = world.renderer.xr;
-  const hide = (): void => {
-    root.hidden = true;
-  };
-  const show = (): void => {
-    root.hidden = false;
-  };
-  xr.addEventListener('sessionstart', hide);
-  xr.addEventListener('sessionend', show);
-  if (xr.isPresenting) hide();
-
   render();
 
   return {
@@ -278,11 +301,44 @@ export function createHouseFilePanel(world: World, houseFiles: HouseFiles, curre
     },
     dispose() {
       for (const undo of cleanups) undo();
-      xr.removeEventListener('sessionstart', hide);
-      xr.removeEventListener('sessionend', show);
       if (pendingTimer !== undefined) clearTimeout(pendingTimer);
       root.remove();
       style.remove();
+    },
+  };
+}
+
+export interface HouseFilePanel {
+  /** The home that is open now (null when it could not be loaded). */
+  setCurrent(house: House | null): void;
+  dispose(): void;
+}
+
+/** The floating box of the web page for `intro=0` (automated QA), hidden while the session is immersive. */
+export function createHouseFilePanel(world: World, houseFiles: HouseFiles, currentId: string): HouseFilePanel {
+  const box = el('div', 'soglia-hf-float');
+  document.body.append(box);
+  const section = mountHouseFiles(box, houseFiles, { currentId, mode: 'panel', heading: true });
+
+  // Hidden while the session is immersive: the file picker cannot open there, and the box would not be seen anyway.
+  const xr = world.renderer.xr;
+  const hide = (): void => {
+    box.hidden = true;
+  };
+  const show = (): void => {
+    box.hidden = false;
+  };
+  xr.addEventListener('sessionstart', hide);
+  xr.addEventListener('sessionend', show);
+  if (xr.isPresenting) hide();
+
+  return {
+    setCurrent: (house) => section.setCurrent(house),
+    dispose() {
+      xr.removeEventListener('sessionstart', hide);
+      xr.removeEventListener('sessionend', show);
+      section.dispose();
+      box.remove();
     },
   };
 }

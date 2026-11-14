@@ -21,10 +21,11 @@ import { loadInfoPoints } from './data/load-issues';
 import { createHouseFiles } from './data/house-files';
 import { createSafeStorage } from './data/storage';
 import { createHouseFilePanel } from './ui/house-file-panel';
+import { createIntroScreen } from './ui/intro-screen';
 import { describeError, slog, swarn } from './log';
 import { formatParamsLine, hasInvalidHouse, mergeParams, parseParams } from './logic/params';
 import { mergeCatalog, menuSections } from './logic/catalog';
-import { applyCatalogSizes, overrideCount } from './logic/catalog-sizes';
+import { applyCatalogSizes, overrideCount, type SizeOverrides } from './logic/catalog-sizes';
 import { scannedToCatalogItem } from './logic/room-scan';
 import { planRadius } from './logic/house-layout';
 import { createInitialState, createStore, setMiniature, setMiniatureOffset, setSunTime } from './logic/state';
@@ -68,6 +69,7 @@ import { createSun } from './systems/sun';
 import { createViewpoint } from './systems/viewpoint';
 import { isRealScale } from './systems/view-mode';
 import { chooseMrEntry, mixedRealityOptions, watchMrSessionRefusal } from './systems/mixed-reality';
+import { withoutSessionOffer } from './systems/xr-entry';
 import { RoomScanSystem } from './systems/room-scan';
 import { createRoomObjects } from './systems/room-objects';
 import { attachRoomPieceVisuals, createRoomPieces } from './systems/room-pieces';
@@ -101,10 +103,41 @@ async function start(): Promise<void> {
   const storage = createSafeStorage();
   if (params.reset) clearSavedState(storage);
 
+  // The houses the user loaded from a file and the sizes the user chose for catalog items: both are data of the user, kept by `reset=1`.
+  const houseFiles = createHouseFiles(storage);
+  const catalogSizes = createCatalogSizeStore(storage);
+
+  // `failcatalog=1` (with `debug=1`): the catalog is not even requested, as if it failed (T5.R2). The catalog is requested first of all:
+  // the Furniture list of the start screen needs it, and so does everything else.
+  let catalogRequest: ReturnType<typeof loadCatalog>;
+  if (params.failcatalog) {
+    slog('debug failcatalog=1: catalog.json is not loaded');
+    catalogRequest = Promise.resolve({ ok: false, errors: ['failcatalog'] });
+  } else {
+    catalogRequest = loadCatalog();
+  }
+
+  // The start screen: on the web page before the immersive session, shown at once while the world is built behind it.
+  // `intro=0` skips it (automated QA) and keeps the old entry: the SDK offers the session to the browser, and the floating box of
+  // the homes is on the page.
+  const intro = params.intro
+    ? createIntroScreen({ store, houseFiles, sizeStore: catalogSizes, houseId: params.house })
+    : null;
+  slog(`intro ${intro ? 'shown' : 'skipped reason=intro0'}`);
+  // The sizes are read once, here: the page works with them from now on, and the start screen compares against them.
+  const catalogLoad = catalogRequest.then((result) => {
+    const overrides: SizeOverrides = result.ok ? catalogSizes.read(result.items) : {};
+    intro?.setCatalog(result.ok ? { kind: 'ready', items: result.items, applied: overrides } : { kind: 'failed' });
+    return { result, overrides };
+  });
+
   // `mr=1`: a mixed reality world (`immersive-ar`, scene understanding on) when the browser can do it; else the VR world of
   // the project, as without the parameter (DMR1). Only a COPY of the project options changes, never the object of the SDK.
   const mrEntry = await chooseMrEntry(params.mr);
-  const worldOptions = mrEntry.mode === 'ar' ? mixedRealityOptions(projectOptions, params.noscan) : projectOptions;
+  intro?.setMode(mrEntry.mode === 'ar' ? 'immersive-ar' : 'immersive-vr');
+  const entryOptions = mrEntry.mode === 'ar' ? mixedRealityOptions(projectOptions, params.noscan) : projectOptions;
+  // With the start screen the session is started by its Enter VR button, never offered to the browser.
+  const worldOptions = intro ? withoutSessionOffer(entryOptions) : entryOptions;
   const world = await World.create(document.getElementById('scene-container') as HTMLDivElement, worldOptions);
   if (mrEntry.mode === 'ar') {
     slog(`mr world created mode=immersive-ar sceneUnderstanding=${params.noscan ? 'off' : 'on'}`);
@@ -140,28 +173,23 @@ async function start(): Promise<void> {
   } else {
     myLoad = loadMyFurniture();
   }
-  // `failcatalog=1` (with `debug=1`): the catalog is not even requested, as if it failed (T5.R2).
-  let catalogLoad: ReturnType<typeof loadCatalog>;
-  if (params.failcatalog) {
-    slog('debug failcatalog=1: catalog.json is not loaded');
-    catalogLoad = Promise.resolve({ ok: false, errors: ['failcatalog'] });
-  } else {
-    catalogLoad = loadCatalog();
-  }
   // `house=file-<id>` is a home the user loaded from a file: it comes from storage, never from the network (HF4).
-  const houseFiles = createHouseFiles(storage);
-  const catalogSizes = createCatalogSizeStore(storage);
-  const [result, catalogResult, myResult] = await Promise.all([loadHouse(params.house, houseFiles), catalogLoad, myLoad, fontsReady]);
-  // The home panel of the web page (HF1): also when the home fails to load, so another one can be chosen.
-  const housePanel = createHouseFilePanel(world, houseFiles, params.house);
-  housePanel.setCurrent(result.ok ? result.house : null);
+  const [result, catalog, myResult] = await Promise.all([loadHouse(params.house, houseFiles), catalogLoad, myLoad, fontsReady]);
+  const catalogResult = catalog.result;
+  // The homes of the web page (HF1): on the start screen, or in the floating box with `intro=0`. Also when the home fails to load, so another one can be chosen.
+  if (intro) {
+    intro.setHouse(result.ok ? result.house : null);
+  } else {
+    const housePanel = createHouseFilePanel(world, houseFiles, params.house);
+    housePanel.setCurrent(result.ok ? result.house : null);
+  }
   if (params.glyphs) showGlyphTest(world);
   // The catalog the whole app works with: the catalog items plus the user's own pieces (T3.8, D34). A failed load of
   // the own pieces only hides their tab; an own id that the catalog already uses is left out (the catalog wins).
   // The objects of the room added to Mine in an earlier session (plan MR) join the own pieces: a saved piece of one of them needs its entry.
   const scannedItems = readSavedScanned(storage, params.house).map(scannedToCatalogItem);
   // The sizes the user chose for catalog items (start screen, Furniture) replace the catalog sizes before anything reads them.
-  const sizeOverrides = catalogResult.ok ? catalogSizes.read(catalogResult.items) : {};
+  const sizeOverrides = catalog.overrides;
   const catalogItems = catalogResult.ok ? applyCatalogSizes(catalogResult.items, sizeOverrides) : [];
   if (overrideCount(sizeOverrides) > 0) slog(`catalog sizes applied items=${overrideCount(sizeOverrides)}`);
   const merged = catalogResult.ok ? mergeCatalog(catalogItems, [...(myResult.ok ? myResult.items : []), ...scannedItems]) : null;
@@ -328,8 +356,12 @@ async function start(): Promise<void> {
       attachLifecycleKeys(lifecycle);
       attachMenuKey();
     }
+    // Everything is built: the Enter VR button of the start screen can start the session.
+    intro?.setWorld(world);
+    slog('app ready');
     return;
   }
+  intro?.setWorld(world);
   if (result.reason === 'not-found') {
     swarn(`house not found: ${result.id}`);
     showErrorPanel(world, {

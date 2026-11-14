@@ -189,6 +189,14 @@ export class FurnitureSystem extends createSystem({}) {
       return;
     }
     const object = ctx.visuals.create(item);
+    // A piece the user resized (start screen, Furniture): say what was drawn, so the QA can see that the model follows the size.
+    if (item.defaultSize) {
+      const drawn = ctx.visuals.measureBody(object);
+      const [w, d, h] = item.size;
+      slog(
+        `furniture resized id=${piece.id} drawn=${drawn ? drawn.join('x') : '?'} size=${Math.round(w * 100)}x${Math.round(d * 100)}x${Math.round(h * 100)}cm`,
+      );
+    }
     const entity = this.world.createTransformEntity(object, ctx.houseEntity);
     tagEntity(entity, piece.id);
     entity.addComponent(Furniture, { catalogId: piece.catalogId, instance: piece.instance, phase: 'placed' });

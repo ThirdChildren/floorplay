@@ -43,6 +43,7 @@ export const modelAssetId = (catalogId: string): string => `furniture-${catalogI
 
 interface PieceUserData {
   outline: Mesh;
+  body: Object3D;
 }
 
 export class FurnitureVisuals {
@@ -104,8 +105,18 @@ export class FurnitureVisuals {
     const frame = new Mesh(this.frame(item.size[0], item.size[1]), this.redMaterial);
     frame.visible = false;
     group.add(frame);
-    (group.userData as PieceUserData).outline = frame;
+    const userData = group.userData as PieceUserData;
+    userData.outline = frame;
+    userData.body = body;
     return group;
+  }
+
+  /** The size of the drawn body of a piece made by `create`, in cm (width, depth, height): for the log of resized pieces. */
+  measureBody(group: Object3D): [number, number, number] | null {
+    const body = (group.userData as Partial<PieceUserData>).body;
+    if (!body) return null;
+    const size = new Box3().setFromObject(body).getSize(new Vector3());
+    return [Math.round(size.x * 100), Math.round(size.z * 100), Math.round(size.y * 100)];
   }
 
   /** Shows the frame in the colour of `kind` (`none` hides it). */
