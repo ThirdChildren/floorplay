@@ -45,6 +45,7 @@ describe('parseParams defaults', () => {
       contrast: false,
       text: 'normal',
       hud: true,
+      intro: true,
     });
   });
 
@@ -273,6 +274,7 @@ describe('parseParams multiple keys', () => {
       contrast: true,
       text: 'large',
       hud: true,
+      intro: true,
     });
     expect([...r.present].sort()).toEqual(['contrast', 'debug', 'failcatalog', 'failmodels', 'failmy', 'furnish', 'glyphs', 'house', 'mr', 'noscan', 'pinch', 'reset', 'role', 'seed', 'text', 'time']);
     expect(r.warnings).toEqual([]);
@@ -303,7 +305,7 @@ describe('parseParams multiple keys', () => {
     expect(r.params.house).toBe('apartment-b');
     expect(r.present).toEqual(['house']);
     expect(r.warnings).toEqual([]);
-    expect(Object.keys(r.params).sort()).toEqual(['contrast', 'debug', 'failcatalog', 'failmodels', 'failmy', 'furnish', 'glyphs', 'house', 'hud', 'mr', 'noscan', 'pinch', 'reset', 'role', 'seed', 'text', 'time']);
+    expect(Object.keys(r.params).sort()).toEqual(['contrast', 'debug', 'failcatalog', 'failmodels', 'failmy', 'furnish', 'glyphs', 'house', 'hud', 'intro', 'mr', 'noscan', 'pinch', 'reset', 'role', 'seed', 'text', 'time']);
   });
 
   it('ignores key names that differ only by case', () => {
@@ -525,6 +527,7 @@ describe('formatParamsLine', () => {
       contrast: false,
       text: 'normal',
       hud: true,
+      intro: true,
     });
     expect(line).toBe('params source=dev-file house=apartment-b role=visitor reset=false seed=1 debug=true time=-');
   });
@@ -930,5 +933,37 @@ describe('t_ keys are not parameters (T6.A4)', () => {
   it('isQueryString accepts a file made of tuning keys', () => {
     expect(isQueryString('t_longPress=1.1&t_palmOpenHold=0.6\n')).toBe(true);
     expect(isQueryString('t_fovMask=-5')).toBe(true);
+  });
+});
+
+
+describe('intro (start screen)', () => {
+  it('is on by default', () => {
+    expect(parseParams('').params.intro).toBe(true);
+    expect(mergeParams(parseParams(''), null).params.intro).toBe(true);
+  });
+
+  it('intro=0 skips the start screen and intro=1 keeps it', () => {
+    expect(parseParams('intro=0').params.intro).toBe(false);
+    expect(parseParams('intro=1').params.intro).toBe(true);
+    expect(parseParams('intro=0').present).toEqual(['intro']);
+  });
+
+  it('rejects other values with a warning and keeps the default', () => {
+    const r = parseParams('intro=no');
+    expect(r.params.intro).toBe(true);
+    expect(r.warnings).toHaveLength(1);
+  });
+
+  it('works from the dev file and the URL beats it', () => {
+    expect(mergeParams(parseParams(''), parseParams('intro=0')).params.intro).toBe(false);
+    expect(mergeParams(parseParams('intro=1'), parseParams('intro=0')).params.intro).toBe(true);
+  });
+
+  it('is named in the log line only when it is off', () => {
+    const on = formatParamsLine('url', parseParams('house=apartment-a').params);
+    expect(on).not.toContain('intro');
+    const off = formatParamsLine('url', parseParams('intro=0').params);
+    expect(off.endsWith(' intro=0')).toBe(true);
   });
 });

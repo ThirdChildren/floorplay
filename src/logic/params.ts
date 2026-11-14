@@ -1,5 +1,5 @@
 // Pure URL / dev-file parameter parsing: no imports from @iwsdk/core or three.
-// Recognised keys: house, role, reset, seed, time, debug, mr, glyphs, furnish, failmodels, failmy, failcatalog, noscan, pinch, contrast, text, hud.
+// Recognised keys: house, role, reset, seed, time, debug, mr, glyphs, furnish, failmodels, failmy, failcatalog, noscan, pinch, contrast, text, hud, intro.
 // The tuning keys `t_<name>` are NOT parameters of this module: `src/logic/tuning.ts` reads them (T6.A4, D66).
 // Unknown values fall back to the default and produce a warning returned as data;
 // the caller decides how to log it.
@@ -37,7 +37,8 @@ export type ParamKey =
   | 'pinch'
   | 'contrast'
   | 'text'
-  | 'hud';
+  | 'hud'
+  | 'intro';
 
 export type ParamsSource = 'url' | 'dev-file' | 'default';
 
@@ -95,6 +96,11 @@ export interface Params {
    * the final measures.
    */
   hud: boolean;
+  /**
+   * `intro=0|1` (default 1): the start screen (load a house file, furniture sizes, Enter VR) on the web page before the immersive
+   * session. `intro=0` skips it and keeps the old entry (the session is offered to the browser at once); it is meant for automated QA.
+   */
+  intro: boolean;
 }
 
 export interface ParsedParams {
@@ -136,6 +142,7 @@ export const DEFAULT_PARAMS: Readonly<Params> = Object.freeze({
   contrast: false,
   text: 'normal',
   hud: true,
+  intro: true,
 });
 
 /** Letters, digits, `_` and `-` only: no dots, slashes, spaces or markup. */
@@ -210,6 +217,7 @@ const FIELD_PARSERS: { [K in ParamKey]: (raw: string) => FieldResult<Params[K]> 
       ? { ok: true, value: raw as TextSize }
       : { ok: false, reason: `expected one of ${TEXT_SIZES.join(', ')}` },
   hud: parseFlag,
+  intro: parseFlag,
 };
 
 const KEYS = Object.keys(FIELD_PARSERS) as ParamKey[];
@@ -325,7 +333,8 @@ export function formatParamsLine(source: ParamsSource, p: Params): string {
   const withContrast = p.contrast ? `${withPinch} contrast=1` : withPinch;
   const withText = p.text === 'large' ? `${withContrast} text=large` : withContrast;
   // Last, and only when it is off: the statistics panel is the default with `debug=1`.
-  return p.hud ? withText : `${withText} hud=0`;
+  const withHud = p.hud ? withText : `${withText} hud=0`;
+  return p.intro ? withHud : `${withHud} intro=0`;
 }
 
 /** True when the warnings include a discarded `house` value (the app then logs that it kept the default home). */

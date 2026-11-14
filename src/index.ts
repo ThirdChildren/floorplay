@@ -13,6 +13,7 @@ import { attachDebugHud } from './debug/hud';
 import { installLogTail } from './debug/log-tail';
 import { attachStats } from './debug/stats';
 import { installTuning } from './debug/tuning';
+import { createCatalogSizeStore } from './data/catalog-sizes';
 import { loadCatalog } from './data/load-catalog';
 import { loadMyFurniture, type LoadMyFurnitureResult } from './data/load-my-furniture';
 import { loadHouse } from './data/load-house';
@@ -23,6 +24,7 @@ import { createHouseFilePanel } from './ui/house-file-panel';
 import { describeError, slog, swarn } from './log';
 import { formatParamsLine, hasInvalidHouse, mergeParams, parseParams } from './logic/params';
 import { mergeCatalog, menuSections } from './logic/catalog';
+import { applyCatalogSizes, overrideCount } from './logic/catalog-sizes';
 import { scannedToCatalogItem } from './logic/room-scan';
 import { planRadius } from './logic/house-layout';
 import { createInitialState, createStore, setMiniature, setMiniatureOffset, setSunTime } from './logic/state';
@@ -148,6 +150,7 @@ async function start(): Promise<void> {
   }
   // `house=file-<id>` is a home the user loaded from a file: it comes from storage, never from the network (HF4).
   const houseFiles = createHouseFiles(storage);
+  const catalogSizes = createCatalogSizeStore(storage);
   const [result, catalogResult, myResult] = await Promise.all([loadHouse(params.house, houseFiles), catalogLoad, myLoad, fontsReady]);
   // The home panel of the web page (HF1): also when the home fails to load, so another one can be chosen.
   const housePanel = createHouseFilePanel(world, houseFiles, params.house);
@@ -157,7 +160,11 @@ async function start(): Promise<void> {
   // the own pieces only hides their tab; an own id that the catalog already uses is left out (the catalog wins).
   // The objects of the room added to Mine in an earlier session (plan MR) join the own pieces: a saved piece of one of them needs its entry.
   const scannedItems = readSavedScanned(storage, params.house).map(scannedToCatalogItem);
-  const merged = catalogResult.ok ? mergeCatalog(catalogResult.items, [...(myResult.ok ? myResult.items : []), ...scannedItems]) : null;
+  // The sizes the user chose for catalog items (start screen, Furniture) replace the catalog sizes before anything reads them.
+  const sizeOverrides = catalogResult.ok ? catalogSizes.read(catalogResult.items) : {};
+  const catalogItems = catalogResult.ok ? applyCatalogSizes(catalogResult.items, sizeOverrides) : [];
+  if (overrideCount(sizeOverrides) > 0) slog(`catalog sizes applied items=${overrideCount(sizeOverrides)}`);
+  const merged = catalogResult.ok ? mergeCatalog(catalogItems, [...(myResult.ok ? myResult.items : []), ...scannedItems]) : null;
   if (merged) for (const id of merged.duplicates) swarn(`my furniture item discarded id=${id} reason=duplicate-id`);
   if (result.ok) {
     // Put the saved furniture and preferences back before the systems start, so the first-use hints and the
@@ -258,7 +265,7 @@ async function start(): Promise<void> {
     });
     // Without a catalog the house is still usable: no furniture (the menu will say so, T2.12).
     if (merged && catalogResult.ok) {
-      const sections = menuSections(catalogResult.items, merged.mine);
+      const sections = menuSections(catalogItems, merged.mine);
       createMenuItems(world, store, sections.items);
       setMenuPickDebug(params.debug);
       // The tab `mine` appears only when its data arrived.

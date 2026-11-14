@@ -26,6 +26,7 @@ import {
 } from '@iwsdk/core';
 import { slog, swarn } from '../log';
 import type { CatalogItem } from '../logic/catalog';
+import { modelScale } from '../logic/catalog-sizes';
 import type { OutlineKind } from '../logic/furniture-diff';
 import { palette } from './theme';
 
@@ -146,10 +147,23 @@ export class FurnitureVisuals {
   private createBody(item: CatalogItem): Object3D {
     if (this.modelReady.has(item.id)) {
       const gltf = AssetManager.getGLTF(modelAssetId(item.id));
-      if (gltf) return gltf.scene;
+      if (gltf) return this.scaled(item, gltf.scene);
       swarn(`furniture model missing from the cache ${item.id}: using a block`);
     }
     return this.createBlock(item);
+  }
+
+  /**
+   * The model is drawn at the size of the catalog file. When the user changed the size of the item (`defaultSize` is set), it goes
+   * inside a group that stretches it to the new width, depth and height: same shared geometry and materials, no new draw call.
+   */
+  private scaled(item: CatalogItem, scene: Object3D): Object3D {
+    if (!item.defaultSize) return scene;
+    const [sx, sy, sz] = modelScale(item);
+    const holder = new Group();
+    holder.scale.set(sx, sy, sz);
+    holder.add(scene);
+    return holder;
   }
 
   private createBlock(item: CatalogItem): Group {
@@ -176,7 +190,8 @@ export class FurnitureVisuals {
 
   private checkSize(item: CatalogItem, scene: Object3D): void {
     const size = new Box3().setFromObject(scene).getSize(new Vector3());
-    const [w, d, h] = item.size;
+    // The model is made at the size of the catalog file, whatever size the user chose for the item.
+    const [w, d, h] = item.defaultSize ?? item.size;
     if (
       Math.abs(size.x - w) > SIZE_TOLERANCE ||
       Math.abs(size.z - d) > SIZE_TOLERANCE ||
