@@ -11,7 +11,7 @@ import { formatRoomLabel } from '../logic/room-label';
  */
 export const introStrings = {
   title: 'Soglia',
-  tagline: 'Furnish, measure and look after a home, with your hands.',
+  tagline: 'Furnish and look after a home, with your hands.',
   selectedLabel: 'Selected house',
   noHouse: 'No house is selected.',
   houseFailed: 'The selected house could not be opened. Load a file or choose another house.',
