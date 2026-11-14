@@ -121,9 +121,13 @@ export function pinnedPanelAnchor(
   const hx = usable ? head.x : FALLBACK_HEAD.x;
   const hy = usable ? head.y : FALLBACK_HEAD.y;
   const hz = usable ? head.z : FALLBACK_HEAD.z;
-  out.x = hx - Math.sin(yaw) * distance;
-  out.y = hy - drop + Math.tan(pitch) * distance;
-  out.z = hz - Math.cos(yaw) * distance;
+  // The normal panels keep their horizontal distance (no point comes nearer than `distance`); the big ones (large text) move along the gaze
+  // instead, so that looking down at the table does not push their bottom corners beyond the 0.8 m of rule 8.
+  const horizontal = large ? Math.cos(pitch) * distance : distance;
+  const rise = large ? Math.sin(pitch) * distance : Math.tan(pitch) * distance;
+  out.x = hx - Math.sin(yaw) * horizontal;
+  out.y = hy - drop + rise;
+  out.z = hz - Math.cos(yaw) * horizontal;
   const safeHead = Number.isFinite(head.x + head.y + head.z) ? head : FALLBACK_HEAD;
   return uprightAnchorInCone(out, yaw, Number.isFinite(pitchRad) ? pitchRad : 0, safeHead, extent, VIEW_CONE_HALF_ANGLE_DEG, out);
 }
