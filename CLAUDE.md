@@ -15,8 +15,7 @@ Consegna: **18 novembre 2026, 12:00 PT** (21:00 in Italia). Regolamento: `docs/R
 
 La casa di un annuncio diventa un **plastico da tavolo** (scala 1:20) che si usa solo con le mani:
 
-1. **Scegliere** (visitatore): arredare con le mani, provare i *propri* mobili e verificare se
-   passano dalle porte, misurare, entrare nelle stanze a grandezza reale, vedere la luce del sole.
+1. **Scegliere** (visitatore): arredare con le mani, provare i *propri* mobili, entrare nelle stanze a grandezza reale, vedere la luce del sole.
 2. **Presentare** (agente): punti informativi, arredo virtuale in un gesto, mappa dell'interesse.
 3. **Vivere** (inquilino e proprietario): segnalazioni ancorate al punto esatto della casa,
    con stati rosso → arancione → verde, storico e verbale d'ingresso/uscita.
@@ -56,7 +55,8 @@ Vengono dal regolamento ufficiale e dal design. Un task che ne viola una non è 
 7. **Onestà.** Dati simulati (es. mappa dell'interesse) etichettati **"Sample data"** nell'app.
 8. **Campo visivo.** UI essenziale vicino al centro della vista, pannelli a 0,5–0,8 m, niente
    elementi critici ai bordi: deve funzionare anche con il campo visivo più stretto dei Meta VR Glasses.
-9. **Accessibilità.** Tutto usabile anche con una mano sola (menu del palmo su entrambe le mani),
+9. **Accessibilità.** Tutto usabile anche con una mano sola (menu del palmo sulla mano destra di default,
+   spostabile sulla sinistra nelle opzioni di accessibilità),
    tema ad alto contrasto, testo grande.
 10. **Nucleo originale.** Nessun servizio esterno al centro dell'esperienza; la demo funziona
     senza backend.
@@ -104,9 +104,7 @@ qa/device/          prove sul visore + DEBT.md (prove rimandate)
 | `HouseBuilder` | pavimenti, muri con aperture, porte, finestre da `house.json` | geometria delle aperture |
 | `Miniature` | plastico 1:20, rotazione/zoom a due mani, appoggio sul tavolo in MR | trasformazioni di scala |
 | `Furniture` | catalogo, presa, aggancio, collisioni, rotazione 90° | snap e collisioni 2D |
-| `FitCheck` | mobili / sedia a rotelle / passeggino attraverso le porte | percorso porte + verifica misure |
 | `Viewpoint` | punti di vista, passaggio plastico ↔ scala reale | — |
-| `Measure` | metro con aggancio a pareti e spigoli | distanze e snap |
 | `Sun` | posizione del sole (SunCalc), luce e ombre | calcolo azimut/elevazione |
 | `Issues` | segnaposto, categorie, urgenza, stati, verbale | macchina a stati delle segnalazioni |
 | `Roles` | visitatore, agente, inquilino, proprietario | permessi per ruolo |
