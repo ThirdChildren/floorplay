@@ -13,6 +13,7 @@ import {
   hasOverride,
   limitsCm,
   modelScale,
+  scaledModelSize,
   overrideCount,
   parseCmText,
   readOverrides,
@@ -23,6 +24,7 @@ import {
   type SizeOverrides,
 } from '../../src/logic/catalog-sizes';
 import { formatSize } from '../../src/logic/furniture-label';
+import { glbBounds } from '../helpers/glb-bounds';
 import { loadJson } from '../helpers/load-json';
 
 const catalog = (): CatalogItem[] => {
@@ -157,6 +159,76 @@ describe('overrides', () => {
     const newBed = find(applyCatalogSizes(items, withSide(NO_OVERRIDES, bed, 0, 80)), 'bed-double');
     expect(modelScale(newBed)).toEqual([0.5, 1, 1]);
     expect(modelScale(bed)).toEqual([1, 1, 1]);
+  });
+
+  it('the model scale is in the axes of the model: depth goes to z, height to y (regression: they were swapped)', () => {
+    const chair = find(items, 'chair'); // 45 x 50 x 85 cm
+    const big = find(applyCatalogSizes(items, { chair: [45, 100, 85] }), 'chair'); // only the depth doubles
+    expect(modelScale(big)).toEqual([1, 1, 2]);
+    const tall = find(applyCatalogSizes(items, { chair: [45, 50, 100] }), 'chair'); // only the height changes
+    const [sx, sy, sz] = modelScale(tall);
+    expect([sx, sz]).toEqual([1, 1]);
+    expect(sy).toBeCloseTo(100 / 85, 12);
+    expect(modelScale(chair)).toEqual([1, 1, 1]);
+  });
+
+  it('a side the model has no extent on keeps the scale 1 instead of dividing by zero', () => {
+    const item = { size: [1, 1, 1] as [number, number, number], defaultSize: [1, 1, 1] as [number, number, number] };
+    expect(modelScale(item, [0, 1, 1])).toEqual([1, 1, 1]);
+    expect(modelScale(item, [Number.NaN, 2, 0.5])).toEqual([1, 2, 0.5]);
+  });
+});
+
+describe('the rendered size of a resized model is the size asked for', () => {
+  const items = catalog();
+  const withModel = items.filter((item) => typeof item.model === 'string');
+
+  it('every catalog model is as large as the catalog says (so the default size scale is right)', () => {
+    expect(withModel.length).toBeGreaterThan(10);
+    for (const item of withModel) {
+      const bounds = glbBounds(`${item.model}`);
+      for (let axis = 0; axis < 3; axis++) expect(bounds.size[axis], `${item.id} axis ${axis}`).toBeCloseTo(item.size[axis], 2);
+    }
+  });
+
+  it('after the scale, the box of every item is width x depth x height for each side changed on its own and for all together', () => {
+    const cases: ReadonlyArray<(base: [number, number, number]) => [number, number, number]> = [
+      ([w, d, h]) => [Math.round(w * 125), d * 100, h * 100],
+      ([w, d, h]) => [w * 100, Math.round(d * 150), h * 100],
+      ([w, d, h]) => [w * 100, d * 100, Math.round(h * 80)],
+      ([w, d, h]) => [Math.round(w * 60), Math.round(d * 130), Math.round(h * 170)],
+    ];
+    for (const item of withModel) {
+      const natural = glbBounds(`${item.model}`).size;
+      for (const make of cases) {
+        const raw = make(item.size);
+        const base = defaultSizeCm(item);
+        const cm: [number, number, number] = [0, 1, 2].map((axis) => clampCm(raw[axis], limitsCm(base, axis as 0 | 1 | 2))) as [number, number, number];
+        const resized = find(applyCatalogSizes(items, { [item.id]: cm }), item.id);
+        const drawn = scaledModelSize(natural, modelScale(resized, natural));
+        for (let axis = 0; axis < 3; axis++) {
+          expect(drawn[axis], `${item.id} ${cm.join('x')} axis ${axis}`).toBeCloseTo(cm[axis] / 100, 3);
+        }
+        // the same with the scale from the catalog number only (what an item that was not measured gets)
+        const fromCatalog = scaledModelSize(natural, modelScale(resized));
+        for (let axis = 0; axis < 3; axis++) expect(fromCatalog[axis]).toBeCloseTo(cm[axis] / 100, 2);
+      }
+    }
+  });
+
+  it('reproduces the reported bug: with the real bed a height of 120 cm gave a model 190 cm deep and 95 cm high', () => {
+    const bed = find(items, 'bed-double'); // 160 x 200 x 95
+    const natural = glbBounds(`${bed.model}`).size;
+    const resized = find(applyCatalogSizes(items, { 'bed-double': [160, 200, 120] }), 'bed-double');
+    const [sx, sy, sz] = modelScale(resized);
+    // the old code set scale.set(sx, depthRatio, heightRatio): depth 1, height 1.263
+    const drawn = scaledModelSize(natural, [sx, sy, sz]);
+    expect(drawn[0]).toBeCloseTo(1.6, 3);
+    expect(drawn[1]).toBeCloseTo(2.0, 3);
+    expect(drawn[2]).toBeCloseTo(1.2, 3);
+    const old = [resized.size[0] / bed.size[0], resized.size[1] / bed.size[1], resized.size[2] / bed.size[2]];
+    expect(natural[1] * old[2]).toBeGreaterThan(2.4); // the old depth: 2.0 x 1.263 = 2.53 m instead of 2.0 m
+    expect(natural[2] * old[1]).toBeCloseTo(0.95, 3); // the old height did not change
   });
 });
 
