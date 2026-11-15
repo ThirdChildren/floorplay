@@ -134,10 +134,13 @@ export function pickRestorable(saved: string, ctx: RestoreContext): Restorable |
   const dropped: DroppedPiece[] = [];
   const parked: PlacedPiece[] = [];
   const nextInstance: Record<string, number> = { ...state.nextInstance };
+  // A walk position is kept as saved (the Walk system puts the body on a free spot of the house at restore, so a house that changed is safe).
   const view: ViewState =
     state.view.kind === 'viewpoint' && ctx.viewpointIds?.has(state.view.id) === true
       ? { kind: 'viewpoint', id: state.view.id }
-      : TABLETOP_VIEW;
+      : state.view.kind === 'walk'
+        ? { kind: 'walk', x: state.view.x, z: state.view.z, yawDeg: state.view.yawDeg }
+        : TABLETOP_VIEW;
   if (ctx.ignoreFurniture === true) {
     return { furniture: [], nextInstance: {}, history: [], prefs, view, dropped, parked, ...m4 };
   }
