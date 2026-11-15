@@ -58,6 +58,7 @@ import { isLargeText } from '../ui/theme';
 import { strings } from '../ui/strings';
 import { isMiniatureGestureActive } from './miniature-gesture';
 import type { Store } from '../logic/state';
+import { clearButtonColumn, setButtonColumn } from './button-column';
 import { getMiniatureAnchor, getMiniatureAnchorYaw } from './miniature';
 import { closeIssuePanel, isIssuePanelOpen, openIssuePanel } from './issue-panel';
 import { closeMenu, getMenuMode, openPinnedMenu } from './palm-menu';
@@ -146,6 +147,7 @@ export class MenuButtonSystem extends createSystem({
         ctx.viewPanels[i].place(0, 0, 0, 0, false);
       }
       this.loggedScale = Number.NaN; // the next session logs its view again
+      clearButtonColumn();
       return;
     }
     const object = this.findRoot()?.object3D;
@@ -173,6 +175,8 @@ export class MenuButtonSystem extends createSystem({
       const v = this.viewButtons[i];
       ctx.viewPanels[i].place(v.x, v.y, v.z, v.yawRad, on);
     }
+    // The pinned menu keeps clear of the column of the shown side (src/logic/menu-follow.ts).
+    setButtonColumn(this.buttons[shown], this.issueButtons[shown], this.viewButtons[shown], shown === 1 ? 'right' : 'left');
     this.logView(head);
   }
 

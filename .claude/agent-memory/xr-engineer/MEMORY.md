@@ -32,3 +32,4 @@
 - [M6 tuning registry + channel (T6.A1-T6.A4)](m6-tuning-registry-channel.md) — 26 knobs, layers live>url>file, wiring list, ERR_ABORTED poll artifact, hud param, verified S6.1 numbers
 - [M6 HUD, log tail, fov mask, start page (T6.A7/A8/A10/A11)](m6-hud-logtail-fovmask-startpage.md) — A4 HUD now above the line of sight (angular-box test), A3 transparent DoubleSide = 2 passes, quest dry-run serial + logcat filter; UIKit newline collapse -> one span per line, HUD placement beside-and-behind, alert ring, mask needs transparent:true, live file needs t_ prefix, logs recipe
 - [Start screen / Enter VR / size overrides](iwsdk-intro-start-screen.md) — offer 'none' + launchXR from a click, reload to apply sizes, how to drive and upload files in the cloud emulator
+- [Panel arbiter (fix/panel-overlap)](panel-arbiter-fix.md) — one pinned panel at a time, arbiter registry, overlap not reproduced, scratch-runtime recipe beside a Quest server

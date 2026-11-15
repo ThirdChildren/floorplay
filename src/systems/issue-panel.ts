@@ -14,7 +14,7 @@
 //
 // It opens with a pinch of one hand on an "Issues" button (src/systems/menu-button.ts calls `openIssuePanel`/`closeIssuePanel`)
 // and never together with the menu: opening the panel closes the menu that is open (palm or pinned) and a menu that opens
-// closes the panel (`onMenuOpening`, `issues panel closed via=menu`). It closes with `Close`, with the button again, when
+// closes the panel (the panel arbiter, `issues panel closed via=menu`). It closes with `Close`, with the button again, when
 // the session is suspended or ends (`suspendIssuePanel`, called by the life cycle, D30) and, in the tasks that follow, when
 // a report is sent (T4.7). The panel is created and disposed ONLY here (always with `disposePanelEntity`): a change of screen
 // rewrites it in place, so the async trap of `PanelUISystem` stays confined to opening and closing.
@@ -130,7 +130,7 @@ import type { Role } from '../logic/params';
 import { IssuePanel } from '../ui/issue-panel';
 import { MenuAnchor } from '../ui/menu-anchor';
 import { strings } from '../ui/strings';
-import { closeOpenMenu, onMenuOpening } from './palm-menu';
+import { panelOpening, reconcilePanels, registerPanel } from './panel-arbiter';
 import { panelFontSupports } from '../ui/fonts';
 import { onPinchStart, pinchClaims, pinchPoint, type Hand } from './pinch-input';
 import { runAgentStaging } from './furniture';
@@ -342,8 +342,10 @@ export class IssuePanelSystem extends createSystem({}) {
       if (context?.panel.isOpen) context.panel.close();
     });
     this.cleanupFuncs.push(onPinchStart((hand) => this.onPinch(hand)));
-    // A menu that opens (the palm, a button, the development key) takes the place of the panel.
-    this.cleanupFuncs.push(onMenuOpening(() => this.close('menu')));
+    // A menu or the View panel that opens takes the place of this panel, and the other way round (src/systems/panel-arbiter.ts).
+    this.cleanupFuncs.push(
+      registerPanel('issues', { isOpen: () => context?.panel.isOpen ?? false, close: (by) => this.close(by === 'menu' ? 'menu' : 'panel') }),
+    );
     // The role (and the issues, for the count of the button) live in the store: the panel follows it, whoever writes there.
     const store = context?.store;
     if (store) this.cleanupFuncs.push(store.subscribe((state) => this.onState(state)));
@@ -400,8 +402,8 @@ export class IssuePanelSystem extends createSystem({}) {
       slog('issues panel unavailable reason=real-scale');
       return;
     }
-    // One panel at a time: the menu that is open (palm or pinned) closes first.
-    closeOpenMenu();
+    // One panel at a time: the menu (palm or pinned) and the View panel that are open close first, in this frame.
+    panelOpening('issues');
     ctx.navigator.reset();
     const state = ctx.store.get();
     ctx.panel.setHome({ role: state.role, issueCount: issueCount(state.issues), staging: hasStaging(ctx.house) });
@@ -660,6 +662,8 @@ export class IssuePanelSystem extends createSystem({}) {
   update(): void {
     const ctx = context;
     if (!ctx || !ctx.panel.isOpen) return;
+    reconcilePanels();
+    if (!ctx.panel.isOpen) return;
     if (!this.world.renderer.xr.isPresenting || this.suspended) {
       this.close('suspend');
       return;

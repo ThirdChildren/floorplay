@@ -9,8 +9,9 @@
 // follows `framePosition` and `frameOrientation`, the bottom centre of the menu.
 //
 // Modes (D18, D32): `palm` is anchored above the hand and follows it; `pinned` (one-hand use, task T3.3a) is the same
-// panel placed ONCE when it opens, 0.55 m in front of the head and 0.20 m below the eyes (src/logic/menu-anchor.ts),
-// upright and facing the user, and then fixed in space. The mode only changes where `update` gets the anchor.
+// panel placed in front of the head (src/logic/menu-anchor.ts), upright and facing the user. It rests where it is while the gaze stays
+// near it and glides to the gaze when the gaze leaves (a tag-along panel), and it always keeps clear of the column of fixed
+// buttons beside the model (src/logic/menu-follow.ts). The mode only changes where `update` gets the anchor.
 
 import {
   PanelDocument,
@@ -38,7 +39,8 @@ import {
   type MenuTabId,
   type PanelExtent,
 } from '../logic/menu';
-import { panelAnchorPitchRad, pinnedConeAngleDeg, pinnedPanelAnchor, pitchOfForward, yawOfForward } from '../logic/menu-anchor';
+import { panelAnchorPitchRad, pinnedConeAngleDeg, pitchOfForward, yawOfForward } from '../logic/menu-anchor';
+import { createMenuFollow, placeMenuFollow, stepMenuFollow, wrapAngle, type ButtonColumn, type FollowInputs } from '../logic/menu-follow';
 import {
   MENU_FRAME_MAX_DISTANCE,
   MENU_FRAME_MAX_DISTANCE_LARGE,
@@ -135,10 +137,20 @@ export class PalmMenuPanel {
   private modeValue: PalmMenuMode = 'palm';
   /** The fourth button of the bar says "Tabletop" instead of "Recenter" at real scale (T3.12). */
   private realScale = false;
-  /** The pinned placement, computed in `openPinned` and then fixed: anchor (bottom centre) and yaw of the panel. */
+  /** The pinned placement: anchor (bottom centre) and yaw of the panel; computed in `openPinned` and moved by the follow (src/logic/menu-follow.ts). */
   private readonly pinnedAnchor: Vec3Like = { x: 0, y: 0, z: 0 };
   private pinnedYaw = 0;
   private pinnedPlaced = false;
+  private readonly follow = createMenuFollow();
+  private readonly followInputs: FollowInputs = {
+    head: this.headPosition,
+    gazeYaw: 0,
+    gazePitch: 0,
+    extent: MENU_EXTENT,
+    large: false,
+    column: null,
+    tieSign: 1,
+  };
   private readonly centerOffset = new Vector3();
   private slotElements: SlotElements[] = [];
   private items: readonly MenuItemContent[] = [];
@@ -184,17 +196,29 @@ export class PalmMenuPanel {
    * Creates the panel pinned in space (task T3.3a): the anchor is computed NOW from the head (position, yaw of its
    * gaze, and its pitch within a limit, T4.R2) and never changes while the menu is open. The panel stays upright. Does nothing when it is already open.
    */
-  openPinned(head: Object3D): void {
+  openPinned(head: Object3D, column: Readonly<ButtonColumn> | null = null, tieSign: 1 | -1 = 1): void {
     if (this.entity) return;
     this.modeValue = 'pinned';
     head.getWorldPosition(this.headPosition);
     head.getWorldQuaternion(this.headQuaternion);
     this.headForward.set(0, 0, -1).applyQuaternion(this.headQuaternion);
-    this.pinnedYaw = yawOfForward(this.headForward.x, this.headForward.z);
     const pitch = pitchOfForward(this.headForward.x, this.headForward.y, this.headForward.z);
     this.setScale(panelScale());
-    pinnedPanelAnchor(this.headPosition, this.pinnedYaw, pitch, this.extentValue, isLargeText(), this.pinnedAnchor);
+    const inputs = this.followInputs;
+    inputs.gazeYaw = yawOfForward(this.headForward.x, this.headForward.z);
+    inputs.gazePitch = pitch;
+    inputs.extent = this.extentValue;
+    inputs.large = isLargeText();
+    inputs.column = column;
+    inputs.tieSign = tieSign;
+    placeMenuFollow(this.follow, inputs);
+    this.pinnedYaw = this.follow.heading;
+    this.pinnedAnchor.x = this.follow.anchor.x;
+    this.pinnedAnchor.y = this.follow.anchor.y;
+    this.pinnedAnchor.z = this.follow.anchor.z;
     slog(`menu pinned pitchDeg=${degrees1(pitch)} anchorPitchDeg=${degrees1(panelAnchorPitchRad(pitch))}`);
+    const shift = Math.abs(wrapAngle(this.pinnedYaw - inputs.gazeYaw));
+    if (shift * RAD_TO_DEG > 0.05) slog(`menu pinned beside buttons shiftDeg=${degrees1(shift)}`);
     this.pinnedPlaced = false;
     this.create();
   }
@@ -280,7 +304,7 @@ export class PalmMenuPanel {
   }
 
   /** Once per frame while open: fills the text when the document is ready, then follows the hand (`pinned`: stays put). */
-  update(handPosition: Vector3, head: Object3D): void {
+  update(handPosition: Vector3, head: Object3D, dt = 0, column: Readonly<ButtonColumn> | null = null, tieSign: 1 | -1 = 1): void {
     const entity = this.entity;
     const object = entity?.object3D;
     if (!entity || !object) return;
@@ -323,7 +347,7 @@ export class PalmMenuPanel {
     head.getWorldPosition(this.headPosition);
     head.getWorldQuaternion(this.headQuaternion);
     this.headForward.set(0, 0, -1).applyQuaternion(this.headQuaternion);
-    if (this.modeValue === 'pinned') this.placePinned(object);
+    if (this.modeValue === 'pinned') this.placePinned(object, dt, column, tieSign);
     else this.followHand(object, handPosition);
     if (!this.fitLogged) {
       this.fitLogged = true;
@@ -357,9 +381,26 @@ export class PalmMenuPanel {
     this.frameReady = true;
   }
 
-  /** `pinned`: placed once from the anchor computed at opening (upright, facing back toward the gaze), then left alone. */
-  private placePinned(object: Object3D): void {
-    if (this.pinnedPlaced) return;
+  /**
+   * `pinned`: placed from the anchor computed at opening, then moved by the follow (src/logic/menu-follow.ts): it rests while the gaze
+   * is near it, glides to the gaze when the gaze leaves, and stays clear of the column of fixed buttons (`column`, null when they are hidden).
+   */
+  private placePinned(object: Object3D, dt: number, column: Readonly<ButtonColumn> | null, tieSign: 1 | -1): void {
+    const inputs = this.followInputs;
+    inputs.gazeYaw = yawOfForward(this.headForward.x, this.headForward.z);
+    inputs.gazePitch = pitchOfForward(this.headForward.x, this.headForward.y, this.headForward.z);
+    inputs.extent = this.extentValue;
+    inputs.column = column;
+    inputs.tieSign = tieSign;
+    const wasMoving = this.follow.moving;
+    const moved = this.pinnedPlaced && stepMenuFollow(this.follow, inputs, dt);
+    if (this.pinnedPlaced && !moved) return;
+    if (moved && !wasMoving) slog('menu follow start');
+    if (moved && wasMoving && !this.follow.moving) slog(`menu follow end headingShiftDeg=${degrees1(wrapAngle(this.follow.heading - inputs.gazeYaw))}`);
+    this.pinnedYaw = this.follow.heading;
+    this.pinnedAnchor.x = this.follow.anchor.x;
+    this.pinnedAnchor.y = this.follow.anchor.y;
+    this.pinnedAnchor.z = this.follow.anchor.z;
     this.pinnedPlaced = true;
     // A panel faces +Z: turning it by the yaw of the gaze makes +Z point back at the user, and keeps it vertical.
     object.rotation.set(0, this.pinnedYaw, 0);

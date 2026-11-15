@@ -4,7 +4,7 @@
 //
 // It opens with a pinch of one hand on a "View" button (src/systems/menu-button.ts calls `openViewPanel`/`closeViewPanel`) and never
 // together with the menu or the Issues panel: opening it closes the menu and the Issues panel that are open, and a menu that opens
-// closes it (`onMenuOpening`); an Issues panel that opens closes it on the next frame (`view panel closed via=panel`). It closes with
+// closes it, and so does an Issues panel that opens (`view panel closed via=menu|panel`, src/systems/panel-arbiter.ts). It closes with
 // `Close`, with the button again, at real scale, and when the session is suspended or ends (`suspendViewPanel`, called by the life
 // cycle, D30). The panel is created and disposed ONLY here (always with `disposePanelEntity`): a press rewrites the text in place.
 //
@@ -43,8 +43,7 @@ import { MenuAnchor } from '../ui/menu-anchor';
 import { panelFontSupports } from '../ui/fonts';
 import { strings } from '../ui/strings';
 import { ViewPanel } from '../ui/view-panel';
-import { closeIssuePanel, isIssuePanelOpen } from './issue-panel';
-import { closeOpenMenu, getMenuMode, onMenuOpening } from './palm-menu';
+import { panelOpening, reconcilePanels, registerPanel } from './panel-arbiter';
 import { onPinchStart, pinchClaims, pinchPoint, type Hand } from './pinch-input';
 import { isModelHidden, isViewTransitioning } from './view-mode';
 
@@ -128,8 +127,10 @@ export class ViewPanelSystem extends createSystem({}) {
       if (context?.panel.isOpen) context.panel.close();
     });
     this.cleanupFuncs.push(onPinchStart((hand) => this.onPinch(hand)));
-    // A menu that opens (the palm, a button, the development key) takes the place of the panel.
-    this.cleanupFuncs.push(onMenuOpening(() => this.close('menu')));
+    // A menu or the Issues panel that opens takes the place of this panel, and the other way round (src/systems/panel-arbiter.ts).
+    this.cleanupFuncs.push(
+      registerPanel('view', { isOpen: () => context?.panel.isOpen ?? false, close: (by) => this.close(by === 'menu' ? 'menu' : 'panel') }),
+    );
     const store = context?.store;
     if (store) this.cleanupFuncs.push(store.subscribe((state) => this.onState(state)));
   }
@@ -195,9 +196,8 @@ export class ViewPanelSystem extends createSystem({}) {
       slog('view panel unavailable reason=real-scale');
       return;
     }
-    // One panel at a time: the menu and the Issues panel that are open close first.
-    closeOpenMenu();
-    closeIssuePanel('panel');
+    // One panel at a time: the menu and the Issues panel that are open close first, in this frame.
+    panelOpening('view');
     this.writeModel(ctx, ctx.store.get());
     ctx.panel.open(this.world.player.head);
     this.writeModel(ctx, ctx.store.get());
@@ -225,10 +225,8 @@ export class ViewPanelSystem extends createSystem({}) {
       return;
     }
     // An Issues panel (or a menu) that opened takes the place of this one.
-    if (isIssuePanelOpen() || getMenuMode() !== null) {
-      this.close('panel');
-      return;
-    }
+    reconcilePanels();
+    if (!ctx.panel.isOpen) return;
     ctx.panel.update(this.world.player.head);
     if (ctx.panel.hasFrame && this.anchors.size === 0) this.placeAnchors(ctx);
   }

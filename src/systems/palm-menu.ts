@@ -26,6 +26,8 @@ import { menuOpacity } from '../logic/menu-dim';
 import { markMenuOpened, type Store } from '../logic/state';
 import { PalmMenuPanel, type PalmMenuMode } from '../ui/palm-menu';
 import { palmNormalYOf } from './hand-joints';
+import { getButtonColumn, getButtonColumnTieSign } from './button-column';
+import { panelOpening, reconcilePanels, registerPanel } from './panel-arbiter';
 import { isMiniatureGestureActive } from './miniature-gesture';
 import { isPanActive, isPinching, pinchClaims } from './pinch-input';
 
@@ -65,23 +67,6 @@ export function closeMenu(via: 'button' | 'debug-key'): void {
  */
 export function closeOpenMenu(): void {
   active?.closeAny();
-}
-
-const openedListeners = new Set<() => void>();
-
-/**
- * Calls `listener` just before a menu opens, in either mode (the log line `menu opened` comes after). The Issues panel
- * uses it to close itself: a menu and the panel are never open together. Returns the unsubscribe function.
- */
-export function onMenuOpening(listener: () => void): () => void {
-  openedListeners.add(listener);
-  return () => {
-    openedListeners.delete(listener);
-  };
-}
-
-function notifyMenuOpening(): void {
-  for (const listener of openedListeners) listener();
 }
 
 /** The hand that holds the PALM menu open, or null when the menu is closed or pinned (the pinned menu belongs to no hand). */
@@ -142,6 +127,8 @@ export class PalmMenuSystem extends createSystem({}) {
     this.cleanupFuncs.push(() => {
       if (active === this) active = null;
     });
+    // The menu, the View panel and the Issues panel are never open together (src/systems/panel-arbiter.ts).
+    this.cleanupFuncs.push(registerPanel('menu', { isOpen: () => context?.panel.isOpen ?? false, close: () => this.closeAny() }));
   }
 
   suspend(): void {
@@ -162,11 +149,12 @@ export class PalmMenuSystem extends createSystem({}) {
     this.gate.reset();
   }
 
-  update(): void {
+  update(delta: number): void {
     const ctx = context;
     if (!ctx) return;
     const world = this.world;
     const xr = world.renderer.xr;
+    reconcilePanels();
 
     if (!xr.isPresenting || this.suspended) {
       // No session (or a suspended one): no hand is up. Close the menu if it was open.
@@ -192,9 +180,9 @@ export class PalmMenuSystem extends createSystem({}) {
     // closing it never drops the piece (the grab does not depend on the menu); a closed menu stays closed
     // while a piece or a gesture is active.
     if (this.pinned) {
-      // The pinned menu does not follow a hand and does not close with a palm; it is only dimmed while a piece is held.
+      // The pinned menu does not follow a hand and does not close with a palm; it follows the gaze (src/logic/menu-follow.ts) and is dimmed while a piece is held.
       ctx.panel.setOpacity(menuOpacity(pieceHeld));
-      ctx.panel.update(this.handPosition, world.player.head);
+      ctx.panel.update(this.handPosition, world.player.head, delta, getButtonColumn(), getButtonColumnTieSign());
       return;
     }
     const blocked = this.owner === null && (pieceHeld || gestureActive);
@@ -221,7 +209,7 @@ export class PalmMenuSystem extends createSystem({}) {
   private setOwner(ctx: { panel: PalmMenuPanel; store: Store }, next: PalmHand | null, via: MenuCloseVia): void {
     this.owner = next;
     if (next) {
-      notifyMenuOpening();
+      panelOpening('menu');
       ctx.panel.open();
       slog(`menu opened hand=${next} mode=palm`);
       ctx.store.dispatch(markMenuOpened()); // idempotent: only the first opening changes the state
@@ -239,13 +227,13 @@ export class PalmMenuSystem extends createSystem({}) {
       slog('menu pinned unavailable reason=no-session');
       return;
     }
-    notifyMenuOpening();
+    panelOpening('menu');
     if (this.owner !== null) this.setOwner(ctx, null, 'button');
     // The palm detectors start from "closed": a palm that is still up must not open a second menu behind this one.
     resetPalmDetector(this.left);
     resetPalmDetector(this.right);
     this.pinned = true;
-    ctx.panel.openPinned(this.world.player.head);
+    ctx.panel.openPinned(this.world.player.head, getButtonColumn(), getButtonColumnTieSign());
     slog(`menu opened hand=${hand ?? 'none'} mode=pinned`);
     ctx.store.dispatch(markMenuOpened());
   }
