@@ -37,3 +37,4 @@
 - [UI polish dark glass](ui-polish-dark-glass.md) — theme tokens, restyle-only rule, border+padding layout trap, HC border, menu bar page indicator, measured calls
 - [Walk by rowing with both fists](walk-row.md) — on from the first viewpoint entry (no Walk button); fist thresholds, IWER fist pose, view-state decision, PC drive recipe
 - [My room in the button column](room-column-button.md) — slot shared via button-column.ts (now the 4th floor, above View); room view keeps the head pair; 6 cm room buttons
+- [Back to home](back-to-home.md) — menu header control that only ends the session; header split, IWER recipe, pinch calibrations

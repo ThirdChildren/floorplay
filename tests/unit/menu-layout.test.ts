@@ -23,6 +23,8 @@ import {
   PAGE_SIZE,
   PANEL_CENTER,
   SECTION_GAP,
+  HOME_SLOT,
+  HOME_WIDTH,
   TAB_WIDTH,
   TITLE_OFFSET,
   TITLE_PANEL_HEIGHT,
@@ -102,7 +104,8 @@ function layout(): {
   const tabs: { dx: number; dy: number }[] = [];
   const tabGap = num('menu-tab-row', 'gap');
   const tabTotal = MENU_TABS.reduce((a, t) => a + num(`menu-tab-${t}`, 'width'), 0) + tabGap * (MENU_TABS.length - 1);
-  let tabLeft = -tabTotal / 2;
+  // The tab row is the left part of the header (the row starts at the left edge of the panel); its tabs are centred in it.
+  let tabLeft = -rootWidth / 2 + (num('menu-tab-row', 'width') - tabTotal) / 2;
   for (const t of MENU_TABS) {
     const w = num(`menu-tab-${t}`, 'width');
     const h = num(`menu-tab-${t}`, 'height');
@@ -124,6 +127,18 @@ describe('the single menu panel (palm-menu.uikitml)', () => {
 
   it('stacks header, grid and bar with no space left over or missing', () => {
     expect(layout().height).toBeCloseTo(MENU_PANEL.height, 9);
+  });
+
+  it('draws "Back to home" at the right end of the header, where its pick rectangle is', () => {
+    expect(num('menu-btn-home', 'width')).toBe(HOME_WIDTH);
+    expect(num('menu-btn-home', 'height')).toBe(HEADER_HEIGHT);
+    expect(num('menu-header', 'gap')).toBe(BAR_GAP);
+    expect(num('menu-header', 'width')).toBe(MENU_PANEL.width);
+    // header row: left part (title or tab row) + gap + home control = the width of the menu
+    expect(num('palm-menu-title-box', 'width') + BAR_GAP + HOME_WIDTH).toBeCloseTo(MENU_PANEL.width, 9);
+    const dx = (-MENU_PANEL.width / 2 + num('palm-menu-title-box', 'width') + BAR_GAP + HOME_WIDTH / 2) / 100;
+    expect(dx).toBeCloseTo(HOME_SLOT.dx, 9);
+    expect(PANEL_CENTER.dy + (MENU_PANEL.height / 200 - HEADER_HEIGHT / 200)).toBeCloseTo(HOME_SLOT.dy, 9);
   });
 
   it('draws the header (title and tab row) like the logic says', () => {

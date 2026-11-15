@@ -1,6 +1,6 @@
 // Palm menu panel (`ui:palm-menu`): ONE UIKit panel for the whole menu (header, six item cards in a 2 x 3 grid and the
 // bar of four buttons, public/ui/palm-menu.uikitml), created when the menu opens and disposed when it closes. The
-// header is the tab row (two tabs or more) or the title (one tab). A page or tab change only rewrites the texts of
+// header is the tab row (two tabs or more) or the title (one tab) on the left and the "Back to home" control on the right. A page or tab change only rewrites the texts of
 // the item cards and the look of the tabs in place (no panel is created or destroyed): that is what keeps the cost
 // of the menu low (M2 rerun 2, W1). It floats MENU_LIFT above the hand, never farther than MENU_FRAME_MAX_DISTANCE
 // from the head, and turns toward the head. The text comes from src/ui/strings.ts and is at least 2.4 cm (D37).
@@ -332,6 +332,7 @@ export class PalmMenuPanel {
         this.root = doc?.getElementById<UIKit.Container>(ROOT_ELEMENT) ?? null;
         this.root?.setProperties({ depthTest: false, renderOrder: MENU_RENDER_ORDER, opacity: this.opacity });
         title.setProperties({ text: this.title });
+        doc?.getElementById<UIKit.Text>('menu-btn-home-label')?.setProperties({ text: strings.menu.home });
         this.fillButtons(doc);
         this.slotElements = [];
         for (let i = 0; i < SLOT_COUNT; i += 1) {

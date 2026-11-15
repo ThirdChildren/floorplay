@@ -17,6 +17,9 @@ import {
   MENU_WIDTH,
   PAGE_INDICATOR_WIDTH,
   SECTION_GAP,
+  HEADER_LEFT_WIDTH,
+  HOME_SLOT,
+  HOME_WIDTH,
   TAB_WIDTH,
   TITLE_OFFSET,
   barButtons,
@@ -214,22 +217,22 @@ describe('the pick rectangles of the tabs', () => {
     expect(tabSlots([])).toEqual([]);
   });
 
-  it('is centred on the menu and as wide as the labels need, for every combination', () => {
+  it('is centred on the left part of the header and as wide as the labels need, for every combination', () => {
     for (const tabs of sets) {
       const slots = tabSlots(tabs);
       const left = slots[0].dx - slots[0].halfWidth;
       const right = slots[slots.length - 1].dx + slots[slots.length - 1].halfWidth;
-      expect(left + right, tabs.join('+')).toBeCloseTo(0, 9);
+      expect(left + right, tabs.join('+')).toBeCloseTo(TITLE_OFFSET.dx * 2, 9);
       const total = tabs.reduce((sum, tab) => sum + TAB_WIDTH[tab], 0) + BAR_GAP * (tabs.length - 1);
       expect((right - left) * 100).toBeCloseTo(total, 9);
       for (const slot of slots) expect(slot.halfWidth * 200).toBeCloseTo(TAB_WIDTH[slot.tab], 9);
     }
   });
 
-  it('puts a single tab in the middle', () => {
+  it('puts a single tab in the middle of the left part of the header', () => {
     for (const tab of MENU_TABS) {
       const [slot] = tabSlots([tab]);
-      expect(slot.dx).toBeCloseTo(0, 12);
+      expect(slot.dx).toBeCloseTo(TITLE_OFFSET.dx, 12);
       expect(slot.halfWidth * 200).toBeCloseTo(TAB_WIDTH[tab], 9);
     }
   });
@@ -255,10 +258,12 @@ describe('the pick rectangles of the tabs', () => {
     }
   });
 
-  it('has both tabs fill the width of the menu exactly', () => {
+  it('has both tabs fill the left part of the header exactly, and leaves the right end to "Back to home"', () => {
     const slots = tabSlots([...MENU_TABS]);
     expect(slots[0].dx - slots[0].halfWidth).toBeCloseTo(-MENU_EXTENT.halfWidth, 9);
-    expect(slots[1].dx + slots[1].halfWidth).toBeCloseTo(MENU_EXTENT.halfWidth, 9);
+    expect(slots[1].dx + slots[1].halfWidth).toBeCloseTo(-MENU_EXTENT.halfWidth + HEADER_LEFT_WIDTH / 100, 9);
+    expect(HOME_SLOT.dx - HOME_SLOT.halfWidth - (slots[1].dx + slots[1].halfWidth)).toBeCloseTo(BAR_GAP / 100, 9);
+    expect(HOME_SLOT.dx + HOME_SLOT.halfWidth).toBeCloseTo(MENU_EXTENT.halfWidth, 9);
   });
 
   it('has only finite numbers', () => {
@@ -282,7 +287,7 @@ describe('the pick rectangles of the tabs', () => {
       // justify-content: center on the row; the tabs that are not shown take no room (display: none).
       const widths = tabs.map(widthOf);
       const total = widths.reduce((a, b) => a + b, 0) + gap * (widths.length - 1);
-      let left = -total / 2;
+      let left = -total / 2 + TITLE_OFFSET.dx * 100;
       const slots = tabSlots(tabs);
       widths.forEach((width, i) => {
         expect((left + width / 2) / 100, tabs.join('+')).toBeCloseTo(slots[i].dx, 9);
