@@ -1,6 +1,6 @@
 ---
 name: walk-row
-description: Walking inside the tabletop model by rowing with both fists (branch claude/dig-walk; replaced the dig gesture): design, thresholds, IWER fist-pose recipe, traps
+description: Walking at real scale by rowing with both fists, on from the first viewpoint entry (branch claude/dig-walk): design, thresholds, IWER fist-pose recipe, traps
 metadata:
   type: project
 ---
@@ -13,3 +13,7 @@ metadata:
 - Scratch runtime (port 8777) recipe: rsync project to scratchpad copy excluding node_modules/.iwsdk/.git/.claude/.mcp.json, node_modules as per-entry symlinks but NOT `.vite`/`.vite-temp`, `port:` changed in the copy's vite.config.ts, `dev up --ai-mode agent --headless --allow-browser-automation --workspace <copy>`, `dev down --workspace <copy>` at the end (user's 8081 Quest server untouched).
 - Pinch the fixed buttons in IWER: aim 7 cm above the target (closed pinch point sits lower). Editing src reloads the page and ends the XR session.
 - Trap: exterior walls are 0.25 m thick, so a body of 0.22 m stops at 0.345 from the wall axis. Smoothing (60 ms) keeps a hand "stroking" 2-3 frames after it stops. `RoomNoticePanel` takes a stable id: the walk hint is `ui:walk-hint`.
+- UPDATE (Walk inside button removed): walking is armed by EVERY real-scale entry. `viewpoint.ts` `placeAt` calls `beginWalk(root, head, spot, eye, showHint)`; viewpoint entry uses the viewpoint's own eye height (1.2 in all houses), a restored `walk` view uses `WALK_EYE_HEIGHT` = `DEFAULT_EYE_HEIGHT` = 1.2 (was 1.6). `WalkReference.eye` is required. Store view stays `viewpoint` until the body really moved (`walked` flag in systems/walk.ts), then `walk`; `flushToStore` is a no-op without it (session end must not rewrite a viewpoint). `viewpointRoot` in src is unused now (kept as the tested reference formula in walk.test.ts).
+- Column is Menu, Issues, View + My room slot (4 floors). The top floor now reaches ~45 deg (seated 1.2-1.6 m); the old 1.9 m head case was dropped from room-column.test.ts (level gaze at 1.9 m is already 56 deg for Menu).
+- The markers exist only on the tabletop (hidden at real scale, `enter` refuses when real scale), so "jump between viewpoints" means Tabletop first; not changed.
+- PC drive recipe: marker world = root.pos + 0.05*(house.pos + marker.local) from `ecs query` (A, default table: -0.13, 1.4375, -0.465); right hand `xr set-transform` to that + (0, 0.0245, 0.012), `xr set-select-value` 1 then 0 -> `walk started`. `browser run` scripts must live INSIDE the workspace copy. `dev-params.local.txt` is read from the project root; `reset=1` in it wipes the saved view on each reload (drop it to test restore).
