@@ -14,7 +14,7 @@
 //
 // It opens with a pinch of one hand on an "Issues" button (src/systems/menu-button.ts calls `openIssuePanel`/`closeIssuePanel`)
 // and never together with the menu: opening the panel closes the menu that is open (palm or pinned) and a menu that opens
-// closes the panel (`onMenuOpening`, `issues panel closed via=menu`). It closes with `Close`, with the button again, when
+// closes the panel (the panel arbiter, `issues panel closed via=menu`). It closes with `Close`, with the button again, when
 // the session is suspended or ends (`suspendIssuePanel`, called by the life cycle, D30) and, in the tasks that follow, when
 // a report is sent (T4.7). The panel is created and disposed ONLY here (always with `disposePanelEntity`): a change of screen
 // rewrites it in place, so the async trap of `PanelUISystem` stays confined to opening and closing.
@@ -130,7 +130,8 @@ import type { Role } from '../logic/params';
 import { IssuePanel } from '../ui/issue-panel';
 import { MenuAnchor } from '../ui/menu-anchor';
 import { strings } from '../ui/strings';
-import { closeOpenMenu, onMenuOpening } from './palm-menu';
+import { getButtonColumn, getButtonColumnTieSign } from './button-column';
+import { panelOpening, reconcilePanels, registerPanel } from './panel-arbiter';
 import { panelFontSupports } from '../ui/fonts';
 import { onPinchStart, pinchClaims, pinchPoint, type Hand } from './pinch-input';
 import { runAgentStaging } from './furniture';
@@ -333,6 +334,8 @@ export class IssuePanelSystem extends createSystem({}) {
   private anchorsFor: IssueScreen | null = null;
   private anchorsRole: Role | null = null;
   private anchorsFormRev = -1;
+  /** The pose of the panel the anchors were put for (`IssuePanel.poseVersion`): they are put again when the panel glides. */
+  private anchorsPose = -1;
 
   init(): void {
     active = this;
@@ -342,8 +345,10 @@ export class IssuePanelSystem extends createSystem({}) {
       if (context?.panel.isOpen) context.panel.close();
     });
     this.cleanupFuncs.push(onPinchStart((hand) => this.onPinch(hand)));
-    // A menu that opens (the palm, a button, the development key) takes the place of the panel.
-    this.cleanupFuncs.push(onMenuOpening(() => this.close('menu')));
+    // A menu or the View panel that opens takes the place of this panel, and the other way round (src/systems/panel-arbiter.ts).
+    this.cleanupFuncs.push(
+      registerPanel('issues', { isOpen: () => context?.panel.isOpen ?? false, close: (by) => this.close(by === 'menu' ? 'menu' : 'panel') }),
+    );
     // The role (and the issues, for the count of the button) live in the store: the panel follows it, whoever writes there.
     const store = context?.store;
     if (store) this.cleanupFuncs.push(store.subscribe((state) => this.onState(state)));
@@ -400,12 +405,12 @@ export class IssuePanelSystem extends createSystem({}) {
       slog('issues panel unavailable reason=real-scale');
       return;
     }
-    // One panel at a time: the menu that is open (palm or pinned) closes first.
-    closeOpenMenu();
+    // One panel at a time: the menu (palm or pinned) and the View panel that are open close first, in this frame.
+    panelOpening('issues');
     ctx.navigator.reset();
     const state = ctx.store.get();
     ctx.panel.setHome({ role: state.role, issueCount: issueCount(state.issues), staging: hasStaging(ctx.house) });
-    ctx.panel.open(this.world.player.head, HOME_SCREEN);
+    ctx.panel.open(this.world.player.head, HOME_SCREEN, getButtonColumn(), getButtonColumnTieSign());
     slog(formatPanelOpened(hand));
     slog(formatScreenLine(HOME_SCREEN));
   }
@@ -657,9 +662,11 @@ export class IssuePanelSystem extends createSystem({}) {
     ctx.panel.setForm(null);
   }
 
-  update(): void {
+  update(delta: number): void {
     const ctx = context;
     if (!ctx || !ctx.panel.isOpen) return;
+    reconcilePanels();
+    if (!ctx.panel.isOpen) return;
     if (!this.world.renderer.xr.isPresenting || this.suspended) {
       this.close('suspend');
       return;
@@ -670,13 +677,18 @@ export class IssuePanelSystem extends createSystem({}) {
       this.close('view');
       return;
     }
-    ctx.panel.update(this.world.player.head);
+    ctx.panel.update(this.world.player.head, delta, getButtonColumn(), getButtonColumnTieSign());
     if (ctx.panel.hasFrame && this.anchorsStale(ctx)) this.placeAnchors(ctx);
   }
 
   /** The anchors were made for another screen, role or form: they are placed again. */
   private anchorsStale(ctx: IssuePanelContext): boolean {
-    return this.anchorsFor !== ctx.navigator.screen || this.anchorsRole !== ctx.store.get().role || this.anchorsFormRev !== ctx.formRev;
+    return (
+      this.anchorsFor !== ctx.navigator.screen ||
+      this.anchorsRole !== ctx.store.get().role ||
+      this.anchorsFormRev !== ctx.formRev ||
+      this.anchorsPose !== ctx.panel.poseVersion
+    );
   }
 
   /** The controls of the current screen with their places: the form builds its own, the other screens use the fixed slots. */
@@ -723,6 +735,7 @@ export class IssuePanelSystem extends createSystem({}) {
     this.anchorsFor = screen;
     this.anchorsRole = role;
     this.anchorsFormRev = ctx.formRev;
+    this.anchorsPose = ctx.panel.poseVersion;
   }
 
   private disposeAnchors(): void {
@@ -732,6 +745,7 @@ export class IssuePanelSystem extends createSystem({}) {
     this.anchorsFor = null;
     this.anchorsRole = null;
     this.anchorsFormRev = -1;
+    this.anchorsPose = -1;
   }
 
   private onPinch(hand: Hand): void {

@@ -35,6 +35,7 @@ import {
   ITEM_SIZE_MARGIN,
   ITEM_SLOTS,
   barButtons,
+  clampPage,
   formatPageLine,
   createMenuPick,
   formatTabLine,
@@ -307,6 +308,7 @@ export class MenuItemsSystem extends createSystem({}) {
         ),
       })),
     );
+    menu.setPage(clampPage(this.page, pieces.length), pageCount(pieces.length));
     this.rebuildSlots();
     if (log) {
       slog(formatPageLine(this.page, pieces.length, items.map((item) => item.id), this.tab));

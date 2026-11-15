@@ -213,9 +213,29 @@ export function applyCatalogSizes(items: readonly CatalogItem[], overrides: Size
   });
 }
 
-/** The scale of a glTF model drawn at the catalog size to show it at the item size (1,1,1 when nothing changed). */
-export function modelScale(item: Pick<CatalogItem, 'size' | 'defaultSize'>): [number, number, number] {
-  const base = item.defaultSize;
+/**
+ * The scale of a glTF model to show it at the item size, in the AXES OF THE MODEL: x = width, y = HEIGHT (up), z = depth. The sizes
+ * of the catalog are [width, depth, height], so the depth ratio goes to z and the height ratio to y (never straight to x, y, z).
+ * `natural` is the size of the model as drawn, [width, depth, height] in metres: the catalog default when omitted, the measured
+ * bounding box of the glTF when the app knows it. A side with no extent keeps the scale 1. 1,1,1 when nothing changed.
+ */
+export function modelScale(
+  item: Pick<CatalogItem, 'size' | 'defaultSize'>,
+  natural?: readonly [number, number, number],
+): [number, number, number] {
+  const base = natural ?? item.defaultSize;
   if (!base) return [1, 1, 1];
-  return [item.size[0] / base[0], item.size[1] / base[1], item.size[2] / base[2]];
+  const ratio = (size: number, from: number): number => (from > 1e-6 && Number.isFinite(from) ? size / from : 1);
+  return [ratio(item.size[0], base[0]), ratio(item.size[2], base[2]), ratio(item.size[1], base[1])];
+}
+
+/**
+ * The size [width, depth, height] a model of natural size `natural` takes once scaled by `scale` (axes of the model, see
+ * `modelScale`). It is what the headset draws: tests compare it with the size asked for.
+ */
+export function scaledModelSize(
+  natural: readonly [number, number, number],
+  scale: readonly [number, number, number],
+): [number, number, number] {
+  return [natural[0] * scale[0], natural[1] * scale[2], natural[2] * scale[1]];
 }

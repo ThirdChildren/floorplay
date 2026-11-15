@@ -9,8 +9,9 @@
 // follows `framePosition` and `frameOrientation`, the bottom centre of the menu.
 //
 // Modes (D18, D32): `palm` is anchored above the hand and follows it; `pinned` (one-hand use, task T3.3a) is the same
-// panel placed ONCE when it opens, 0.55 m in front of the head and 0.20 m below the eyes (src/logic/menu-anchor.ts),
-// upright and facing the user, and then fixed in space. The mode only changes where `update` gets the anchor.
+// panel placed in front of the head (src/logic/menu-anchor.ts), upright and facing the user. It rests where it is while the gaze stays
+// near it and glides to the gaze when the gaze leaves (a tag-along panel), and it always keeps clear of the column of fixed
+// buttons beside the model (src/logic/menu-follow.ts). The mode only changes where `update` gets the anchor.
 
 import {
   PanelDocument,
@@ -38,7 +39,8 @@ import {
   type MenuTabId,
   type PanelExtent,
 } from '../logic/menu';
-import { panelAnchorPitchRad, pinnedConeAngleDeg, pinnedPanelAnchor, pitchOfForward, yawOfForward } from '../logic/menu-anchor';
+import { panelAnchorPitchRad, pinnedConeAngleDeg, pitchOfForward, yawOfForward } from '../logic/menu-anchor';
+import type { ButtonColumn } from '../logic/menu-follow';
 import {
   MENU_FRAME_MAX_DISTANCE,
   MENU_FRAME_MAX_DISTANCE_LARGE,
@@ -53,6 +55,7 @@ import { fitPanelToCone, panelConeAngleDeg, type ConeFit } from '../logic/view-f
 import { slog } from '../log';
 import { swarn } from '../log';
 import { applyPanelLook } from './panel-theme';
+import { PinnedFollower } from './pinned-follow';
 import { BUTTON_ICONS } from './menu-icons';
 import { disposePanelEntity } from './panel-lifecycle';
 import { strings } from './strings';
@@ -69,8 +72,8 @@ const ROOT_ELEMENT = 'palm-menu-root';
 const MENU_RENDER_ORDER = 1000;
 /** Icons are drawn just above the panel. */
 const ICON_RENDER_ORDER = 1001;
-/** Icon size in UIKit units; at most the 1.4 cm slot of the layout, so icon (1.4) + gap (0.6) + label (2.64) always fit the 5.4 cm inside a bar button (UI fix 3: they overlapped). */
-const ICON_SIZE: Readonly<Record<ButtonId, number>> = { undo: 1.4, prev: 1.2, next: 1.2, recenter: 1.4 };
+/** Icon size in UIKit units; at most the slot of the layout. `Undo` and `Recenter` stack a 1.4 cm icon, a 0.6 gap and the label (2.64) in the 5.8 cm inside a bar button (UI fix 3: they overlapped); `Back` and `Next` are a 2.6 cm arrow and nothing else. */
+const ICON_SIZE: Readonly<Record<ButtonId, number>> = { undo: 1.4, prev: 2.6, next: 2.6, recenter: 1.4 };
 const BUTTON_LABELS: Readonly<Record<ButtonId, string>> = {
   undo: strings.menu.undo,
   prev: strings.menu.previous,
@@ -106,6 +109,11 @@ interface UiDocument {
   getElementById: <T>(id: string) => T | null;
 }
 
+/** What the code needs from an icon to change its colour. */
+interface Dimmable {
+  setProperties: (properties: Record<string, unknown>) => void;
+}
+
 interface SlotElements {
   card: UIKit.Container | null;
   name: UIKit.Text | null;
@@ -135,16 +143,25 @@ export class PalmMenuPanel {
   private modeValue: PalmMenuMode = 'palm';
   /** The fourth button of the bar says "Tabletop" instead of "Recenter" at real scale (T3.12). */
   private realScale = false;
-  /** The pinned placement, computed in `openPinned` and then fixed: anchor (bottom centre) and yaw of the panel. */
+  /** The pinned placement: anchor (bottom centre) and yaw of the panel; computed in `openPinned` and moved by the follow (src/logic/menu-follow.ts). */
   private readonly pinnedAnchor: Vec3Like = { x: 0, y: 0, z: 0 };
   private pinnedYaw = 0;
   private pinnedPlaced = false;
+  private readonly follower = new PinnedFollower();
   private readonly centerOffset = new Vector3();
   private slotElements: SlotElements[] = [];
   private items: readonly MenuItemContent[] = [];
   private titleBox: UIKit.Container | null = null;
   private tabRow: UIKit.Container | null = null;
   private tabElements = new Map<MenuTabId, TabElements>();
+  /** The page indicator and the two arrows (`Back` and `Next` are drawn faint when there is no page in that direction). */
+  private pageLabel: UIKit.Text | null = null;
+  private prevButton: UIKit.Container | null = null;
+  private nextButton: UIKit.Container | null = null;
+  /** The arrows drawn on `Back` and `Next`, to be dimmed when there is no page that way. */
+  private arrowIcons: { prev?: Dimmable; next?: Dimmable } = {};
+  private pageNumber = 0;
+  private pageTotal = 1;
   /** The tabs to draw and the active one; fewer than two tabs means the header is the title. */
   private visibleTabs: readonly MenuTabId[] = [];
   private activeTab: MenuTabId = 'items';
@@ -184,17 +201,22 @@ export class PalmMenuPanel {
    * Creates the panel pinned in space (task T3.3a): the anchor is computed NOW from the head (position, yaw of its
    * gaze, and its pitch within a limit, T4.R2) and never changes while the menu is open. The panel stays upright. Does nothing when it is already open.
    */
-  openPinned(head: Object3D): void {
+  openPinned(head: Object3D, column: Readonly<ButtonColumn> | null = null, tieSign: 1 | -1 = 1): void {
     if (this.entity) return;
     this.modeValue = 'pinned';
     head.getWorldPosition(this.headPosition);
     head.getWorldQuaternion(this.headQuaternion);
     this.headForward.set(0, 0, -1).applyQuaternion(this.headQuaternion);
-    this.pinnedYaw = yawOfForward(this.headForward.x, this.headForward.z);
     const pitch = pitchOfForward(this.headForward.x, this.headForward.y, this.headForward.z);
     this.setScale(panelScale());
-    pinnedPanelAnchor(this.headPosition, this.pinnedYaw, pitch, this.extentValue, isLargeText(), this.pinnedAnchor);
+    this.follower.open(head, this.extentValue, this.menuScale > 1, column, tieSign);
+    this.pinnedYaw = this.follower.heading;
+    this.pinnedAnchor.x = this.follower.anchor.x;
+    this.pinnedAnchor.y = this.follower.anchor.y;
+    this.pinnedAnchor.z = this.follower.anchor.z;
     slog(`menu pinned pitchDeg=${degrees1(pitch)} anchorPitchDeg=${degrees1(panelAnchorPitchRad(pitch))}`);
+    const shift = Math.abs(this.follower.shift);
+    if (shift * RAD_TO_DEG > 0.05) slog(`menu pinned beside buttons shiftDeg=${degrees1(shift)}`);
     this.pinnedPlaced = false;
     this.create();
   }
@@ -246,6 +268,16 @@ export class PalmMenuPanel {
     if (this.textApplied) this.writeItems();
   }
 
+  /**
+   * The page indicator and the arrows: `page` is zero-based, `count` the number of pages. "1/3" is shown when there is more than one page;
+   * `Back` is faint on the first page and `Next` on the last. Written in place, kept until the layout is loaded.
+   */
+  setPage(page: number, count: number): void {
+    this.pageNumber = page;
+    this.pageTotal = Math.max(1, count);
+    if (this.textApplied) this.writePage();
+  }
+
   /** The fourth button of the bar: "Recenter" on the table-top model, "Tabletop" at real scale (T3.12). Written in place. */
   setRealScale(realScale: boolean): void {
     if (realScale === this.realScale) return;
@@ -277,10 +309,16 @@ export class PalmMenuPanel {
     this.tabRow = null;
     this.visibleTabs = [];
     this.activeTab = 'items';
+    this.pageLabel = null;
+    this.arrowIcons = {};
+    this.prevButton = null;
+    this.nextButton = null;
+    this.pageNumber = 0;
+    this.pageTotal = 1;
   }
 
   /** Once per frame while open: fills the text when the document is ready, then follows the hand (`pinned`: stays put). */
-  update(handPosition: Vector3, head: Object3D): void {
+  update(handPosition: Vector3, head: Object3D, dt = 0, column: Readonly<ButtonColumn> | null = null, tieSign: 1 | -1 = 1): void {
     const entity = this.entity;
     const object = entity?.object3D;
     if (!entity || !object) return;
@@ -313,9 +351,13 @@ export class PalmMenuPanel {
           });
           this.tabElements.get(tab)?.label?.setProperties({ text: strings.menu.tabs[tab] });
         }
+        this.pageLabel = doc?.getElementById<UIKit.Text>('menu-page-label') ?? null;
+        this.prevButton = doc?.getElementById<UIKit.Container>('menu-btn-prev') ?? null;
+        this.nextButton = doc?.getElementById<UIKit.Container>('menu-btn-next') ?? null;
         this.textApplied = true;
         this.writeTabs();
         this.writeItems();
+        this.writePage();
       }
     }
     if (!this.textApplied) return;
@@ -323,7 +365,7 @@ export class PalmMenuPanel {
     head.getWorldPosition(this.headPosition);
     head.getWorldQuaternion(this.headQuaternion);
     this.headForward.set(0, 0, -1).applyQuaternion(this.headQuaternion);
-    if (this.modeValue === 'pinned') this.placePinned(object);
+    if (this.modeValue === 'pinned') this.placePinned(object, head, dt, column, tieSign);
     else this.followHand(object, handPosition);
     if (!this.fitLogged) {
       this.fitLogged = true;
@@ -357,9 +399,20 @@ export class PalmMenuPanel {
     this.frameReady = true;
   }
 
-  /** `pinned`: placed once from the anchor computed at opening (upright, facing back toward the gaze), then left alone. */
-  private placePinned(object: Object3D): void {
-    if (this.pinnedPlaced) return;
+  /**
+   * `pinned`: placed from the anchor computed at opening, then moved by the follow (src/logic/menu-follow.ts): it rests while the gaze
+   * is near it, glides to the gaze when the gaze leaves, and stays clear of the column of fixed buttons (`column`, null when they are hidden).
+   */
+  private placePinned(object: Object3D, head: Object3D, dt: number, column: Readonly<ButtonColumn> | null, tieSign: 1 | -1): void {
+    const wasMoving = this.follower.moving;
+    const moved = this.pinnedPlaced && this.follower.step(head, this.extentValue, this.menuScale > 1, column, tieSign, dt);
+    if (this.pinnedPlaced && !moved) return;
+    if (moved && !wasMoving) slog('menu follow start');
+    if (moved && wasMoving && !this.follower.moving) slog(`menu follow end headingShiftDeg=${degrees1(this.follower.shift)}`);
+    this.pinnedYaw = this.follower.heading;
+    this.pinnedAnchor.x = this.follower.anchor.x;
+    this.pinnedAnchor.y = this.follower.anchor.y;
+    this.pinnedAnchor.z = this.follower.anchor.z;
     this.pinnedPlaced = true;
     // A panel faces +Z: turning it by the yaw of the gaze makes +Z point back at the user, and keeps it vertical.
     object.rotation.set(0, this.pinnedYaw, 0);
@@ -389,15 +442,15 @@ export class PalmMenuPanel {
       if (!slot) continue;
       try {
         const Icon = BUTTON_ICONS[button];
-        slot.add(
-          new Icon({
-            width: ICON_SIZE[button] * this.menuScale,
-            height: ICON_SIZE[button] * this.menuScale,
-            color: getUiColors().ink,
-            depthTest: false,
-            renderOrder: ICON_RENDER_ORDER,
-          }),
-        );
+        const icon = new Icon({
+          width: ICON_SIZE[button] * this.menuScale,
+          height: ICON_SIZE[button] * this.menuScale,
+          color: getUiColors().ink,
+          depthTest: false,
+          renderOrder: ICON_RENDER_ORDER,
+        });
+        slot.add(icon);
+        if (button === 'prev' || button === 'next') this.arrowIcons[button] = icon as unknown as Dimmable;
       } catch (error) {
         swarn(`menu icon ${button} unavailable: ${error instanceof Error ? error.message : String(error)}`);
       }
@@ -415,6 +468,27 @@ export class PalmMenuPanel {
       elements.tab?.setProperties({ display: visible ? 'flex' : 'none', backgroundColor: look.backgroundColor });
       elements.label?.setProperties({ color: look.color });
     }
+  }
+
+  /** Writes the page indicator and the faint look of the arrows that have nowhere to go. */
+  private writePage(): void {
+    this.pageLabel?.setProperties({ text: this.pageTotal > 1 ? strings.menu.page(this.pageNumber + 1, this.pageTotal) : '' });
+    this.writeArrow(this.prevButton, this.arrowIcons.prev, this.pageNumber <= 0);
+    this.writeArrow(this.nextButton, this.arrowIcons.next, this.pageNumber >= this.pageTotal - 1);
+  }
+
+  /**
+   * An arrow with no page that way is flat and dim (surface fill, quiet border, dim icon), never see-through: a translucent button
+   * showed the model through it and looked like a stain. The pinch still works and clamps at the first and the last page.
+   */
+  private writeArrow(button: UIKit.Container | null, icon: Dimmable | undefined, disabled: boolean): void {
+    const c = getUiColors();
+    const look = chipLook(false);
+    button?.setProperties({
+      backgroundColor: disabled ? c.surface : look.backgroundColor,
+      borderColor: disabled ? c.secondary : c.border,
+    });
+    icon?.setProperties({ color: disabled ? c.disabledInk : c.ink });
   }
 
   /** Writes `items` into the item cards; a card without an item is hidden. */

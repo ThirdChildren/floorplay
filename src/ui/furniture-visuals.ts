@@ -56,6 +56,8 @@ export class FurnitureVisuals {
   private readonly itemById = new Map<string, CatalogItem>();
   /** Catalog ids whose model loaded: only these are instantiated from the AssetManager. */
   private readonly modelReady = new Set<string>();
+  /** Measured size of each loaded model as drawn, [width, depth, height] in metres: the base of the scale of a resized piece. */
+  private readonly naturalSize = new Map<string, [number, number, number]>();
 
   constructor(items: readonly CatalogItem[]) {
     for (const item of items) this.itemById.set(item.id, item);
@@ -115,6 +117,7 @@ export class FurnitureVisuals {
   measureBody(group: Object3D): [number, number, number] | null {
     const body = (group.userData as Partial<PieceUserData>).body;
     if (!body) return null;
+    body.updateWorldMatrix(true, true);
     const size = new Box3().setFromObject(body).getSize(new Vector3());
     return [Math.round(size.x * 100), Math.round(size.z * 100), Math.round(size.y * 100)];
   }
@@ -170,7 +173,8 @@ export class FurnitureVisuals {
    */
   private scaled(item: CatalogItem, scene: Object3D): Object3D {
     if (!item.defaultSize) return scene;
-    const [sx, sy, sz] = modelScale(item);
+    // Scale from the MEASURED size of the model (not only from the catalog number), in the axes of the model: y is the height.
+    const [sx, sy, sz] = modelScale(item, this.naturalSize.get(item.id));
     const holder = new Group();
     holder.scale.set(sx, sy, sz);
     holder.add(scene);
@@ -201,6 +205,7 @@ export class FurnitureVisuals {
 
   private checkSize(item: CatalogItem, scene: Object3D): void {
     const size = new Box3().setFromObject(scene).getSize(new Vector3());
+    this.naturalSize.set(item.id, [size.x, size.z, size.y]);
     // The model is made at the size of the catalog file, whatever size the user chose for the item.
     const [w, d, h] = item.defaultSize ?? item.size;
     if (
@@ -241,15 +246,19 @@ export function frameGeometry(w: number, d: number, width = OUTLINE_WIDTH): Buff
 
 /**
  * Fallback block of a `w` x `d` x `h` piece as ONE geometry with vertex colours: the body box (origin on the
- * floor, centred on the footprint) and the dark front strip on the -z face, sticking out by half its depth so it
- * never z-fights with the box. Same sizes and colours as the former two-mesh block.
+ * floor, centred on the footprint) and the dark front strip on the -z face. The whole block fits the `w` x `d` x `h` box
+ * exactly: the strip takes the front STRIP_DEPTH of the depth and the body box starts half of it behind, so the strip's face
+ * is in front of the body (no z-fighting) and nothing sticks out of the footprint (the old strip added 1 cm of depth).
  */
 export function blockGeometry(w: number, d: number, h: number): BufferGeometry {
-  const body = new BoxGeometry(w, h, d);
-  body.translate(0, h / 2, 0);
+  const overlap = Math.min(STRIP_DEPTH / 2, d / 4);
+  const bodyDepth = d - overlap;
+  const body = new BoxGeometry(w, h, bodyDepth);
+  body.translate(0, h / 2, overlap / 2);
   const stripHeight = Math.max(h * 0.6, 0.005);
-  const strip = new BoxGeometry(w * 0.8, stripHeight, STRIP_DEPTH);
-  strip.translate(0, h / 2, -d / 2);
+  const stripDepth = Math.min(STRIP_DEPTH, d / 2);
+  const strip = new BoxGeometry(w * 0.8, stripHeight, stripDepth);
+  strip.translate(0, h / 2, -d / 2 + stripDepth / 2);
   const merged = mergeColoured([
     [body, new Color(palette.furniture)],
     [strip, new Color(palette.furnitureFront)],

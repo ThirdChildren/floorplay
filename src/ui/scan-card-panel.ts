@@ -25,8 +25,6 @@ const CLOSE_TEXT_ELEMENT = 'scan-card-close-text';
 const PANEL_RENDER_ORDER = 1000;
 /** Height of the centre of the panel above its anchor (bottom centre), metres at scale 1. */
 const PANEL_CENTER_RISE = CARD_HEIGHT / 200;
-/** A button that cannot be pressed (`Added`, `Mine is full`) is drawn faint. */
-const FAINT_OPACITY = 0.55;
 
 interface UiDocument {
   getElementById: <T>(id: string) => T | null;
@@ -169,14 +167,14 @@ export class ScanCardPanel {
     const main = buttonLook('primary');
     // The pressable button is the primary one (blue, white text); `Added` and `Mine is full` are only a word, faint.
     if (model.action === 'add') {
-      this.add?.setProperties({ backgroundColor: main.backgroundColor, borderColor: colors.border, opacity: 1 });
+      this.add?.setProperties({ backgroundColor: main.backgroundColor, borderColor: main.borderColor, opacity: 1 });
       this.addText?.setProperties({ color: main.color });
     } else {
-      this.add?.setProperties({ backgroundColor: colors.surface, borderColor: colors.border, opacity: FAINT_OPACITY });
-      this.addText?.setProperties({ color: colors.ink });
+      this.add?.setProperties({ backgroundColor: colors.surface, borderColor: colors.secondary, opacity: 1 });
+      this.addText?.setProperties({ color: colors.inkSoft });
     }
     const secondary = buttonLook('secondary');
-    this.close?.setProperties({ backgroundColor: secondary.backgroundColor, borderColor: colors.border });
+    this.close?.setProperties({ backgroundColor: secondary.backgroundColor, borderColor: secondary.borderColor });
     this.closeText?.setProperties({ color: secondary.color });
   }
 }

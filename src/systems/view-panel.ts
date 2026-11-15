@@ -4,7 +4,7 @@
 //
 // It opens with a pinch of one hand on a "View" button (src/systems/menu-button.ts calls `openViewPanel`/`closeViewPanel`) and never
 // together with the menu or the Issues panel: opening it closes the menu and the Issues panel that are open, and a menu that opens
-// closes it (`onMenuOpening`); an Issues panel that opens closes it on the next frame (`view panel closed via=panel`). It closes with
+// closes it, and so does an Issues panel that opens (`view panel closed via=menu|panel`, src/systems/panel-arbiter.ts). It closes with
 // `Close`, with the button again, at real scale, and when the session is suspended or ends (`suspendViewPanel`, called by the life
 // cycle, D30). The panel is created and disposed ONLY here (always with `disposePanelEntity`): a press rewrites the text in place.
 //
@@ -43,8 +43,8 @@ import { MenuAnchor } from '../ui/menu-anchor';
 import { panelFontSupports } from '../ui/fonts';
 import { strings } from '../ui/strings';
 import { ViewPanel } from '../ui/view-panel';
-import { closeIssuePanel, isIssuePanelOpen } from './issue-panel';
-import { closeOpenMenu, getMenuMode, onMenuOpening } from './palm-menu';
+import { getButtonColumn, getButtonColumnTieSign } from './button-column';
+import { panelOpening, reconcilePanels, registerPanel } from './panel-arbiter';
 import { onPinchStart, pinchClaims, pinchPoint, type Hand } from './pinch-input';
 import { isModelHidden, isViewTransitioning } from './view-mode';
 
@@ -119,6 +119,8 @@ export class ViewPanelSystem extends createSystem({}) {
   /** The pick rectangles of the controls, in the plane of the panel (made once the panel has a place). */
   private readonly pickSlots: Slot[] = [];
   private readonly anchors = new Map<ViewControlId, MenuAnchor>();
+  /** The pose of the panel the anchors were put for (`ViewPanel.poseVersion`). */
+  private anchorsPose = -1;
 
   init(): void {
     active = this;
@@ -128,8 +130,10 @@ export class ViewPanelSystem extends createSystem({}) {
       if (context?.panel.isOpen) context.panel.close();
     });
     this.cleanupFuncs.push(onPinchStart((hand) => this.onPinch(hand)));
-    // A menu that opens (the palm, a button, the development key) takes the place of the panel.
-    this.cleanupFuncs.push(onMenuOpening(() => this.close('menu')));
+    // A menu or the Issues panel that opens takes the place of this panel, and the other way round (src/systems/panel-arbiter.ts).
+    this.cleanupFuncs.push(
+      registerPanel('view', { isOpen: () => context?.panel.isOpen ?? false, close: (by) => this.close(by === 'menu' ? 'menu' : 'panel') }),
+    );
     const store = context?.store;
     if (store) this.cleanupFuncs.push(store.subscribe((state) => this.onState(state)));
   }
@@ -151,7 +155,7 @@ export class ViewPanelSystem extends createSystem({}) {
     ctx.panel.close();
     this.disposeAnchors();
     this.writeModel(ctx, state);
-    ctx.panel.open(this.world.player.head);
+    ctx.panel.open(this.world.player.head, getButtonColumn(), getButtonColumnTieSign());
     slog(`view panel rebuilt text=${state.prefs.largeText ? 'large' : 'normal'}`);
   }
 
@@ -195,11 +199,10 @@ export class ViewPanelSystem extends createSystem({}) {
       slog('view panel unavailable reason=real-scale');
       return;
     }
-    // One panel at a time: the menu and the Issues panel that are open close first.
-    closeOpenMenu();
-    closeIssuePanel('panel');
+    // One panel at a time: the menu and the Issues panel that are open close first, in this frame.
+    panelOpening('view');
     this.writeModel(ctx, ctx.store.get());
-    ctx.panel.open(this.world.player.head);
+    ctx.panel.open(this.world.player.head, getButtonColumn(), getButtonColumnTieSign());
     this.writeModel(ctx, ctx.store.get());
     slog(formatViewPanelOpened(hand));
   }
@@ -212,7 +215,7 @@ export class ViewPanelSystem extends createSystem({}) {
     slog(formatViewPanelClosed(via));
   }
 
-  update(): void {
+  update(delta: number): void {
     const ctx = context;
     if (!ctx || !ctx.panel.isOpen) return;
     if (!this.world.renderer.xr.isPresenting || this.suspended) {
@@ -225,12 +228,11 @@ export class ViewPanelSystem extends createSystem({}) {
       return;
     }
     // An Issues panel (or a menu) that opened takes the place of this one.
-    if (isIssuePanelOpen() || getMenuMode() !== null) {
-      this.close('panel');
-      return;
-    }
-    ctx.panel.update(this.world.player.head);
-    if (ctx.panel.hasFrame && this.anchors.size === 0) this.placeAnchors(ctx);
+    reconcilePanels();
+    if (!ctx.panel.isOpen) return;
+    ctx.panel.update(this.world.player.head, delta, getButtonColumn(), getButtonColumnTieSign());
+    // The controls are made once the panel has a place, and put again each time the panel glides to a new one.
+    if (ctx.panel.hasFrame && (this.anchors.size === 0 || this.anchorsPose !== ctx.panel.poseVersion)) this.placeAnchors(ctx);
   }
 
   /** Makes the anchors of the controls and puts them (and their pick slots) in the plane of the panel. */
@@ -240,8 +242,11 @@ export class ViewPanelSystem extends createSystem({}) {
     this.frameQuat.w = Math.cos(yaw / 2);
     this.pickSlots.length = 0;
     for (const base of layoutControlSlots(ctx.panel.layout)) {
-      const anchor = new MenuAnchor(this.world, viewControlStableId(base.id));
-      this.anchors.set(base.id, anchor);
+      let anchor = this.anchors.get(base.id);
+      if (!anchor) {
+        anchor = new MenuAnchor(this.world, viewControlStableId(base.id));
+        this.anchors.set(base.id, anchor);
+      }
       pinnedPanelPoint(ctx.panel.framePosition, yaw, base.dx, base.dy, this.spot);
       this.pickSlots.push({ id: base.id, x: this.spot.x, y: this.spot.y, z: this.spot.z, halfWidth: base.halfWidth, halfHeight: base.halfHeight });
       const object = anchor.object;
@@ -250,12 +255,14 @@ export class ViewPanelSystem extends createSystem({}) {
         object.rotation.set(0, yaw, 0);
       }
     }
+    this.anchorsPose = ctx.panel.poseVersion;
   }
 
   private disposeAnchors(): void {
     for (const anchor of this.anchors.values()) anchor.dispose();
     this.anchors.clear();
     this.pickSlots.length = 0;
+    this.anchorsPose = -1;
   }
 
   private onPinch(hand: Hand): void {

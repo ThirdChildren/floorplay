@@ -24,7 +24,8 @@ export const HOUSE_LIMITS = {
   walls: 150,
   /** Doors and windows together. */
   openings: 200,
-  viewpoints: 30,
+  /** Up to one default per room (30) plus the ones the file names. */
+  viewpoints: 60,
   fixtures: 200,
   /** Items over all staging presets. */
   stagingItems: 200,

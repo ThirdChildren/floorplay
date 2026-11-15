@@ -7,7 +7,8 @@
 import { PanelDocument, PanelUI, Quaternion, Vector3, type Entity, type Object3D, type UIKit, type World } from '@iwsdk/core';
 import { tagEntity } from '../components/tag-entity';
 import { stableId } from '../logic/ids';
-import { panelAnchorPitchRad, pinnedConeAngleDeg, pinnedPanelAnchor, pitchOfForward, yawOfForward } from '../logic/menu-anchor';
+import { panelAnchorPitchRad, pinnedConeAngleDeg, pitchOfForward, yawOfForward } from '../logic/menu-anchor';
+import type { ButtonColumn } from '../logic/menu-follow';
 import type { Vec3Like } from '../logic/palm';
 import {
   VIEW_ROWS,
@@ -23,6 +24,7 @@ import { slog } from '../log';
 import { panelFontSupports } from './fonts';
 import { applyPanelLook } from './panel-theme';
 import { disposePanelEntity } from './panel-lifecycle';
+import { PinnedFollower } from './pinned-follow';
 import { strings } from './strings';
 import { isLargeText } from './theme';
 
@@ -56,9 +58,14 @@ export class ViewPanel {
   private readonly headForward = new Vector3();
   private readonly headQuaternion = new Quaternion();
   private readonly centerOffset = new Vector3();
-  /** The pinned placement, computed in `open` and then fixed: anchor (bottom centre) and yaw of the panel. */
+  /** The pinned placement: anchor (bottom centre) and yaw of the panel; computed in `open` and moved by the follower (src/logic/menu-follow.ts). */
   private readonly anchor: Vec3Like = { x: 0, y: 0, z: 0 };
   private yaw = 0;
+  private readonly follower = new PinnedFollower();
+  /** Grows each time the panel is placed somewhere new (the controls follow it). */
+  get poseVersion(): number {
+    return this.follower.version;
+  }
   /** Bottom centre of the panel and its yaw: where the controls are (valid once `hasFrame`). */
   readonly framePosition = new Vector3();
 
@@ -85,16 +92,18 @@ export class ViewPanel {
   }
 
   /** Creates the panel pinned in front of `head` (hidden until its text is in). Does nothing when it is already open. */
-  open(head: Object3D): void {
+  open(head: Object3D, column: Readonly<ButtonColumn> | null = null, tieSign: 1 | -1 = 1): void {
     if (this.entity) return;
     head.getWorldPosition(this.headPosition);
     head.getWorldQuaternion(this.headQuaternion);
     this.headForward.set(0, 0, -1).applyQuaternion(this.headQuaternion);
-    this.yaw = yawOfForward(this.headForward.x, this.headForward.z);
     const pitch = pitchOfForward(this.headForward.x, this.headForward.y, this.headForward.z);
     this.panelLayout = viewLayout(isLargeText());
-    pinnedPanelAnchor(this.headPosition, this.yaw, pitch, layoutExtent(this.panelLayout), isLargeText(), this.anchor);
+    this.follower.open(head, layoutExtent(this.panelLayout), this.panelLayout.large, column, tieSign);
+    this.syncPose();
     slog(`view panel pitchDeg=${degrees1(pitch)} anchorPitchDeg=${degrees1(panelAnchorPitchRad(pitch))}`);
+    const shift = Math.abs(this.follower.shift);
+    if (shift * RAD_TO_DEG > 0.05) slog(`view panel beside buttons shiftDeg=${degrees1(shift)}`);
     const entity = this.world.createTransformEntity();
     tagEntity(entity, stableId.ui('view-panel'));
     entity.addComponent(PanelUI, { config: this.panelLayout.asset });
@@ -121,13 +130,30 @@ export class ViewPanel {
     if (this.applied) this.writeModel();
   }
 
-  /** Once per frame while open: fills the panel when its document is ready, then places it once. */
-  update(head: Object3D): void {
+  private syncPose(): void {
+    this.yaw = this.follower.heading;
+    this.anchor.x = this.follower.anchor.x;
+    this.anchor.y = this.follower.anchor.y;
+    this.anchor.z = this.follower.anchor.z;
+  }
+
+  /**
+   * Once per frame while open: fills the panel when its document is ready, places it, then lets it follow the gaze (rest inside the dead
+   * zone, glide outside it, keep clear of the column of fixed buttons: src/logic/menu-follow.ts).
+   */
+  update(head: Object3D, dt = 0, column: Readonly<ButtonColumn> | null = null, tieSign: 1 | -1 = 1): void {
     const entity = this.entity;
     const object = entity?.object3D;
     if (!entity || !object) return;
     if (!this.applied) this.tryApply(entity);
-    if (!this.applied || this.placed) return;
+    if (!this.applied) return;
+    if (this.placed) {
+      const wasMoving = this.follower.moving;
+      if (!this.follower.step(head, layoutExtent(this.panelLayout), this.panelLayout.large, column, tieSign, dt)) return;
+      if (!wasMoving) slog('view panel follow start');
+      else if (!this.follower.moving) slog(`view panel follow end headingShiftDeg=${degrees1(this.follower.shift)}`);
+      this.syncPose();
+    }
 
     this.placed = true;
     // A panel faces +Z: turning it by the yaw of the gaze makes +Z point back at the user, and keeps it vertical.
@@ -139,7 +165,7 @@ export class ViewPanel {
     object.position.add(this.centerOffset);
     object.updateMatrixWorld(true);
     object.visible = true;
-    this.logView(head);
+    if (!this.viewLogged) this.logView(head);
   }
 
   private logView(head: Object3D): void {

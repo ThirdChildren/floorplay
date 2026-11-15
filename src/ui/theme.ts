@@ -120,25 +120,56 @@ export function getPalette(): Palette {
  * applies these so the colour has ONE source (M5 adds the high-contrast set).
  */
 export const uiColors = {
-  /** Background of a panel. */
-  surface: '#ffffff',
+  /** Background of a panel, a title bar, a card: a deep blue-black that reads over passthrough and over the sky of the room. */
+  surface: '#141b2a',
   /** Text on a surface. */
-  ink: '#1a1a1a',
-  /** Border of a panel and of its buttons. */
-  border: '#1a1a1a',
-  /** Secondary text (a hint, a date) on a surface. */
-  inkSoft: '#3a3f47',
-  /** Background of the selected chip, row or tab, and the text on it. */
-  active: '#1a1a1a',
+  ink: '#f3f6fb',
+  /** Hairline border of a card, a chip and a button (`uiTokens.border.width`): a step lighter than the surface, never a heavy outline. */
+  border: '#6b7fa8',
+  /** Secondary text (a size, a hint, a date) on a surface. */
+  inkSoft: '#aab6ca',
+  /** Background of the selected chip, row or tab, and the text on it: a deep blue that stays apart from the accent of the main button. */
+  active: '#3772c2',
   activeInk: '#ffffff',
   /**
-   * The two kinds of button (UI fix 3): `primary` is the one main action of a panel or of the fixed buttons (the Menu button, `Close`), a
-   * strong blue with white text; `secondary` is every other button, chip or tab that is not selected: a pale blue-grey with the dark ink. A
-   * selected chip is `active` (dark). Cards that only show something stay on the `surface`.
+   * The two kinds of button: `primary` is the one main action of a panel or of the fixed buttons (the Menu button, `Close`): the accent, a
+   * light blue with a near-black text; `secondary` is every other button, chip or tab that is not selected: a card one step lighter than
+   * the surface. The accent is also the colour of a panel title. Cards that only show something stay on the `surface`.
    */
-  primary: '#1f4fd8',
-  primaryInk: '#ffffff',
-  secondary: '#e3e9f3',
+  primary: '#7cc0ff',
+  primaryInk: '#06101f',
+  secondary: '#26324a',
+  /** A control that cannot be used right now (the arrow with no page to go to): a flat dim grey-blue icon on the surface, not a see-through button. */
+  disabledInk: '#66738c',
+} as const;
+
+/**
+ * The rest of the visual language (the colours are `uiColors` above): radii, borders, spacing, type and states, in UIKit units (centimetres).
+ * The `public/ui/*.uikitml` files carry these numbers and tests/unit/ui-tokens.test.ts keeps them equal, so a panel cannot drift. The layout
+ * itself (the sizes of the boxes) is in src/logic/*: a restyle never moves a hit rectangle.
+ */
+export const uiTokens = {
+  radius: {
+    /** A card, a list row, a body: a rounded rectangle. */
+    card: 2.4,
+    /** The most a button is rounded: a control up to 6.2 cm tall is a pill, a round button when it is as wide as it is tall. */
+    pillMax: 3.1,
+  },
+  border: {
+    /** The hairline of every card and control. High contrast draws it `highContrastFactor` times as thick. */
+    width: 0.2,
+    highContrastFactor: 2,
+  },
+  /** Space between two controls or two cards. */
+  gap: 0.4,
+  type: {
+    /** Panel title, bold. */
+    title: 2.6,
+    /** Everything else, 2.4 cm (3.0 cm in large text). */
+    body: 2.4,
+  },
+  /** A control that cannot be used right now (the first page has no `Back`). */
+  disabledOpacity: 0.4,
 } as const;
 
 export interface UiColors {
@@ -151,6 +182,7 @@ export interface UiColors {
   readonly primary: string;
   readonly primaryInk: string;
   readonly secondary: string;
+  readonly disabledInk: string;
 }
 
 /**
@@ -167,6 +199,7 @@ export const highContrastUiColors: UiColors = {
   primary: '#33d6ff',
   primaryInk: '#000000',
   secondary: '#2b2b2b',
+  disabledInk: '#8c8c8c',
 };
 
 /** The colours of the flat UI panels now: `uiColors`, or `highContrastUiColors` while the contrast preference is on. */
@@ -183,10 +216,12 @@ export function chipLook(active: boolean): { readonly backgroundColor: string; r
 /** The look of a button: `primary` (the main action) or `secondary` (every other one). */
 export type ButtonKind = 'primary' | 'secondary';
 
-/** Background and text colour of a button of `kind` for the preference that is on. */
-export function buttonLook(kind: ButtonKind): { readonly backgroundColor: string; readonly color: string } {
+/** Background, border and text colour of a button of `kind` for the preference that is on (a primary button has no visible border in the normal theme). */
+export function buttonLook(kind: ButtonKind): { readonly backgroundColor: string; readonly borderColor: string; readonly color: string } {
   const c = getUiColors();
-  return kind === 'primary' ? { backgroundColor: c.primary, color: c.primaryInk } : { backgroundColor: c.secondary, color: c.ink };
+  return kind === 'primary'
+    ? { backgroundColor: c.primary, borderColor: highContrast ? c.border : c.primary, color: c.primaryInk }
+    : { backgroundColor: c.secondary, borderColor: c.border, color: c.ink };
 }
 
 // --- Contrast ratios (WCAG 2.x) --------------------------------------------------------------------------------------------
@@ -212,7 +247,7 @@ export function contrastRatio(a: string | number, b: string | number): number {
 
 export type UiColorProperty = 'backgroundColor' | 'borderColor' | 'color';
 
-const SOFT_INKS: ReadonlySet<string> = new Set(['#3a3f47', '#3a3d42', '#3d3d3d']);
+const SOFT_INKS: ReadonlySet<string> = new Set([uiColors.inkSoft, '#3a3f47', '#3a3d42', '#3d3d3d']);
 
 /**
  * The colour a UIKitML file carries (`original`, always the NORMAL set) as it must look now. In normal contrast it is the
@@ -228,9 +263,12 @@ export function themedColor(property: UiColorProperty, original: string): string
       if (c === uiColors.primary) return highContrastUiColors.primary;
       return c === uiColors.secondary ? highContrastUiColors.secondary : original;
     case 'borderColor':
-      return c === uiColors.border ? highContrastUiColors.border : original;
+      // A primary button has a border of its own colour in the normal theme; in high contrast every border is the yellow one.
+      return c === uiColors.border || c === uiColors.primary ? highContrastUiColors.border : original;
     case 'color':
       if (c === uiColors.primaryInk) return highContrastUiColors.primaryInk;
+      // The accent is also the colour of a title: bright cyan in high contrast.
+      if (c === uiColors.primary) return highContrastUiColors.primary;
       return c === uiColors.ink || SOFT_INKS.has(c) ? highContrastUiColors.ink : original;
   }
 }

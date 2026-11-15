@@ -193,9 +193,12 @@ export class FurnitureSystem extends createSystem({}) {
     if (item.defaultSize) {
       const drawn = ctx.visuals.measureBody(object);
       const [w, d, h] = item.size;
-      slog(
-        `furniture resized id=${piece.id} drawn=${drawn ? drawn.join('x') : '?'} size=${Math.round(w * 100)}x${Math.round(d * 100)}x${Math.round(h * 100)}cm`,
-      );
+      const wanted = [Math.round(w * 100), Math.round(d * 100), Math.round(h * 100)];
+      slog(`furniture resized id=${piece.id} drawn=${drawn ? drawn.join('x') : '?'} size=${wanted.join('x')}cm`);
+      // The mesh must have the size that was asked for (model with an offset or another unit would not).
+      if (drawn && drawn.some((side, i) => Math.abs(side - wanted[i]) > 1)) {
+        swarn(`furniture resized ${piece.id}: drawn ${drawn.join('x')} differs from size ${wanted.join('x')}cm`);
+      }
     }
     const entity = this.world.createTransformEntity(object, ctx.houseEntity);
     tagEntity(entity, piece.id);

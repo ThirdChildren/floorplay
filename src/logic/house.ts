@@ -9,6 +9,8 @@
 // unique ids, openings inside their wall and not overlapping, valid `connects`, a single entrance.
 // Coordinates follow docs/DATA_FORMATS.md: metres, plan on the x-z plane, 2D point = [x, z].
 
+import { withDefaultViewpoints } from './viewpoint-default';
+
 export type Vec2 = [number, number];
 export type Vec3 = [number, number, number];
 
@@ -339,8 +341,8 @@ function checkOpening(
 }
 
 /**
- * Validates untrusted data against the house format. Returns the same object typed as `House`
- * when valid (no copy), otherwise every problem found, as `"<field path>: <message>"` lines.
+ * Validates untrusted data against the house format. Returns the object typed as `House` when valid (the same
+ * object, or a shallow copy that adds a default viewpoint to each room that has none: `withDefaultViewpoints`), otherwise every problem found, as `"<field path>: <message>"` lines.
  */
 export function checkHouse(data: unknown): HouseCheck {
   const c = new Checker();
@@ -548,7 +550,8 @@ export function checkHouse(data: unknown): HouseCheck {
   }
 
   if (c.errors.length > 0) return { ok: false, errors: c.errors };
-  return { ok: true, house: root as unknown as House };
+  // A room without a viewpoint would have no marker on the table-top model, so no way to enter it at real scale.
+  return { ok: true, house: withDefaultViewpoints(root as unknown as House) };
 }
 
 /** Number of doors and windows across all walls. */

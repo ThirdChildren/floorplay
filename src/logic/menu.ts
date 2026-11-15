@@ -119,14 +119,16 @@ export const GRID_GAP = 0.4;
 export const ITEM_PANEL = { width: (MENU_WIDTH - GRID_GAP) / GRID_COLUMNS, height: 8.6 } as const;
 /** Height of a bar button, centimetres. */
 export const BAR_HEIGHT = 6.2;
-/** Width of each bar button, centimetres; the widest label ("Recenter", "Tabletop") is 10.6 at 2.4 bold. */
+/** Width of each bar button, centimetres; the widest label ("Recenter", "Tabletop") is 10.6 at 2.4 bold. `Back` and `Next` are round arrows with no label (an icon only, 2.6 cm); their names are in the strings and in the anchors. */
 export const BUTTON_WIDTH: Readonly<Record<ButtonId | 'tabletop', number>> = {
-  undo: 7.9,
-  prev: 7.4,
-  next: 7.2,
-  recenter: 12.3,
-  tabletop: 12.3,
+  undo: 7.2,
+  prev: 5.2,
+  next: 5.2,
+  recenter: 11.6,
+  tabletop: 11.6,
 };
+/** Width of the page indicator ("1/3") between `Back` and `Next`: not a control, but it takes its place in the bar. */
+export const PAGE_INDICATOR_WIDTH = 5.2;
 /** Space between two bar buttons or two tabs, centimetres. */
 export const BAR_GAP = 0.4;
 /** Size of a bar button panel in UIKit units: the widest one (the real widths are `BUTTON_WIDTH`). */
@@ -136,9 +138,9 @@ export const HEADER_HEIGHT = 4;
 /** Width of each tab, centimetres: the two tabs share the row (36) with the gap of `BAR_GAP` between them. */
 export const TAB_WIDTH: Readonly<Record<MenuTabId, number>> = { items: 17.8, mine: 17.8 };
 /** Border of an item card in UIKit units (public/ui/palm-menu.uikitml). */
-export const ITEM_BORDER = 0.4;
+export const ITEM_BORDER = 0.2;
 /** Space kept between the text of an item name and the border of its card, per side, in UIKit units. */
-export const ITEM_NAME_CLEARANCE = 0.5;
+export const ITEM_NAME_CLEARANCE = 0.7;
 /** Widest line of an item name that fits its card with that clearance, in UIKit units. */
 export const ITEM_NAME_MAX_WIDTH = ITEM_PANEL.width - 2 * ITEM_BORDER - 2 * ITEM_NAME_CLEARANCE;
 /**
@@ -187,12 +189,23 @@ export const ITEM_SLOTS: readonly Offset[] = Array.from({ length: GRID_ROWS }, (
 
 /** Height of the centre of the bar, metres from the bottom of the menu. */
 const BAR_CENTRE = (BAR_BOTTOM + BAR_HEIGHT / 2) / 100;
+/** Position of the page indicator among the five cells of the bar. */
+const PAGE_INDICATOR_INDEX = 2;
 
 /** Slot of each of the four bar buttons in the order of `BUTTONS` (the fourth one: Recenter, or Tabletop in real scale). */
 export const BUTTON_SLOTS: readonly Offset[] = rowCentres(
-  BUTTONS.map((button) => BUTTON_WIDTH[button]),
+  // The bar reads undo, back, "1/3", next, recenter: the indicator is between the two arrows and is not a button.
+  [BUTTON_WIDTH.undo, BUTTON_WIDTH.prev, PAGE_INDICATOR_WIDTH, BUTTON_WIDTH.next, BUTTON_WIDTH.recenter],
   BAR_GAP,
-).map((dx) => ({ dx, dy: BAR_CENTRE }));
+)
+  .filter((_, index) => index !== PAGE_INDICATOR_INDEX)
+  .map((dx) => ({ dx, dy: BAR_CENTRE }));
+
+/** Centre of the page indicator in the plane of the menu, metres from the middle line (the indicator is not a control: nothing is placed there). */
+export const PAGE_INDICATOR_OFFSET: Offset = {
+  dx: rowCentres([BUTTON_WIDTH.undo, BUTTON_WIDTH.prev, PAGE_INDICATOR_WIDTH, BUTTON_WIDTH.next, BUTTON_WIDTH.recenter], BAR_GAP)[PAGE_INDICATOR_INDEX],
+  dy: BAR_CENTRE,
+};
 
 /** Half size of each bar button (`BUTTON_WIDTH`, `BAR_HEIGHT`). */
 export const BUTTON_HALVES: Readonly<Record<ButtonId | 'tabletop', HalfSize>> = {

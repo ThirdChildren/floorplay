@@ -23,6 +23,7 @@ Gli schemi in `schemas/` sono la fonte di verità; `logic-tester` li usa nei tes
 | `walls[]` | `id`, `from`, `to`, `thickness`, `exterior`, `openings[]` |
 | `openings[]` | `id`, `type` (`door`/`window`), `offset` (m dall'estremo `from`), `width` (luce netta), `height`, `sill` (finestre), `connects` (porte: due id di stanza o `"outside"`), `entrance` |
 | `viewpoints[]` | `id`, `room`, `position` `[x, z]`, `yawDeg` (0 = verso −z, orario), `eyeHeight` |
+| ↳ stanze senza punto di vista | ogni stanza deve avere un marcatore blu sul plastico: se il file non nomina un punto di vista per una stanza, il caricatore (`checkHouse`) ne aggiunge uno in coda (`V<n>` libero), nel punto della stanza più lontano dai muri (sempre dentro il poligono, anche per stanze a L), rivolto alla porta più vicina o, senza porte, al lato più lungo. I punti di vista scritti nel file non cambiano mai |
 | `fixtures[]` | oggetti fissi indicabili dall'inquilino: `id`, `name`, `room`, `category`, `position` `[x, y, z]` |
 | `staging` | preset "Furnish": `{ "<style>": [{ catalogId, position [x, z], rotationDeg }] }` |
 

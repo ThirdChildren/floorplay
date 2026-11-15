@@ -1,7 +1,8 @@
 // Where the pinned menu goes (task T3.3a, decision D32). Pure: no imports from @iwsdk/core or three.
 //
 // The pinned menu is the same panel as the palm menu, but it does not follow a hand: its anchor (the bottom
-// centre, the "frame") is computed ONCE when the menu opens and then stays where it is in space. The panel is
+// centre, the "frame") is computed when the menu opens and then stays where it is in space until the gaze leaves a dead zone
+// (then it glides, src/logic/menu-follow.ts). The panel is
 // always upright and turned about the vertical axis only (the yaw of the head), so looking up or down while opening
 // never tilts it; the pitch of the gaze only raises or lowers it, within a limit (task T4.R2, D49).
 
@@ -102,8 +103,7 @@ export function panelAnchorPitchRad(pitchRad: number): number {
  * `PINNED_DISTANCE_LARGE` and `PINNED_DROP_LARGE`. Then slid, only if it is needed, to the nearest place where the WHOLE panel (`extent`
  * from the anchor) is inside the 30 degree view cone (`uprightAnchorInCone`): a panel never opens at the edge of the view, whatever the
  * pitch of the head. A head or yaw that is not finite falls back to a seated user at the origin looking along -z, a pitch that is not
- * finite to a level gaze. Writes into `out` and returns it; allocates nothing but the closure of `uprightAnchorInCone` (made once, when
- * the panel opens).
+ * finite to a level gaze. Writes into `out` and returns it; allocates nothing.
  */
 export function pinnedPanelAnchor(
   head: Readonly<Point3Like>,
@@ -188,6 +188,31 @@ const FIT_STEPS = 20;
 const fitForward: Point3Like = { x: 0, y: 0, z: -1 };
 const fitHead: Point3Like = { x: 0, y: 0, z: 0 };
 
+/** One step of the slide of `uprightAnchorInCone`: the point `t` of the way from (dx,dy,dz) to (tx,ty,tz), kept at least `distance` from the head. Writes into `out`. */
+function blendAnchor(
+  out: Point3Like,
+  dx: number,
+  dy: number,
+  dz: number,
+  tx: number,
+  ty: number,
+  tz: number,
+  head: Readonly<Point3Like>,
+  distance: number,
+  t: number,
+): void {
+  out.x = dx + (tx - dx) * t;
+  out.y = dy + (ty - dy) * t;
+  out.z = dz + (tz - dz) * t;
+  const d = Math.hypot(out.x - head.x, out.y - head.y, out.z - head.z);
+  if (d > EPS && d < distance) {
+    const k = distance / d;
+    out.x = head.x + (out.x - head.x) * k;
+    out.y = head.y + (out.y - head.y) * k;
+    out.z = head.z + (out.z - head.z) * k;
+  }
+}
+
 /**
  * Keeps an upright panel (the pinned menu's kind: turned about the vertical axis only, facing back along the horizontal gaze `yawRad`)
  * inside the view cone of `halfAngleDeg` around the gaze (yaw `yawRad`, pitch `pitchRad`), even when the head pitch is beyond what
@@ -196,8 +221,8 @@ const fitHead: Point3Like = { x: 0, y: 0, z: 0 };
  * is returned unchanged. Otherwise the anchor slides along a straight line toward the point that puts the middle of the panel on the
  * gaze at the same distance from the head, and stops at the first point that fits (bisection): the panel moves only as far as needed.
  * When even the centred panel does not fit (a cone narrower than the panel) the centred position is returned. Input that is not finite
- * gives `desired` back. Writes into `out` (which may be `desired`) and returns it. Meant for the moment a panel is anchored (it makes one small
- * closure when the panel has to move), never for every frame.
+ * gives `desired` back. Writes into `out` (which may be `desired`) and returns it. Allocates nothing (it runs every frame while the pinned
+ * menu glides with the gaze).
  */
 export function uprightAnchorInCone(
   desired: Readonly<Point3Like>,
@@ -233,26 +258,14 @@ export function uprightAnchorInCone(
   const tz = head.z + fitForward.z * distance;
   // The blend is a chord: its middle is nearer to the head than the ends. A point nearer than `distance` is pushed back out along the line
   // from the head (a panel never comes closer than where the pinned logic put it, rule 8: 0.5-0.8 m).
-  const blend = (t: number): void => {
-    out.x = dx + (tx - dx) * t;
-    out.y = dy + (ty - dy) * t;
-    out.z = dz + (tz - dz) * t;
-    const d = Math.hypot(out.x - head.x, out.y - head.y, out.z - head.z);
-    if (d > EPS && d < distance) {
-      const k = distance / d;
-      out.x = head.x + (out.x - head.x) * k;
-      out.y = head.y + (out.y - head.y) * k;
-      out.z = head.z + (out.z - head.z) * k;
-    }
-  };
   let lo = 0;
   let hi = 1;
   for (let i = 0; i < FIT_STEPS; i += 1) {
     const mid = (lo + hi) / 2;
-    blend(mid);
+    blendAnchor(out, dx, dy, dz, tx, ty, tz, head, distance, mid);
     if (pinnedConeAngleDeg(out, yawRad, fitHead, fitForward, extent) <= halfAngleDeg) hi = mid;
     else lo = mid;
   }
-  blend(hi);
+  blendAnchor(out, dx, dy, dz, tx, ty, tz, head, distance, hi);
   return out;
 }

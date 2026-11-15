@@ -49,18 +49,18 @@ export const LIST_BOLD_FACTOR = 1.05;
 export const LIST_ROW_WIDTH = ISSUE_PANEL.width - 2 * ISSUE_BODY_BORDER;
 /** Height of a row of the move-in report (a 4 cm target, rule 8). */
 export const LIST_ROW_HEIGHT = 4;
-/** Height of a row of the list: two lines of 2.4 cm (the status and the urgency, then the text) and the border (T5.R4). */
+/** Height of a row of the list: two lines of 2.4 cm (the status and the urgency, then the text), the border and 0.2 cm of air (T5.R4). */
 export const LIST_ISSUE_ROW_HEIGHT = 5.4;
 /** Border of a row of the list. */
-export const LIST_ISSUE_BORDER = 0.3;
+export const LIST_ISSUE_BORDER = 0.2;
 /** Space between two rows. */
 export const LIST_ROW_GAP = 0.3;
 /** Height of the heading "History" and the space under it. */
 export const LIST_HEADING_HEIGHT = 2.4;
 export const LIST_HEADING_GAP = 0.2;
 /** Border of a row and the space between the border and the dot (and between the urgency and the border). */
-export const LIST_ROW_BORDER = 0.4;
-export const LIST_ROW_PADDING = 0.4;
+export const LIST_ROW_BORDER = 0.2;
+export const LIST_ROW_PADDING = 0.5;
 /** The dot of the status: its diameter and the space between it and the text. */
 export const LIST_DOT_SIZE = 1.8;
 export const LIST_DOT_GAP = 0.4;

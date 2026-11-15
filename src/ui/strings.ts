@@ -160,8 +160,8 @@ export const strings = {
     catalogUnavailable: 'Catalog not loaded',
     /** The fixed buttons beside the model (T3.3b): they open and close the pinned menu with one hand. */
     button: 'Menu',
-    /** "1 / 3" */
-    page: (page: number, total: number): string => `${page} / ${total}`,
+    /** The page indicator between the two arrows of the bar: "1/3" (short: the cell is 5.4 cm wide at 2.4 cm text). */
+    page: (page: number, total: number): string => `${page}/${total}`,
     /** "1.6 × 2.0 m" (plain x when the local panel font is missing). */
     itemSize: (width: number, depth: number, ascii = false): string => formatSize(width, depth, ascii),
     /** "0.35×0.35 m": the same without the spaces, for a measure that would touch the border of its card. */

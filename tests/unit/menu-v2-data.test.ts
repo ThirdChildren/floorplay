@@ -222,11 +222,9 @@ describe('the measure line of every piece (R25: shorten the measure before shrin
 });
 
 describe('the labels of the bar and of the tabs fit with the bold font, in the widths of the file', () => {
-  it('fits Undo, Back, Next, Recenter and Tabletop in their buttons with at least 0.5 cm to spare', () => {
+  it('fits Undo, Recenter and Tabletop in their buttons with at least 0.5 cm to spare (Back and Next are arrows with no label)', () => {
     const labels = {
       undo: strings.menu.undo,
-      prev: strings.menu.previous,
-      next: strings.menu.next,
       recenter: strings.menu.recenter,
       tabletop: strings.menu.tabletop,
     } as const;
@@ -280,8 +278,8 @@ describe('no text is smaller than 2.4 cm (rule 9, D37)', () => {
 
   it('gives every text element of the layout file a font size of at least the minimum (a text with none would get a default)', () => {
     const spans = [...source.matchAll(/<span\b[^>]*>/g)].map((match) => match[0]);
-    // The title, 6 names, 6 measures, 4 buttons and 2 tabs.
-    expect(spans).toHaveLength(1 + 6 * 2 + 4 + 2);
+    // The title, 6 names, 6 measures, the labels of Undo and Recenter (Back and Next are arrows), the page indicator and 2 tabs.
+    expect(spans).toHaveLength(1 + 6 * 2 + 2 + 1 + 2);
     for (const span of spans) {
       const size = /font-size:\s*([0-9.]+)/.exec(span);
       expect(size, span).not.toBeNull();
