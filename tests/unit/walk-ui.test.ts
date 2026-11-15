@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { MAX_WALK_SPEED } from '../../src/logic/dig-gesture';
+import { MAX_WALK_SPEED } from '../../src/logic/row-gesture';
 import {
   BUTTON_HALF_HEIGHT,
   ISSUE_BUTTON_HALF_HEIGHT,
@@ -79,7 +79,7 @@ describe('the "Walk inside" button', () => {
     expect(layout).toContain(`width: ${WALK_BUTTON_PANEL.width};`);
     expect(layout).toContain(`height: ${WALK_BUTTON_PANEL.height};`);
     expect(strings.walk.button).toBe('Walk inside');
-    expect(strings.walk.hint).toBe('Dig with both hands, palms down, to walk');
+    expect(strings.walk.hint).toBe('Row with both fists to walk');
     for (const text of [strings.walk.button, strings.walk.hint, strings.walk.needsHands]) expect(text).toMatch(/^[\x20-\x7e]+$/);
   });
 });

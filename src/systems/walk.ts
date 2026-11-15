@@ -1,46 +1,39 @@
-// Walking inside the tabletop model with the "dig" gesture (plan docs/plans/WALK.md, rule 2).
+// Walking inside the tabletop model with the "row" gesture (plan docs/plans/WALK.md, rule 2).
 //
 // The view change itself (the fade, the real-scale look of the model, the store, the way back) is in src/systems/viewpoint.ts: it
 // calls `beginWalk` at the black frame and `endWalk` when the model goes back to the table. This file owns what happens while the
 // user walks:
-//   - it reads the joints of both hands each frame (ONE `fillPoses` call per hand: wrist, two metacarpals, five fingertips) and
-//     feeds `updateDig` (src/logic/dig-gesture.ts) with them and with the horizontal gaze;
+//   - it reads the joints of both hands each frame (ONE `fillPoses` call per hand: wrist and the four fingertips that tell a fist) and
+//     feeds `updateRow` (src/logic/row-gesture.ts) with them and with the horizontal gaze;
 //   - the speed that comes out moves the body on the plan (`stepWalk`, src/logic/walk.ts: it slides along the walls) and the model
 //     root is placed again so the body stays under the head (the head never moves, rule 2: the MODEL moves);
 //   - the comfort vignette (one head-locked quad) follows the speed;
 //   - the position is written to the store (`view: {kind: 'walk', x, z, yawDeg}`) when the body stops and at most once a second while
 //     it moves, so pause/resume and reload bring the user back to the same spot (plan WALK, decision 3).
-// The hint "Dig with both hands, palms down, to walk" shows the first three times the walk is entered, until the first stroke.
+// The hint "Row with both fists to walk" shows the first three times the walk is entered, until the first stroke.
 //
 // Without hand joints (controllers only, no `XRFrame.fillPoses`) the walk cannot be driven: `requestWalk` says so and does not enter
 // (`[soglia] feature hand joints unavailable`); the Tabletop button and the viewpoints work as always (controllers are never required).
 //
 // A debug hook behind `?debug=1` (`window.__sogliaWalk`, src/debug/walk-hook.ts) feeds a speed or synthetic hand poses to the same
-// code path: the emulator cannot move the finger joints of a hand the way a dig does.
+// code path: the emulator cannot bend the fingers of a hand without a custom pose.
 //
 // Nothing here allocates per frame: the samples, the vectors and the steps are created once.
 
 import { createSystem, Quaternion, Vector3, type Object3D, type World } from '@iwsdk/core';
 import { slog, swarn } from '../log';
-import {
-  FLOATS_PER_JOINT,
-  JOINT_INDEX_TIP,
-  JOINT_THUMB_TIP,
-  JOINT_WRIST,
-  jointPositionFromMatrix,
-  palmNormalFromJoints,
-} from '../logic/hand-joints';
+import { FLOATS_PER_JOINT, jointPositionFromMatrix } from '../logic/hand-joints';
 import {
   MAX_WALK_SPEED,
-  createDig,
-  createDigHandSample,
+  createRow,
+  createRowHandSample,
   horizontalForward,
-  resetDig,
-  updateDig,
-  type DigHandSample,
-  type DigHead,
-  type DigState,
-} from '../logic/dig-gesture';
+  resetRow,
+  updateRow,
+  type RowHandSample,
+  type RowHead,
+  type RowState,
+} from '../logic/row-gesture';
 import { yawFromForward } from '../logic/placement';
 import { setView, type Store } from '../logic/state';
 import { vignetteStep, vignetteTarget } from '../logic/vignette';
@@ -71,21 +64,14 @@ const HANDS: readonly Hand[] = ['left', 'right'];
 const DEG_TO_RAD = Math.PI / 180;
 const RAD_TO_DEG = 180 / Math.PI;
 
-// The joints this reader asks for: the first five are the layout of src/logic/hand-joints.ts (so the palm normal code is shared).
-const DIG_JOINT_NAMES = [
-  'wrist',
-  'index-finger-metacarpal',
-  'pinky-finger-metacarpal',
-  'thumb-tip',
-  'index-finger-tip',
-  'middle-finger-tip',
-  'ring-finger-tip',
-  'pinky-finger-tip',
-] as const;
-const JOINT_MIDDLE_TIP = 5;
-const JOINT_RING_TIP = 6;
-const JOINT_PINKY_TIP = 7;
-const DIG_BUFFER_LENGTH = DIG_JOINT_NAMES.length * FLOATS_PER_JOINT;
+// The joints this reader asks for: the wrist and the four fingertips (a fist has all of them close to the wrist).
+const ROW_JOINT_NAMES = ['wrist', 'index-finger-tip', 'middle-finger-tip', 'ring-finger-tip', 'pinky-finger-tip'] as const;
+const JOINT_WRIST = 0;
+const JOINT_INDEX_TIP = 1;
+const JOINT_MIDDLE_TIP = 2;
+const JOINT_RING_TIP = 3;
+const JOINT_PINKY_TIP = 4;
+const ROW_BUFFER_LENGTH = ROW_JOINT_NAMES.length * FLOATS_PER_JOINT;
 
 type FillPoses = (spaces: ArrayLike<XRSpace>, baseSpace: XRSpace, transforms: Float32Array) => boolean;
 interface FrameWithFillPoses {
@@ -109,7 +95,7 @@ interface HandReader {
   readonly joints: Float32Array;
 }
 
-const createReader = (): HandReader => ({ bound: null, complete: false, spaces: new Array<XRSpace>(DIG_JOINT_NAMES.length), joints: new Float32Array(DIG_BUFFER_LENGTH) });
+const createReader = (): HandReader => ({ bound: null, complete: false, spaces: new Array<XRSpace>(ROW_JOINT_NAMES.length), joints: new Float32Array(ROW_BUFFER_LENGTH) });
 
 interface WalkContext {
   world: World;
@@ -126,15 +112,15 @@ let active: WalkSystem | null = null;
 
 // --- State of the walk -----------------------------------------------------------------------------------------------------------
 
-const dig: DigState = createDig();
-const samples: Record<Hand, DigHandSample> = { left: createDigHandSample(), right: createDigHandSample() };
+const row: RowState = createRow();
+const samples: Record<Hand, RowHandSample> = { left: createRowHandSample(), right: createRowHandSample() };
 const readers: Record<Hand, HandReader> = { left: createReader(), right: createReader() };
 const body: PlanPoint = { x: 0, z: 0 };
 const reference: WalkReference = { hx: 0, hy: 0, hz: 0, yawRad: 0 };
 const rootPose: MiniatureRoot = { x: 0, y: 0, z: 0, yawRad: 0, scale: 1 };
 const stepScratch: PlanPoint = { x: 0, z: 0 };
 const stepResult: WalkStep = { moved: 0, wanted: 0, progress: 1 };
-const gaze: DigHead = { x: 0, y: 0, z: 0, fx: 0, fz: -1 };
+const gaze: RowHead = { x: 0, y: 0, z: 0, fx: 0, fz: -1 };
 const forward = { fx: 0, fz: -1 };
 const spotScratch: PlanPoint = { x: 0, z: 0 };
 
@@ -180,7 +166,7 @@ export function hasHandTracking(world: World): boolean {
 
 /** Says why the walk was not entered (a short notice in front of the head), once per request. */
 export function noticeNoHands(): void {
-  swarn('feature hand joints unavailable: walking by dig needs hand tracking');
+  swarn('feature hand joints unavailable: walking by rowing needs hand tracking');
   noticeUntil = performance.now() / 1000 + NOTICE_SECONDS;
   active?.showNotice(strings.walk.needsHands);
 }
@@ -197,7 +183,7 @@ export function startingSpot(house: House): { x: number; z: number; yawDeg: numb
 
 /**
  * Starts the walk at the plan spot `spot` (on a free place near it) with the head at `head` (world, `yawDeg` the turn of the head, as
- * for a viewpoint): places `root` so the body is under the head, with the floor `WALK_EYE_HEIGHT` below the eyes, and switches the dig
+ * for a viewpoint): places `root` so the body is under the head, with the floor `WALK_EYE_HEIGHT` below the eyes, and switches the row
  * on (`showHint`: the first entries show the hint, a restore does not). Returns the spot used (the place and the heading to save), or null when the head pose is not usable (nothing changed).
  */
 export function beginWalk(
@@ -222,7 +208,7 @@ export function beginWalk(
   reference.yawRad = yawRad;
   ctx.root = root;
   placeRoot(ctx);
-  resetDig(dig);
+  resetRow(row);
   lastHeadYawDeg = head.yawDeg;
   sinceSave = 0;
   dirty = false;
@@ -239,7 +225,7 @@ export function endWalk(save: boolean): void {
   if (!ctx || !isWalking()) return;
   if (save) flushToStore(ctx);
   setWalkFlag(false);
-  resetDig(dig);
+  resetRow(row);
   debugSpeed = 0;
   debugSpeedSeconds = 0;
   ctx.vignette.set(0);
@@ -253,7 +239,7 @@ export function suspendWalk(): void {
   const ctx = context;
   if (!ctx || !isWalking()) return;
   flushToStore(ctx);
-  resetDig(dig);
+  resetRow(row);
   debugSpeed = 0;
   debugSpeedSeconds = 0;
   ctx.vignette.set(0);
@@ -264,14 +250,14 @@ export function walkPosition(): { x: number; z: number; yawDeg: number } {
   return { x: roundMm(body.x), z: roundMm(body.z), yawDeg: wrapDegrees(reference.yawRad * RAD_TO_DEG - lastHeadYawDeg) };
 }
 
-/** Debug hook: drives the walk at `speed` m/s for `seconds` along the gaze as if the hands had dug (same code path after `updateDig`). */
+/** Debug hook: drives the walk at `speed` m/s for `seconds` along the gaze as if the hands had rowed (same code path after `updateRow`). */
 export function debugDrive(speed: number, seconds: number): void {
   debugSpeed = Math.max(0, Math.min(MAX_WALK_SPEED, speed));
   debugSpeedSeconds = Math.max(0, seconds);
 }
 
-/** Debug hook: feeds a synthetic hand pose to `updateDig` instead of the real joints (null = back to the joints). */
-export function debugHandSamples(left: DigHandSample | null, right: DigHandSample | null): void {
+/** Debug hook: feeds a synthetic hand pose to `updateRow` instead of the real joints (null = back to the joints). */
+export function debugHandSamples(left: RowHandSample | null, right: RowHandSample | null): void {
   debugHands = left !== null && right !== null;
   if (left && right) {
     copySample(left, samples.left);
@@ -279,10 +265,10 @@ export function debugHandSamples(left: DigHandSample | null, right: DigHandSampl
   }
 }
 
-function copySample(from: DigHandSample, to: DigHandSample): void {
+function copySample(from: RowHandSample, to: RowHandSample): void {
   to.tracked = from.tracked;
   to.pinching = from.pinching;
-  for (const key of ['wrist', 'palmNormal', 'thumbTip', 'indexTip', 'middleTip', 'ringTip', 'pinkyTip'] as const) {
+  for (const key of ['wrist', 'indexTip', 'middleTip', 'ringTip', 'pinkyTip'] as const) {
     to[key].x = from[key].x;
     to[key].y = from[key].y;
     to[key].z = from[key].z;
@@ -302,14 +288,14 @@ export function walkStatus(): {
   hands: { back: number; side: number; stroking: boolean; wristZ: number }[];
 } {
   return {
-    hands: [dig.left, dig.right].map((h, i) => ({ back: roundMm(h.back), side: roundMm(h.side), stroking: h.stroking, wristZ: roundMm(samples[i === 0 ? 'left' : 'right'].wrist.z) })),
+    hands: [row.left, row.right].map((h, i) => ({ back: roundMm(h.back), side: roundMm(h.side), stroking: h.stroking, wristZ: roundMm(samples[i === 0 ? 'left' : 'right'].wrist.z) })),
     walking: isWalking(),
-    speed: dig.speed,
+    speed: row.speed,
     x: roundMm(body.x),
     z: roundMm(body.z),
     vignette: context?.vignette.strength ?? 0,
-    left: dig.left.reason,
-    right: dig.right.reason,
+    left: row.left.reason,
+    right: row.right.reason,
   };
 }
 
@@ -372,10 +358,10 @@ function bind(reader: HandReader, source: XRInputSource): boolean {
   reader.complete = false;
   const hand = source.hand;
   if (!hand || typeof hand.get !== 'function') return false;
-  for (let i = 0; i < DIG_JOINT_NAMES.length; i += 1) {
-    const space = hand.get(DIG_JOINT_NAMES[i]);
+  for (let i = 0; i < ROW_JOINT_NAMES.length; i += 1) {
+    const space = hand.get(ROW_JOINT_NAMES[i]);
     if (!space) {
-      swarn(`feature hand joint ${DIG_JOINT_NAMES[i]} unavailable`);
+      swarn(`feature hand joint ${ROW_JOINT_NAMES[i]} unavailable`);
       return false;
     }
     reader.spaces[i] = space;
@@ -385,7 +371,7 @@ function bind(reader: HandReader, source: XRInputSource): boolean {
 }
 
 /** Fills `sample` from the joints of `source`. Returns false (sample marked untracked) when there is nothing usable. */
-function readHand(hand: Hand, source: XRInputSource | null, frame: XRFrame | null, reference_: XRReferenceSpace | null, sample: DigHandSample): boolean {
+function readHand(hand: Hand, source: XRInputSource | null, frame: XRFrame | null, reference_: XRReferenceSpace | null, sample: RowHandSample): boolean {
   sample.tracked = false;
   if (!source || !frame || !reference_) return false;
   const reader = readers[hand];
@@ -393,7 +379,7 @@ function readHand(hand: Hand, source: XRInputSource | null, frame: XRFrame | nul
   if (typeof fill !== 'function') {
     if (!warnedFill) {
       warnedFill = true;
-      swarn('feature XRFrame.fillPoses unavailable; the dig gesture cannot read the hands');
+      swarn('feature XRFrame.fillPoses unavailable; the row gesture cannot read the hands');
     }
     return false;
   }
@@ -405,10 +391,8 @@ function readHand(hand: Hand, source: XRInputSource | null, frame: XRFrame | nul
     return false;
   }
   const m = reader.joints;
-  if (!palmNormalFromJoints(m, hand, sample.palmNormal)) return false;
   if (
     !jointPositionFromMatrix(m, JOINT_WRIST, sample.wrist) ||
-    !jointPositionFromMatrix(m, JOINT_THUMB_TIP, sample.thumbTip) ||
     !jointPositionFromMatrix(m, JOINT_INDEX_TIP, sample.indexTip) ||
     !jointPositionFromMatrix(m, JOINT_MIDDLE_TIP, sample.middleTip) ||
     !jointPositionFromMatrix(m, JOINT_RING_TIP, sample.ringTip) ||
@@ -514,18 +498,18 @@ export class WalkSystem extends createSystem({}) {
       samples.right.pinching = isPinching('right');
     }
 
-    let speed = updateDig(dig, samples.left, samples.right, gaze, dt);
+    let speed = updateRow(row, samples.left, samples.right, gaze, dt);
     if (debugSpeedSeconds > 0) {
       debugSpeedSeconds -= dt;
       speed = Math.max(speed, debugSpeed);
-      dig.speed = speed;
+      row.speed = speed;
     }
 
     if (speed > 0) {
       planStep(speed, gaze.fx, gaze.fz, dt, reference.yawRad, stepScratch);
       stepWalk(body, stepScratch.x, stepScratch.z, ctx.walkWorld, stepResult);
       // Walking at a wall: the speed bleeds away so the user does not keep "pushing" after stopping (the body slides if it can).
-      if (stepResult.wanted > 0 && stepResult.progress < 0.3) dig.speed *= Math.exp(-dt / 0.12);
+      if (stepResult.wanted > 0 && stepResult.progress < 0.3) row.speed *= Math.exp(-dt / 0.12);
       placeRoot(ctx);
       moved = true;
       dirty = true;
@@ -542,7 +526,7 @@ export class WalkSystem extends createSystem({}) {
       moved = false;
     }
 
-    this.vignetteStrength = vignetteStep(this.vignetteStrength, vignetteTarget(dig.speed), dt);
+    this.vignetteStrength = vignetteStep(this.vignetteStrength, vignetteTarget(row.speed), dt);
     ctx.vignette.set(this.vignetteStrength);
   }
 }

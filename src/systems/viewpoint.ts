@@ -318,7 +318,7 @@ export function requestTabletop(source: 'menu' | 'button'): boolean {
  * Goes inside the model with a fade and starts the walk (plan docs/plans/WALK.md): the user becomes a person at the scale of the model, at
  * the first viewpoint of the house, looking where it looks. `source` is who asked (the "Walk inside" button beside the model). Returns true
  * when the fade started. Does nothing at real scale, in the room view or while a fade runs; without hand tracking it says so and stays on the
- * table (the dig gesture needs the joints of the hands, controllers are never required).
+ * table (the row gesture needs the joints of the hands, controllers are never required).
  */
 export function requestWalk(source: 'button'): boolean {
   void source;

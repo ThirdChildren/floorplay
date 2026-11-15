@@ -1,15 +1,16 @@
-// The "dig" gesture that walks inside the tabletop model (plan docs/plans/WALK.md). Pure logic: no imports from @iwsdk/core
+// The "row" gesture that walks inside the tabletop model (plan docs/plans/WALK.md). Pure logic: no imports from @iwsdk/core
 // or three, so it is tested with synthetic hands.
 //
-// A dig is what you do with both hands to scoop something towards you: BOTH hands open (fingers out, thumb and index apart),
-// BOTH palms facing down, in front of the body below the eyes, and each hand sweeping BACK towards the body. Every coordinated
-// stroke adds speed along the horizontal direction of the head; when the strokes stop, the speed decays smoothly to zero.
+// A row is what you do on a rowing machine: BOTH hands closed into fists, in front of the body at about chest height, pulled back
+// towards the body together in a dragging stroke. Every coordinated stroke adds speed along the horizontal direction of the head;
+// when the strokes stop, the speed decays smoothly to zero.
 //
 // Why it is hard to trigger by accident (rule: no false positives with pinch, grab or the two-hand zoom/turn):
-//  - a hand only counts while it is open (thumb-index gap and finger reach, with hysteresis), palm down (angle from straight
-//    down, with hysteresis) and in front of / below the head;
-//  - a pinch of that hand (the `selectstart` state) shuts the hand out for LOCKOUT_SECONDS after it ends, so the open-hand
-//    pose that surrounds every pinch never walks, and the two-hand rotate/zoom gesture (both hands pinching) never does either;
+//  - a hand only counts while it is a FIST: the tips of all four fingers (index, middle, ring, pinky) are curled close to the wrist
+//    (with hysteresis). A pinch keeps the index finger out towards the thumb and the others relaxed, an open hand reaches twice as far;
+//  - a pinch of that hand (the `selectstart` state) shuts the hand out for LOCKOUT_SECONDS after it ends, so a pinch, a grab or the
+//    two-hand rotate/zoom gesture (both hands pinching) never rows;
+//  - the fist has to be in the chest zone: in front of the head within reach and below the eyes by a plausible band (with hysteresis);
 //  - a hand has to be qualified for ARM_SECONDS before its movement counts;
 //  - the stroke has to be mostly backwards (not a sideways wave) and faster than STROKE_MIN_SPEED in BOTH hands at once;
 //  - a forward return stroke adds nothing.
@@ -25,26 +26,29 @@ export interface Vec3Like {
 
 // --- Thresholds (all of them are to be tuned on the headset: qa/device/DEBT.md) -----------------------------------------------
 
-/** Palm down: the palm normal is within this angle of straight down to start (degrees)... */
-export const PALM_DOWN_START_DEG = 40;
-/** ...and stays "down" until it leaves this angle (hysteresis). */
-export const PALM_DOWN_KEEP_DEG = 58;
-/** Thumb tip to index tip distance (metres) that counts as open (not a pinch, not a grab) to start... */
-export const OPEN_PINCH_START = 0.05;
-/** ...and the distance that still counts as open once it is. */
-export const OPEN_PINCH_KEEP = 0.04;
-/** Mean distance of the middle, ring and pinky tips from the wrist (metres): a flat hand is about 0.16, a fist about 0.08. To start... */
-export const OPEN_REACH_START = 0.12;
-/** ...and to keep. */
-export const OPEN_REACH_KEEP = 0.1;
-/** The wrist is in front of the head by at least this much (metres, along the gaze)... */
-export const FRONT_MIN = 0.12;
-/** ...and at most this much. */
-export const FRONT_MAX = 0.8;
-/** The wrist is below the eyes by at least this much (metres): a hand waving in front of the face is not a dig. */
-export const BELOW_EYES_MIN = 0.1;
-/** The hand is at most this far below the eyes (metres): the lap of a seated user is the lowest it goes. */
-export const BELOW_EYES_MAX = 0.95;
+/**
+ * Fist: the farthest of the four fingertips (index, middle, ring, pinky) from the wrist, in metres. A flat hand is about 0.17-0.19, a
+ * relaxed hand about 0.15, a pinch with the other fingers loose about 0.13-0.15, a fist about 0.07-0.10. To start...
+ */
+export const FIST_REACH_START = 0.11;
+/** ...and to keep (hysteresis: a fist that opens a little while rowing stays a fist). */
+export const FIST_REACH_KEEP = 0.135;
+/** The wrist is in front of the head (metres, along the gaze) by at least this much to start... */
+export const FRONT_MIN_START = 0.12;
+/** ...and by at least this much to keep: a stroke ends close to the chest. */
+export const FRONT_MIN_KEEP = 0.04;
+/** The wrist is in front of the head by at most this much to start (about an arm's reach)... */
+export const FRONT_MAX_START = 0.7;
+/** ...and by at most this much to keep. */
+export const FRONT_MAX_KEEP = 0.8;
+/** Chest height: the wrist is below the eyes by at least this much (metres) to start (a fist in front of the face is not a row)... */
+export const BELOW_EYES_MIN_START = 0.18;
+/** ...and by at least this much to keep. */
+export const BELOW_EYES_MIN_KEEP = 0.12;
+/** ...and by at most this much to start (the belly; the lap of a seated user is lower)... */
+export const BELOW_EYES_MAX_START = 0.65;
+/** ...and by at most this much to keep. */
+export const BELOW_EYES_MAX_KEEP = 0.75;
 /** After a pinch of a hand ends (or while it lasts) the hand does not qualify for this long (seconds). */
 export const LOCKOUT_SECONDS = 0.4;
 /** A hand must be qualified this long before its stroke counts (seconds). */
@@ -70,34 +74,28 @@ export const STOP_SPEED = 0.03;
 /** A frame longer than this (seconds) is cut to it: a hitch must not turn into a leap. */
 export const MAX_DT = 0.1;
 
-const COS_START = Math.cos((PALM_DOWN_START_DEG * Math.PI) / 180);
-const COS_KEEP = Math.cos((PALM_DOWN_KEEP_DEG * Math.PI) / 180);
-
 // --- Input ----------------------------------------------------------------------------------------------------------------------
 
 /** What the system reads from one hand each frame (joint positions in world metres). Filled in place by the caller. */
-export interface DigHandSample {
-  /** The joints were read this frame and the palm normal is coherent. */
+export interface RowHandSample {
+  /** The joints were read this frame and are finite. */
   tracked: boolean;
   /** The pinch state of the hand (WebXR `selectstart` .. `selectend`). */
   pinching: boolean;
   wrist: Vec3Like;
-  /** Unit vector out of the palm. */
-  palmNormal: Vec3Like;
-  thumbTip: Vec3Like;
   indexTip: Vec3Like;
   middleTip: Vec3Like;
   ringTip: Vec3Like;
   pinkyTip: Vec3Like;
 }
 
-export function createDigHandSample(): DigHandSample {
+export function createRowHandSample(): RowHandSample {
   const v = (): Vec3Like => ({ x: 0, y: 0, z: 0 });
-  return { tracked: false, pinching: false, wrist: v(), palmNormal: { x: 0, y: -1, z: 0 }, thumbTip: v(), indexTip: v(), middleTip: v(), ringTip: v(), pinkyTip: v() };
+  return { tracked: false, pinching: false, wrist: v(), indexTip: v(), middleTip: v(), ringTip: v(), pinkyTip: v() };
 }
 
 /** The head each frame: position and the unit vector of the gaze projected on the floor. */
-export interface DigHead {
+export interface RowHead {
   x: number;
   y: number;
   z: number;
@@ -107,13 +105,13 @@ export interface DigHead {
 
 // --- State ----------------------------------------------------------------------------------------------------------------------
 
-/** Why a hand is not part of the dig right now (for logs and tests). `ok` means it qualifies. */
-export type DigReject = 'ok' | 'untracked' | 'pinch' | 'lockout' | 'palm' | 'open' | 'reach' | 'zone';
+/** Why a hand is not part of the row right now (for logs and tests). `ok` means it qualifies. */
+export type RowReject = 'ok' | 'untracked' | 'pinch' | 'lockout' | 'fist' | 'zone';
 
-export interface DigHandState {
-  /** The hand qualifies (open, palm down, in the zone), with hysteresis. */
+export interface RowHandState {
+  /** The hand qualifies (a fist in the chest zone), with hysteresis. */
   qualified: boolean;
-  reason: DigReject;
+  reason: RowReject;
   /** Seconds the hand has been qualified (0 when it is not). */
   qualifiedFor: number;
   /** Seconds left of the lockout after a pinch. */
@@ -128,24 +126,24 @@ export interface DigHandState {
   stroking: boolean;
 }
 
-export interface DigState {
-  readonly left: DigHandState;
-  readonly right: DigHandState;
+export interface RowState {
+  readonly left: RowHandState;
+  readonly right: RowHandState;
   /** Walking speed, metres per second (perceived), 0 to MAX_WALK_SPEED. */
   speed: number;
   /** Metres of coordinated stroke added to the speed in the last update (for tests and logs). */
   lastStroke: number;
 }
 
-function createHandState(): DigHandState {
+function createHandState(): RowHandState {
   return { qualified: false, reason: 'untracked', qualifiedFor: 0, lockout: 0, hasPrev: false, prevX: 0, prevZ: 0, back: 0, side: 0, stroking: false };
 }
 
-export function createDig(): DigState {
+export function createRow(): RowState {
   return { left: createHandState(), right: createHandState(), speed: 0, lastStroke: 0 };
 }
 
-export function resetHandState(h: DigHandState): void {
+export function resetHandState(h: RowHandState): void {
   h.qualified = false;
   h.reason = 'untracked';
   h.qualifiedFor = 0;
@@ -157,7 +155,7 @@ export function resetHandState(h: DigHandState): void {
 }
 
 /** Stops everything (a session ends, the walk is left, the app is suspended). */
-export function resetDig(state: DigState): void {
+export function resetRow(state: RowState): void {
   resetHandState(state.left);
   resetHandState(state.right);
   state.speed = 0;
@@ -168,36 +166,35 @@ function dist(a: Vec3Like, b: Vec3Like): number {
   return Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 }
 
-/** Mean distance of the middle, ring and pinky tips from the wrist: how far the fingers reach (small for a fist). */
-export function fingerReach(h: Readonly<DigHandSample>): number {
-  return (dist(h.middleTip, h.wrist) + dist(h.ringTip, h.wrist) + dist(h.pinkyTip, h.wrist)) / 3;
+/** The farthest of the index, middle, ring and pinky tips from the wrist (metres): small only when ALL four fingers are curled. */
+export function fistReach(h: Readonly<RowHandSample>): number {
+  return Math.max(dist(h.indexTip, h.wrist), dist(h.middleTip, h.wrist), dist(h.ringTip, h.wrist), dist(h.pinkyTip, h.wrist));
 }
 
 /**
  * Judges one hand for this frame: writes `qualified` and `reason` of `h` and returns whether the hand qualifies. Uses the
  * strict thresholds to start and the relaxed ones to stay (hysteresis). A pinch starts the lockout.
  */
-export function judgeHand(h: DigHandState, s: Readonly<DigHandSample>, head: Readonly<DigHead>, dt: number): boolean {
+export function judgeHand(h: RowHandState, s: Readonly<RowHandSample>, head: Readonly<RowHead>, dt: number): boolean {
   if (s.pinching) h.lockout = LOCKOUT_SECONDS;
   else if (h.lockout > 0) h.lockout = Math.max(0, h.lockout - dt);
 
   const was = h.qualified;
-  let reason: DigReject = 'ok';
+  let reason: RowReject = 'ok';
   if (!s.tracked) reason = 'untracked';
   else if (s.pinching) reason = 'pinch';
   else if (h.lockout > 0) reason = 'lockout';
+  else if (!(fistReach(s) <= (was ? FIST_REACH_KEEP : FIST_REACH_START))) reason = 'fist';
   else {
-    const cosDown = -s.palmNormal.y; // 1 = palm straight down
-    if (!(cosDown >= (was ? COS_KEEP : COS_START))) reason = 'palm';
-    else if (!(dist(s.thumbTip, s.indexTip) >= (was ? OPEN_PINCH_KEEP : OPEN_PINCH_START))) reason = 'open';
-    else if (!(fingerReach(s) >= (was ? OPEN_REACH_KEEP : OPEN_REACH_START))) reason = 'reach';
-    else {
-      const rx = s.wrist.x - head.x;
-      const rz = s.wrist.z - head.z;
-      const front = rx * head.fx + rz * head.fz;
-      const below = head.y - s.wrist.y;
-      if (!(front >= FRONT_MIN && front <= FRONT_MAX && below >= BELOW_EYES_MIN && below <= BELOW_EYES_MAX)) reason = 'zone';
-    }
+    const rx = s.wrist.x - head.x;
+    const rz = s.wrist.z - head.z;
+    const front = rx * head.fx + rz * head.fz;
+    const below = head.y - s.wrist.y;
+    const frontMin = was ? FRONT_MIN_KEEP : FRONT_MIN_START;
+    const frontMax = was ? FRONT_MAX_KEEP : FRONT_MAX_START;
+    const belowMin = was ? BELOW_EYES_MIN_KEEP : BELOW_EYES_MIN_START;
+    const belowMax = was ? BELOW_EYES_MAX_KEEP : BELOW_EYES_MAX_START;
+    if (!(front >= frontMin && front <= frontMax && below >= belowMin && below <= belowMax)) reason = 'zone';
   }
   h.reason = reason;
   h.qualified = reason === 'ok';
@@ -216,7 +213,7 @@ export function judgeHand(h: DigHandState, s: Readonly<DigHandSample>, head: Rea
  * Measures the stroke of a qualified hand: the speed of the wrist towards the body (along -forward) and sideways, smoothed.
  * Sets `stroking`. Returns the backward speed that counts (0 when the hand does not stroke).
  */
-function measureStroke(h: DigHandState, s: Readonly<DigHandSample>, head: Readonly<DigHead>, dt: number): number {
+function measureStroke(h: RowHandState, s: Readonly<RowHandSample>, head: Readonly<RowHead>, dt: number): number {
   const x = s.wrist.x;
   const z = s.wrist.z;
   if (!h.hasPrev) {
@@ -251,11 +248,11 @@ function measureStroke(h: DigHandState, s: Readonly<DigHandSample>, head: Readon
  * One frame. Judges both hands, adds the stroke (when BOTH hands stroke, the slower one counts) to the speed and lets the speed
  * decay. Returns the new speed. `dt` is in seconds; a non-positive or non-finite one changes nothing.
  */
-export function updateDig(
-  state: DigState,
-  left: Readonly<DigHandSample>,
-  right: Readonly<DigHandSample>,
-  head: Readonly<DigHead>,
+export function updateRow(
+  state: RowState,
+  left: Readonly<RowHandSample>,
+  right: Readonly<RowHandSample>,
+  head: Readonly<RowHead>,
   dt: number,
 ): number {
   if (!(dt > 0) || !Number.isFinite(dt) || !Number.isFinite(head.fx + head.fz + head.x + head.y + head.z)) return state.speed;

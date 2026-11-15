@@ -59,7 +59,7 @@ export type ViewState =
   | { readonly kind: 'tabletop' }
   | { readonly kind: 'viewpoint'; readonly id: string }
   /**
-   * Walking inside the model with the "dig" gesture (plan docs/plans/WALK.md): the plan position of the body, metres, and the
+   * Walking inside the model with the "row" gesture (plan docs/plans/WALK.md): the plan position of the body, metres, and the
    * direction it faces (viewpoint convention: 0 = towards -z, clockwise seen from above, degrees). Additive: an older save has none.
    */
   | { readonly kind: 'walk'; readonly x: number; readonly z: number; readonly yawDeg: number };

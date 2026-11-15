@@ -180,12 +180,12 @@ export const strings = {
   viewpoint: {
     tabletopButton: 'Tabletop',
   },
-  /** Walking inside the model with the dig gesture (plan docs/plans/WALK.md). */
+  /** Walking inside the model with the row gesture (plan docs/plans/WALK.md). */
   walk: {
     /** The fixed button beside the model that takes the user inside it. */
     button: 'Walk inside',
     /** The first time: how to walk. Plain ASCII, one short line. */
-    hint: 'Dig with both hands, palms down, to walk',
+    hint: 'Row with both fists to walk',
     /** Hand joints are not available (controllers only): the walk cannot be driven, so the user stays at the table. */
     needsHands: 'Walking needs hand tracking. Put the controllers down.',
   },

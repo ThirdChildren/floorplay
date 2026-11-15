@@ -351,7 +351,7 @@ async function start(): Promise<void> {
     // after the menu and the grab (their pinch listeners run first) and before the drag (a marker is never a pan).
     const fadeOverlay = createFadeOverlay(world);
     createViewpoint(world, store, result.house, miniature.root, built.entity, fadeOverlay);
-    // Walking inside the model with the dig gesture (plan WALK): after the viewpoint system, which owns the change of view.
+    // Walking inside the model with the row gesture (plan WALK): after the viewpoint system, which owns the change of view.
     createWalk(world, store, result.house, miniature.root.object3D ?? null);
     if (params.debug) attachWalkHook();
     // The pins of the issues (T4.4): one instanced mesh and a light entity per visible issue, after the viewpoint markers.

@@ -4,7 +4,7 @@
 // shown value follows the target quickly when it rises (the edges close before the eyes notice the motion) and slowly when it
 // falls (they open gently after the stop), so a stroke that ends does not make the view flicker.
 
-import { MAX_WALK_SPEED } from './dig-gesture';
+import { MAX_WALK_SPEED } from './row-gesture';
 
 /** Speed (m/s) under which there is no vignette. */
 export const VIGNETTE_MIN_SPEED = 0.05;

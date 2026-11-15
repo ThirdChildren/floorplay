@@ -50,8 +50,8 @@ export function setTransitionFlag(value: boolean): void {
 }
 
 /**
- * True while the user walks inside the model with the dig gesture (plan docs/plans/WALK.md). Walking is a real-scale view: `realScale`
- * is true too, so every table-top gesture is off; the flag only says that the dig gesture drives the model under the head.
+ * True while the user walks inside the model with the row gesture (plan docs/plans/WALK.md). Walking is a real-scale view: `realScale`
+ * is true too, so every table-top gesture is off; the flag only says that the row gesture drives the model under the head.
  */
 export function isWalking(): boolean {
   return walking;
