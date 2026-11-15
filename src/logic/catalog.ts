@@ -12,6 +12,11 @@ export interface CatalogItem {
   kind: CatalogKind;
   /** [width, depth, height] in metres. */
   size: [number, number, number];
+  /**
+   * Set only by `applyCatalogSizes` (never in the file) when the user changed the size: the size the catalog file gives, in metres.
+   * The glTF model is drawn at that size and scaled to `size`.
+   */
+  defaultSize?: [number, number, number];
   disassemblable: boolean;
   model?: string | null;
   credit?: string | null;

@@ -5,6 +5,70 @@ import { CATEGORY_LABELS, PHRASES } from '../logic/issue-text';
 import { MAX_FILE_BYTES, MAX_HOUSE_FILES, type HouseFileReject } from '../logic/house-file';
 import { formatRoomLabel } from '../logic/room-label';
 
+/**
+ * The start screen of the web page (before the immersive session): plain DOM, not a UIKit panel, so like `houseFileStrings` it is not
+ * part of `strings` (the glyph checks of the panel font do not apply to it).
+ */
+export const introStrings = {
+  title: 'Soglia',
+  tagline: 'Furnish and look after a home, with your hands.',
+  selectedLabel: 'Selected house',
+  noHouse: 'No house is selected.',
+  houseFailed: 'The selected house could not be opened. Load a file or choose another house.',
+  loadingHouse: 'Loading the house...',
+  menuLabel: 'Start menu',
+  loadHouse: 'Load house file',
+  loadHouseHint: 'Choose a .json file with the plan of a house.',
+  furniture: 'Furniture',
+  furnitureHint: 'Change the size of the pieces in the catalog.',
+  enterVr: 'Enter VR',
+  back: 'Back',
+  backApply: 'Apply and go back',
+  housesTitle: 'Load house file',
+  housesIntro: 'The house you select here is the one VR opens.',
+  /** Under the Enter VR button. */
+  enterNote: {
+    loading: 'Getting the house ready...',
+    checking: 'Checking your browser...',
+    ready: 'Opens the tabletop model of the selected house. You only need your hands.',
+    starting: 'Starting VR...',
+    failed: 'VR did not start. Press Enter VR to try again.',
+    'house-missing': 'The selected house could not be opened, so VR cannot start. Choose another house.',
+    'start-failed': 'Something went wrong while starting. Reload the page to try again.',
+    'sizes-unsaved': 'Some furniture sizes could not be saved, so VR uses the catalog sizes.',
+    unsupported: 'This browser cannot start VR. Open this page in the Meta Quest Browser.',
+    'no-api': 'This browser has no WebXR, so VR cannot start. Open this page in the Meta Quest Browser.',
+    error: 'VR could not be checked in this browser. Reload the page or open it in the Meta Quest Browser.',
+  },
+  sizes: {
+    title: 'Furniture sizes',
+    intro: 'Sizes are in centimetres. They are saved in this browser and used for the menu, the model and the collisions.',
+    loading: 'Loading the furniture list...',
+    failed: 'The furniture list could not be loaded.',
+    width: 'Width',
+    depth: 'Depth',
+    height: 'Height',
+    now: (size: string): string => `Now: ${size}`,
+    changed: 'Changed',
+    defaultSize: (size: string): string => `Catalog: ${size}`,
+    range: (min: number, max: number): string => `Allowed ${min} to ${max}`,
+    smaller: (axis: string, name: string): string => `Make the ${axis.toLowerCase()} of the ${name.toLowerCase()} smaller`,
+    larger: (axis: string, name: string): string => `Make the ${axis.toLowerCase()} of the ${name.toLowerCase()} larger`,
+    field: (axis: string, name: string): string => `${axis} of the ${name.toLowerCase()} in centimetres`,
+    resetItem: 'Reset to default',
+    resetAll: 'Reset all to default',
+    resetAllConfirm: 'Press again to reset all',
+    changedCount: (count: number): string => (count === 1 ? '1 piece changed' : `${count} pieces changed`),
+    noneChanged: 'No piece changed',
+    pending: 'Saved. Press "Apply and go back" to use the new sizes.',
+    applying: 'Applying the new sizes...',
+    unsaved: 'This browser cannot save the sizes, so they cannot be applied. Free some browser storage and try again.',
+    notNumber: 'Type a number of centimetres.',
+    tooSmall: (min: number, max: number): string => `Too small. Use ${min} to ${max} cm.`,
+    tooLarge: (min: number, max: number): string => `Too large. Use ${min} to ${max} cm.`,
+  },
+} as const;
+
 /** Why a piece is not valid (D27): short texts shown next to it. */
 const reason = {
   blocksDoor: 'Blocks the door',
@@ -35,6 +99,11 @@ export const houseFileStrings = {
   memoryTag: 'This page only',
   open: 'Open',
   opened: 'Open now',
+  /** The start screen: choosing a house is selecting it for Enter VR. */
+  select: 'Use this house',
+  selected: 'Selected',
+  selectedNow: 'Selected house',
+  loadedSelecting: (title: string): string => `Loaded: ${title}. Selecting it...`,
   load: 'Load house file',
   dropHint: 'or drop a .json file on this page',
   remove: 'Remove',

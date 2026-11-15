@@ -26,6 +26,7 @@ import {
 } from '@iwsdk/core';
 import { slog, swarn } from '../log';
 import type { CatalogItem } from '../logic/catalog';
+import { modelScale } from '../logic/catalog-sizes';
 import type { OutlineKind } from '../logic/furniture-diff';
 import { palette } from './theme';
 
@@ -42,6 +43,7 @@ export const modelAssetId = (catalogId: string): string => `furniture-${catalogI
 
 interface PieceUserData {
   outline: Mesh;
+  body: Object3D;
 }
 
 export class FurnitureVisuals {
@@ -103,8 +105,18 @@ export class FurnitureVisuals {
     const frame = new Mesh(this.frame(item.size[0], item.size[1]), this.redMaterial);
     frame.visible = false;
     group.add(frame);
-    (group.userData as PieceUserData).outline = frame;
+    const userData = group.userData as PieceUserData;
+    userData.outline = frame;
+    userData.body = body;
     return group;
+  }
+
+  /** The size of the drawn body of a piece made by `create`, in cm (width, depth, height): for the log of resized pieces. */
+  measureBody(group: Object3D): [number, number, number] | null {
+    const body = (group.userData as Partial<PieceUserData>).body;
+    if (!body) return null;
+    const size = new Box3().setFromObject(body).getSize(new Vector3());
+    return [Math.round(size.x * 100), Math.round(size.z * 100), Math.round(size.y * 100)];
   }
 
   /** Shows the frame in the colour of `kind` (`none` hides it). */
@@ -146,10 +158,23 @@ export class FurnitureVisuals {
   private createBody(item: CatalogItem): Object3D {
     if (this.modelReady.has(item.id)) {
       const gltf = AssetManager.getGLTF(modelAssetId(item.id));
-      if (gltf) return gltf.scene;
+      if (gltf) return this.scaled(item, gltf.scene);
       swarn(`furniture model missing from the cache ${item.id}: using a block`);
     }
     return this.createBlock(item);
+  }
+
+  /**
+   * The model is drawn at the size of the catalog file. When the user changed the size of the item (`defaultSize` is set), it goes
+   * inside a group that stretches it to the new width, depth and height: same shared geometry and materials, no new draw call.
+   */
+  private scaled(item: CatalogItem, scene: Object3D): Object3D {
+    if (!item.defaultSize) return scene;
+    const [sx, sy, sz] = modelScale(item);
+    const holder = new Group();
+    holder.scale.set(sx, sy, sz);
+    holder.add(scene);
+    return holder;
   }
 
   private createBlock(item: CatalogItem): Group {
@@ -176,7 +201,8 @@ export class FurnitureVisuals {
 
   private checkSize(item: CatalogItem, scene: Object3D): void {
     const size = new Box3().setFromObject(scene).getSize(new Vector3());
-    const [w, d, h] = item.size;
+    // The model is made at the size of the catalog file, whatever size the user chose for the item.
+    const [w, d, h] = item.defaultSize ?? item.size;
     if (
       Math.abs(size.x - w) > SIZE_TOLERANCE ||
       Math.abs(size.z - d) > SIZE_TOLERANCE ||
