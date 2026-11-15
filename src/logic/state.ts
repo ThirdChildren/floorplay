@@ -57,9 +57,17 @@ export interface FurnitureSnapshot {
  */
 export type ViewState =
   | { readonly kind: 'tabletop' }
-  | { readonly kind: 'viewpoint'; readonly id: string };
+  | { readonly kind: 'viewpoint'; readonly id: string }
+  /**
+   * Walking inside the model with the "row" gesture (plan docs/plans/WALK.md): the plan position of the body, metres, and the
+   * direction it faces (viewpoint convention: 0 = towards -z, clockwise seen from above, degrees). Additive: an older save has none.
+   */
+  | { readonly kind: 'walk'; readonly x: number; readonly z: number; readonly yawDeg: number };
 
 export const TABLETOP_VIEW: ViewState = { kind: 'tabletop' };
+
+/** A saved walk position beyond this many metres from the plan origin is not believed. */
+const WALK_COORD_LIMIT = 1000;
 
 const VIEWPOINT_ID_PATTERN = /^[A-Za-z0-9._-]+$/;
 
@@ -67,6 +75,13 @@ const VIEWPOINT_ID_PATTERN = /^[A-Za-z0-9._-]+$/;
 export function isViewState(v: unknown): v is ViewState {
   if (!isRecord(v)) return false;
   if (v.kind === 'tabletop') return true;
+  if (v.kind === 'walk') {
+    return (
+      typeof v.x === 'number' && Number.isFinite(v.x) && Math.abs(v.x) <= WALK_COORD_LIMIT &&
+      typeof v.z === 'number' && Number.isFinite(v.z) && Math.abs(v.z) <= WALK_COORD_LIMIT &&
+      typeof v.yawDeg === 'number' && Number.isFinite(v.yawDeg) && Math.abs(v.yawDeg) <= 360
+    );
+  }
   return (
     v.kind === 'viewpoint' &&
     typeof v.id === 'string' &&
@@ -77,12 +92,16 @@ export function isViewState(v: unknown): v is ViewState {
 
 /** True when both views are the tabletop, or the same viewpoint. */
 export function sameView(a: ViewState, b: ViewState): boolean {
-  return a.kind === 'tabletop' ? b.kind === 'tabletop' : b.kind === 'viewpoint' && a.id === b.id;
+  if (a.kind === 'tabletop') return b.kind === 'tabletop';
+  if (a.kind === 'walk') return b.kind === 'walk' && a.x === b.x && a.z === b.z && a.yawDeg === b.yawDeg;
+  return b.kind === 'viewpoint' && a.id === b.id;
 }
 
 /** A view copy that keeps only the known keys (so an extra key in saved text never reaches the store). */
 function cleanView(v: ViewState): ViewState {
-  return v.kind === 'viewpoint' ? { kind: 'viewpoint', id: v.id } : TABLETOP_VIEW;
+  if (v.kind === 'viewpoint') return { kind: 'viewpoint', id: v.id };
+  if (v.kind === 'walk') return { kind: 'walk', x: v.x, z: v.z, yawDeg: v.yawDeg };
+  return TABLETOP_VIEW;
 }
 
 export interface AppState {

@@ -37,8 +37,11 @@ export function formatMrView(view: RoomView): string {
 // --- The toggle button -------------------------------------------------------------------------------------------------------
 
 export const ROOM_BUTTON_ID = 'ui:room-button';
-/** Size of the panel in UIKit units (centimetres); the pick rectangle is the same size. "My room" in bold at 2.4 cm is about 9 cm wide. */
-export const ROOM_BUTTON_PANEL = { width: 12, height: 5 } as const;
+/**
+ * Size of the panel in UIKit units (centimetres); the pick rectangle is the same size. "My room" in bold at 2.4 cm is about 9 cm wide.
+ * 6 cm tall like every floor of the fixed column, where the toggle sits in the model view (`roomButtonSlots`, src/logic/menu-button.ts).
+ */
+export const ROOM_BUTTON_PANEL = { width: 12, height: 6 } as const;
 export const ROOM_BUTTON_HALF_WIDTH = ROOM_BUTTON_PANEL.width / 200;
 export const ROOM_BUTTON_HALF_HEIGHT = ROOM_BUTTON_PANEL.height / 200;
 /** Distance in front of the head along the horizontal gaze, metres. */
@@ -65,7 +68,7 @@ const EPS = 1e-9;
 
 /** The `Menu` button beside the toggle: opens and closes the pinned menu with one hand in the room view. */
 export const ROOM_MENU_BUTTON_ID = 'ui:room-menu-button';
-export const ROOM_MENU_BUTTON_PANEL = { width: 8, height: 5 } as const;
+export const ROOM_MENU_BUTTON_PANEL = { width: 8, height: 6 } as const;
 export const ROOM_MENU_BUTTON_HALF_WIDTH = ROOM_MENU_BUTTON_PANEL.width / 200;
 /** Gap between the two buttons, metres. */
 export const ROOM_BUTTONS_GAP = 0.01;

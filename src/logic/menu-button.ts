@@ -14,6 +14,7 @@
 // The table in tests/unit/menu-button.test.ts gives distance and angle for scale 0.03-0.12 and for heads at 1.2-1.9 m.
 
 import { PICK_DEPTH } from './menu';
+import { ROOM_BUTTON_HALF_WIDTH, ROOM_BUTTON_ID } from './room-view';
 import { getTuning, TUNING_DEFAULTS } from './tuning';
 import { BASE_ABOVE } from './miniature-pan';
 import { SCALE } from './state';
@@ -364,4 +365,31 @@ export function widenButtons(buttons: ButtonPair, halfWidth: number, factor: num
 /** Body of the `view button view` log line: `view button view distance=0.715 angleDeg=37.6`. */
 export function formatViewButtonView(view: Readonly<ButtonView>): string {
   return `view button view distance=${view.distance.toFixed(3)} angleDeg=${view.angleDeg.toFixed(1)}`;
+}
+
+// --- The "My room" toggle, fourth floor of the column (mixed reality mode, plan MR) ---------------------------------------------
+
+/** Size of the "My room" toggle in UIKit units (centimetres): 12 x 6, as tall as the other floors of the column. */
+export const ROOM_COLUMN_BUTTON_HALF_WIDTH = ROOM_BUTTON_HALF_WIDTH;
+/** The toggle is this much higher than the "View" button below it (centre to centre, metres): 1 cm free between the rectangles. */
+export const ROOM_COLUMN_BUTTON_LIFT = 0.07;
+
+/**
+ * Places the two "My room" slots above the two "View" buttons in `view` (already placed by `viewButtonAnchors`): the same ring
+ * position and the same yaw, ROOM_COLUMN_BUTTON_LIFT higher. The panel itself is one (`ui:room-button`, src/systems/room-view.ts): only the
+ * slot of the side that is shown is used. Writes into `out` and returns it.
+ */
+export function roomButtonSlots(view: Readonly<ButtonPair>, out: ButtonPair = createButtonPair()): ButtonPair {
+  for (let i = 0; i < 2; i += 1) {
+    const side: ButtonSide = i === 0 ? 'left' : 'right';
+    const button = out[i];
+    button.id = ROOM_BUTTON_ID;
+    button.side = side;
+    button.x = view[i].x;
+    button.y = view[i].y + ROOM_COLUMN_BUTTON_LIFT;
+    button.z = view[i].z;
+    button.yawRad = view[i].yawRad;
+    button.halfWidth = ROOM_COLUMN_BUTTON_HALF_WIDTH;
+  }
+  return out;
 }
