@@ -116,6 +116,13 @@ Guida passo passo per l'utente (Fedora, adb, certificato, debug remoto, Meta VR 
       ci si gira e diventa rosso sopra un mobile vero; percorso a una mano (`Model`/`Menu`); fps letti sul visore (nessun tetto di 12 pezzi da provare, decisione del 2026-11-14);
       senza `?mr=1` l'app è quella di `main`. Se una prova fallisce, il ramo non si unisce.
 
+## Torna alla schermata iniziale (`Back to home`, 2026-11-15; piano e scenario: `qa/scenarios/HOME-back-to-home.md`)
+- [ ] **`Back to home`** (a destra dell'intestazione del menu, accanto a `Items` e `Mine`): si preme con una mano sola, dal menu
+      sul palmo e da quello fisso, senza prendere per sbaglio una scheda vicina; l'etichetta si legge a 0,5-0,6 m.
+- [ ] La sessione finisce da sola, nel Quest Browser compare la schermata iniziale (Load house file, Furniture, Enter VR) senza
+      ricaricare; `Enter VR` riparte con casa, ruolo, pezzi, segnalazioni e punto di vista come erano.
+- [ ] Da lì si sceglie un'altra casa o si cambiano le misure dei mobili ("Apply and go back"), poi `Enter VR` apre la casa nuova.
+
 ## Strumenti di M6 (fase A implementata il 2026-11-07, **provati solo sul PC**; i dettagli in `docs/QUEST_SETUP.md`, sezione 11)
 - [ ] `?debug=1` mostra nel visore, **solo in sessione**, il pannello `ui:debug-hud` (fps con `OK`/`LOW`/`FAIL`, ms medio/p95/max,
       chiamate e triangoli, fps minimo e frame peggiore, sorgente dei giunti, ultime righe di log; a ~0,8 m e ~36° dalla linea
