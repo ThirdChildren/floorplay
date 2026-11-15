@@ -38,7 +38,8 @@ Vengono dal regolamento ufficiale e dal design. Un task che ne viola una non è 
 1. **Solo mani, dall'inizio alla fine.** Ogni percorso si completa con pizzico e gesti; i
    controller possono funzionare ma non servono mai.
 2. **Da seduti.** Interazioni entro ~60 cm. **Nessuna locomozione a levetta né teletrasporto**:
-   ci si sposta solo tra *punti di vista* con una dissolvenza.
+   ci si sposta tra *punti di vista* con una dissolvenza, oppure camminando dentro il plastico
+   con il gesto "scavare" (due mani, palmi in giù), lento e con vignetta di comfort.
 3. **Prestazioni.** Almeno **60 fps sul Quest** (obiettivo 72). Budget di progetto, da tarare sul
    visore: ≤ 100 draw call, ≤ 150k triangoli visibili, texture ≤ 1024 px, ombre solo dal sole.
 4. **Avvio rapido, pausa e ripresa pulite.** Lo stato si salva da solo; togliendo e rimettendo
@@ -180,7 +181,7 @@ all'utente in italiano cosa è stato fatto e cosa resta.
 ## Cosa non fare
 
 - Aggiungere dipendenze pesanti senza chiedere all'utente.
-- Introdurre locomozione a levetta, teletrasporto, interazioni che richiedono il controller.
+- Introdurre locomozione a levetta, teletrasporto (la camminata col gesto "scavare" della regola 2 è l'unica eccezione), interazioni che richiedono il controller.
 - Scrivere testo italiano nell'interfaccia o nei dati.
 - Usare asset senza licenza CC0 verificata o con marchi riconoscibili.
 - Segnare un gate come superato senza il report che lo dimostra.
