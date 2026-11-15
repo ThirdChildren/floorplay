@@ -182,11 +182,9 @@ export const strings = {
   },
   /** Walking inside the model with the row gesture (plan docs/plans/WALK.md). */
   walk: {
-    /** The fixed button beside the model that takes the user inside it. */
-    button: 'Walk inside',
-    /** The first time: how to walk. Plain ASCII, one short line. */
+    /** The first three viewpoint entries: how to walk. Plain ASCII, one short line. */
     hint: 'Row with both fists to walk',
-    /** Hand joints are not available (controllers only): the walk cannot be driven, so the user stays at the table. */
+    /** Hand joints are not available (controllers only): the walk cannot be driven; the viewpoints still work. */
     needsHands: 'Walking needs hand tracking. Put the controllers down.',
   },
   /** The mixed reality mode (`?mr=1`, plan MR): the toggle between the model and the real room, and the card of a real object. */

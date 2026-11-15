@@ -10,7 +10,7 @@
 // The "Issues" buttons (T4.6a, D47) are two more panels, 7 cm above the "Menu" ones (`ui:issue-button-left/-right`): same place on
 // the ring, same yaw, 9 x 6 cm, and a pinch on one opens (or closes) the Issues panel instead of the menu.
 //
-// In the mixed reality mode (`?mr=1`) the column has a fifth floor, the "My room" toggle (`ui:room-button`, 12 x 6 cm, 7 cm above "Walk inside"):
+// In the mixed reality mode (`?mr=1`) the column has a fourth floor, the "My room" toggle (`ui:room-button`, 12 x 6 cm, 7 cm above "View"):
 // this system only computes its slot (`roomButtonSlots`) and shares it with the room view system (`button-column.ts`), which owns the panel
 // and the pinch on it.
 //
@@ -37,7 +37,6 @@ import {
   ISSUE_BUTTON_IDS,
   MENU_BUTTON_IDS,
   VIEW_BUTTON_IDS,
-  WALK_BUTTON_IDS,
   buttonAnchors,
   buttonView,
   createButtonPair,
@@ -51,13 +50,11 @@ import {
   pickButton,
   sideIndex,
   viewButtonAnchors,
-  walkButtonAnchors,
   widenButtons,
   BUTTON_HALF_WIDTH,
   ISSUE_BUTTON_HALF_WIDTH,
   ROOM_COLUMN_BUTTON_HALF_WIDTH,
   VIEW_BUTTON_HALF_WIDTH,
-  WALK_BUTTON_HALF_WIDTH,
   type ButtonAnchor,
   type ButtonView,
 } from '../logic/menu-button';
@@ -72,7 +69,6 @@ import { getMiniatureAnchor, getMiniatureAnchorYaw } from './miniature';
 import { closeIssuePanel, isIssuePanelOpen, openIssuePanel } from './issue-panel';
 import { closeMenu, getMenuMode, openPinnedMenu } from './palm-menu';
 import { closeViewPanel, isViewPanelOpen, openViewPanel } from './view-panel';
-import { requestWalk } from './viewpoint';
 import { onPinchStart, pinchClaims, pinchPoint, type Hand } from './pinch-input';
 import { isModelHidden } from './view-mode';
 
@@ -84,8 +80,6 @@ interface MenuButtonContext {
   issuePanels: readonly [MenuButtonPanel, MenuButtonPanel];
   /** The two "View" buttons above those (T5.5), left first. */
   viewPanels: readonly [MenuButtonPanel, MenuButtonPanel];
-  /** The two "Walk inside" buttons at the top (plan WALK), left first. */
-  walkPanels: readonly [MenuButtonPanel, MenuButtonPanel];
 }
 
 // Shared with the system, which has no constructor arguments: set by `createMenuButton`.
@@ -107,10 +101,6 @@ export function createMenuButton(world: World, store: Store): void {
       new MenuButtonPanel(world, VIEW_BUTTON_IDS.left, strings.view.button, 'view'),
       new MenuButtonPanel(world, VIEW_BUTTON_IDS.right, strings.view.button, 'view'),
     ],
-    walkPanels: [
-      new MenuButtonPanel(world, WALK_BUTTON_IDS.left, strings.walk.button, 'walk'),
-      new MenuButtonPanel(world, WALK_BUTTON_IDS.right, strings.walk.button, 'walk'),
-    ],
   };
   world.registerSystem(MenuButtonSystem);
 }
@@ -124,13 +114,12 @@ export class MenuButtonSystem extends createSystem({
   private readonly buttons = createButtonPair();
   private readonly issueButtons = createButtonPair();
   private readonly viewButtons = createButtonPair();
-  private readonly walkButtons = createButtonPair();
-  /** Where the "My room" toggle goes (the fifth floor); the panel is the room view system's. */
+  /** Where the "My room" toggle goes (the fourth floor); the panel is the room view system's. */
   private readonly roomSlots = createButtonPair();
-  /** The pick targets of each side (left, right): four floors each, disjoint (each is 1 cm above the one below); the objects are shared with the pairs above. */
+  /** The pick targets of each side (left, right): three floors each, disjoint (each is 1 cm above the one below); the objects are shared with the pairs above. */
   private readonly targets: readonly [readonly ButtonAnchor[], readonly ButtonAnchor[]] = [
-    [this.buttons[0], this.issueButtons[0], this.viewButtons[0], this.walkButtons[0]],
-    [this.buttons[1], this.issueButtons[1], this.viewButtons[1], this.walkButtons[1]],
+    [this.buttons[0], this.issueButtons[0], this.viewButtons[0]],
+    [this.buttons[1], this.issueButtons[1], this.viewButtons[1]],
   ];
   private readonly view: ButtonView = { distance: 0, angleDeg: 180 };
   private readonly anchor = { x: 0, y: 0, z: 0 };
@@ -154,7 +143,6 @@ export class MenuButtonSystem extends createSystem({
       ctx.panels[i].prepare();
       ctx.issuePanels[i].prepare();
       ctx.viewPanels[i].prepare();
-      ctx.walkPanels[i].prepare();
     }
 
     const head = this.world.player.head;
@@ -165,7 +153,6 @@ export class MenuButtonSystem extends createSystem({
         ctx.panels[i].place(0, 0, 0, 0, false);
         ctx.issuePanels[i].place(0, 0, 0, 0, false);
         ctx.viewPanels[i].place(0, 0, 0, 0, false);
-        ctx.walkPanels[i].place(0, 0, 0, 0, false);
       }
       this.loggedScale = Number.NaN; // the next session logs its view again
       clearButtonColumn();
@@ -180,14 +167,12 @@ export class MenuButtonSystem extends createSystem({
     faceHead(this.buttons, this.headPosition);
     issueButtonAnchors(this.buttons, this.issueButtons);
     viewButtonAnchors(this.issueButtons, this.viewButtons);
-    walkButtonAnchors(this.viewButtons, this.walkButtons);
-    roomButtonSlots(this.walkButtons, this.roomSlots);
+    roomButtonSlots(this.viewButtons, this.roomSlots);
     // With large text the boxes are wider (their text is 3.0 cm), and so are the rectangles of the pinch.
     const widen = isLargeText() ? LARGE_TEXT_FACTOR : 1;
     widenButtons(this.buttons, BUTTON_HALF_WIDTH, widen);
     widenButtons(this.issueButtons, ISSUE_BUTTON_HALF_WIDTH, widen);
     widenButtons(this.viewButtons, VIEW_BUTTON_HALF_WIDTH, widen);
-    widenButtons(this.walkButtons, WALK_BUTTON_HALF_WIDTH, widen);
     widenButtons(this.roomSlots, ROOM_COLUMN_BUTTON_HALF_WIDTH, widen);
     // One side only: the buttons of the other hand are hidden.
     const shown = sideIndex(menuButtonSide(ctx.store.get().prefs.leftHandMenu));
@@ -199,11 +184,9 @@ export class MenuButtonSystem extends createSystem({
       ctx.issuePanels[i].place(c.x, c.y, c.z, c.yawRad, on);
       const v = this.viewButtons[i];
       ctx.viewPanels[i].place(v.x, v.y, v.z, v.yawRad, on);
-      const w = this.walkButtons[i];
-      ctx.walkPanels[i].place(w.x, w.y, w.z, w.yawRad, on);
     }
     // The pinned menu keeps clear of the column of the shown side (src/logic/menu-follow.ts).
-    setButtonColumn(this.buttons[shown], this.issueButtons[shown], this.viewButtons[shown], shown === 1 ? 'right' : 'left', this.walkButtons[shown], this.roomSlots[shown]);
+    setButtonColumn(this.buttons[shown], this.issueButtons[shown], this.viewButtons[shown], shown === 1 ? 'right' : 'left', this.roomSlots[shown]);
     this.logView(head);
   }
 
@@ -231,24 +214,14 @@ export class MenuButtonSystem extends createSystem({
     if (!hit) return;
     const isIssues = hit === this.issueButtons[0] || hit === this.issueButtons[1];
     const isView = hit === this.viewButtons[0] || hit === this.viewButtons[1];
-    const isWalk = hit === this.walkButtons[0] || hit === this.walkButtons[1];
     // With a piece in the hand the buttons do not react: the pinch of the other hand rotates the piece.
     if (pinchClaims.anyClaimed('furniture')) {
-      slog(`${isIssues ? 'issue' : isView ? 'view' : isWalk ? 'walk' : 'menu'} button ignored id=${hit.id} hand=${hand} reason=piece-held`);
+      slog(`${isIssues ? 'issue' : isView ? 'view' : 'menu'} button ignored id=${hit.id} hand=${hand} reason=piece-held`);
       return;
     }
     // The menu has the highest priority: this only fails if the menu already owns the hand (checked above).
     // The Rotate button comes first (T5.14): a pinch that pressed it is not a second press on a control under it.
     if (pinchClaims.ownerOf(hand) === 'menu' || !pinchClaims.claim(hand, 'menu')) return;
-    if (isWalk) {
-      // Walk inside: closes the panels that are open and starts the fade into the model (src/systems/viewpoint.ts).
-      slog(`walk button pressed id=${hit.id} hand=${hand}`);
-      closeMenu('button');
-      closeIssuePanel('button');
-      closeViewPanel('button');
-      if (!requestWalk('button')) pinchClaims.release(hand, 'menu');
-      return;
-    }
     if (isView) {
       // The View panel toggles like the Issues panel; opening it closes the menu and the Issues panel that are open.
       slog(`view button pressed id=${hit.id} hand=${hand}`);

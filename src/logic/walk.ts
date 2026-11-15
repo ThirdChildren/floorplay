@@ -1,11 +1,11 @@
-// Walking inside the tabletop model (plan docs/plans/WALK.md): the body, the walls it cannot cross, the step and the pose of the
+// Walking inside the model at real scale (plan docs/plans/WALK.md): the body, the walls it cannot cross, the step and the pose of the
 // model around the head. Pure logic: no imports from @iwsdk/core or three.
 //
 // THE IDEA. Like the viewpoints (D35) the head never moves: the model is shown at real scale (perceived scale 1, the user
 // is "small inside the 1:20 model" and the model is shown 20 times larger around them) and walking moves the MODEL under the
 // head. The state is the plan position `P` of the body (metres, the plan of the house file). The root of the model is placed so
-// that `P` is under the reference head position `ref` (the head when the walk started), with the floor `WALK_EYE_HEIGHT` below
-// the eyes; leaning moves the head from `ref`, not `P`.
+// that `P` is under the reference head position `ref` (the head when the walk started), with the floor `eye` (the eye height of the
+// viewpoint) below the eyes; leaning moves the head from `ref`, not `P`.
 //
 // COLLISIONS. The body is a circle (BODY_RADIUS) on the plan. The solid things are the solid pieces of every wall (walls split
 // at their DOORS, `wallPieces`: doors are gaps; windows stay solid) plus a closed "plug" in each door that leads outside (the
@@ -17,9 +17,13 @@ import { doorZone, wallPieces, type Rect } from './footprint';
 import { planBox } from './house-layout';
 import { REAL_SCALE } from './real-scale';
 import type { MiniatureRoot } from './furniture-pose';
+import { DEFAULT_EYE_HEIGHT } from './viewpoint-pose';
 
-/** Eyes above the floor of the model at the perceived scale, metres: a standing person (the model is at real size around the head). */
-export const WALK_EYE_HEIGHT = 1.6;
+/**
+ * Eyes above the floor of the model at the perceived scale, metres: seated, as at a viewpoint (the model is at real size around the
+ * head). A walk that starts at a viewpoint keeps the eye height of that viewpoint; one restored from the saved `walk` view uses this.
+ */
+export const WALK_EYE_HEIGHT = DEFAULT_EYE_HEIGHT;
 /** Radius of the body on the plan, metres (a doorway of 0.75 m leaves 0.31 m of play). */
 export const BODY_RADIUS = 0.22;
 /** A step is cut into pieces of at most this length so a fast frame cannot jump across a wall (metres; walls are 0.1 m thick). */
@@ -183,10 +187,12 @@ export interface WalkReference {
   hy: number;
   hz: number;
   yawRad: number;
+  /** Eyes above the floor of the model, metres (`WALK_EYE_HEIGHT`, or the eye height of the viewpoint the walk started at). */
+  eye: number;
 }
 
 /**
- * Pose of `miniature:root` that puts the plan point (`px`, `pz`) under the head of `ref` with the floor `WALK_EYE_HEIGHT` below
+ * Pose of `miniature:root` that puts the plan point (`px`, `pz`) under the head of `ref` with the floor `ref.eye` below
  * it: `root_xz = head_xz - R(yaw) (P - centre)`, with R as in `viewpointRoot` (src/logic/viewpoint-pose.ts). Writes into `out`.
  */
 export function walkRoot(
@@ -201,7 +207,7 @@ export function walkRoot(
   const a = px - center[0];
   const b = pz - center[1];
   out.x = ref.hx - (a * c + b * s);
-  out.y = ref.hy - WALK_EYE_HEIGHT;
+  out.y = ref.hy - ref.eye;
   out.z = ref.hz - (-a * s + b * c);
   out.yawRad = ref.yawRad;
   out.scale = REAL_SCALE;

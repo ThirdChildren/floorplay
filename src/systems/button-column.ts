@@ -1,4 +1,4 @@
-// The column of fixed buttons beside the model (Menu, Issues, View, Walk inside and, in mixed reality, My room: the side of the hand preference), as the pinned menu needs to know it
+// The column of fixed buttons beside the model (Menu, Issues, View and, in mixed reality, My room: the side of the hand preference), as the pinned menu needs to know it
 // to keep clear of it (src/logic/menu-follow.ts). Written each frame by the Menu button system, read by the palm menu system. Not an ECS
 // system: a tiny shared record, so the two systems do not import each other. Nothing here allocates.
 
@@ -21,11 +21,10 @@ export function setButtonColumn(
   issues: Readonly<ButtonAnchor>,
   view: Readonly<ButtonAnchor>,
   side: 'left' | 'right',
-  walk?: Readonly<ButtonAnchor>,
   room?: Readonly<ButtonAnchor>,
 ): void {
   const roomOn = room !== undefined && roomSlotEnabled;
-  fillButtonColumn(column, menu, issues, view, walk, roomOn ? room : undefined);
+  fillButtonColumn(column, menu, issues, view, roomOn ? room : undefined);
   if (roomOn && room) {
     roomSlot.id = room.id;
     roomSlot.side = room.side;

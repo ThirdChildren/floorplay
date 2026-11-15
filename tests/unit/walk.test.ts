@@ -17,7 +17,7 @@ import {
   type WalkStep,
   type WalkWorld,
 } from '../../src/logic/walk';
-import { viewpointRoot } from '../../src/logic/viewpoint-pose';
+import { DEFAULT_EYE_HEIGHT, eyeHeightOf, viewpointRoot } from '../../src/logic/viewpoint-pose';
 import { planCenter } from '../../src/logic/house-layout';
 import { loadJson } from '../helpers/load-json';
 
@@ -263,13 +263,56 @@ describe('integration: speed to distance', () => {
   });
 });
 
+describe('a walk that starts at a viewpoint (walking is on in every real-scale view)', () => {
+  const center = planCenter(houseA);
+  const head = { x: 0.1, y: 1.25, z: -0.3, yawDeg: -40 };
+  const rootAt = (position: readonly [number, number], yawDeg: number, eye: number): ReturnType<typeof walkRoot> => {
+    const yawRad = ((yawDeg + head.yawDeg) * Math.PI) / 180;
+    return walkRoot(position[0], position[1], center, { hx: head.x, hy: head.y, hz: head.z, yawRad, eye }, { x: 0, y: 0, z: 0, yawRad: 0, scale: 0 });
+  };
+
+  it('the seated walk eye height is the viewpoint default, so a restored walk keeps the floor where the viewpoints put it', () => {
+    expect(WALK_EYE_HEIGHT).toBe(DEFAULT_EYE_HEIGHT);
+  });
+
+  it('puts the model exactly where the viewpoint pose did, for each viewpoint of every demo house, with its own eye height', () => {
+    for (const house of [houseA, houseB]) {
+      for (const v of house.viewpoints) {
+        const eye = eyeHeightOf(v);
+        const expected = viewpointRoot(v, planCenter(house), head);
+        const yawRad = ((v.yawDeg ?? 0) + head.yawDeg) * (Math.PI / 180);
+        const got = walkRoot(v.position[0], v.position[1], planCenter(house), { hx: head.x, hy: head.y, hz: head.z, yawRad, eye }, { x: 0, y: 0, z: 0, yawRad: 0, scale: 0 });
+        expect(got.x).toBeCloseTo(expected.x, 9);
+        expect(got.y).toBeCloseTo(expected.y, 9);
+        expect(got.z).toBeCloseTo(expected.z, 9);
+        expect(got.yawRad).toBeCloseTo(expected.yawRad, 9);
+      }
+    }
+  });
+
+  it('an eye height of 1.5 m puts the floor 1.5 m under the head', () => {
+    expect(rootAt(houseA.viewpoints[0].position, 0, 1.5).y).toBeCloseTo(head.y - 1.5, 12);
+  });
+
+  it('a viewpoint marker is already on a free spot of its house: entering it does not move the body', () => {
+    for (const house of [houseA, houseB]) {
+      const world = buildWalkWorld(house);
+      for (const v of house.viewpoints) {
+        const free = freeSpot(v.position[0], v.position[1], world, at(0, 0));
+        expect(free.x).toBeCloseTo(v.position[0], 9);
+        expect(free.z).toBeCloseTo(v.position[1], 9);
+      }
+    }
+  });
+});
+
 describe('walkRoot: the model around the head', () => {
   it('puts the point P under the head with the floor one eye height down, as a viewpoint does', () => {
     const v1 = houseA.viewpoints[0];
     const center = planCenter(houseA);
     const head = { x: 0.3, y: 1.3, z: -0.2, yawDeg: 25 };
     const ref = viewpointRoot({ ...v1, eyeHeight: WALK_EYE_HEIGHT }, center, head);
-    const root = walkRoot(v1.position[0], v1.position[1], center, { hx: head.x, hy: head.y, hz: head.z, yawRad: ref.yawRad }, { x: 0, y: 0, z: 0, yawRad: 0, scale: 0 });
+    const root = walkRoot(v1.position[0], v1.position[1], center, { hx: head.x, hy: head.y, hz: head.z, yawRad: ref.yawRad, eye: WALK_EYE_HEIGHT }, { x: 0, y: 0, z: 0, yawRad: 0, scale: 0 });
     expect(root.x).toBeCloseTo(ref.x, 9);
     expect(root.y).toBeCloseTo(ref.y, 9);
     expect(root.z).toBeCloseTo(ref.z, 9);
@@ -279,7 +322,7 @@ describe('walkRoot: the model around the head', () => {
 
   it('walking one metre along the gaze moves the root one metre the other way', () => {
     const center = planCenter(houseA);
-    const ref = { hx: 0, hy: 1.3, hz: 0, yawRad: 0 };
+    const ref = { hx: 0, hy: 1.3, hz: 0, yawRad: 0, eye: WALK_EYE_HEIGHT };
     const a = walkRoot(3, 3, center, ref, { x: 0, y: 0, z: 0, yawRad: 0, scale: 1 });
     const b = walkRoot(3, 2, center, ref, { x: 0, y: 0, z: 0, yawRad: 0, scale: 1 }); // 1 m towards -z of the plan = the gaze at yaw 0
     expect(b.z - a.z).toBeCloseTo(1, 9); // the world slides towards the user

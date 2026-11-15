@@ -1,19 +1,21 @@
-// Walking inside the tabletop model with the "row" gesture (plan docs/plans/WALK.md, rule 2).
+// Walking inside the model with the "row" gesture (plan docs/plans/WALK.md, rule 2).
 //
-// The view change itself (the fade, the real-scale look of the model, the store, the way back) is in src/systems/viewpoint.ts: it
-// calls `beginWalk` at the black frame and `endWalk` when the model goes back to the table. This file owns what happens while the
-// user walks:
+// There is no separate way in: walking is on as soon as a viewpoint is entered (a pinch on a blue marker). The view change itself
+// (the fade, the real-scale look of the model, the store, the way back) is in src/systems/viewpoint.ts: it calls `beginWalk` at the
+// black frame of every viewpoint (and of a restored view) and `endWalk` when the model goes back to the table. This file owns what
+// happens while the user is there:
 //   - it reads the joints of both hands each frame (ONE `fillPoses` call per hand: wrist and the four fingertips that tell a fist) and
 //     feeds `updateRow` (src/logic/row-gesture.ts) with them and with the horizontal gaze;
 //   - the speed that comes out moves the body on the plan (`stepWalk`, src/logic/walk.ts: it slides along the walls) and the model
 //     root is placed again so the body stays under the head (the head never moves, rule 2: the MODEL moves);
 //   - the comfort vignette (one head-locked quad) follows the speed;
-//   - the position is written to the store (`view: {kind: 'walk', x, z, yawDeg}`) when the body stops and at most once a second while
-//     it moves, so pause/resume and reload bring the user back to the same spot (plan WALK, decision 3).
-// The hint "Row with both fists to walk" shows the first three times the walk is entered, until the first stroke.
+//   - once the body has really moved, the position is written to the store (`view: {kind: 'walk', x, z, yawDeg}`, which replaces the
+//     `viewpoint` view) when the body stops and at most once a second while it moves, so pause/resume and reload bring the user back to
+//     the same spot (plan WALK, decision 3). A viewpoint that was only looked at stays a `viewpoint` view.
+// The hint "Row with both fists to walk" shows the first three times a viewpoint is entered, until the first stroke.
 //
-// Without hand joints (controllers only, no `XRFrame.fillPoses`) the walk cannot be driven: `requestWalk` says so and does not enter
-// (`[soglia] feature hand joints unavailable`); the Tabletop button and the viewpoints work as always (controllers are never required).
+// Without hand joints (controllers only, no `XRFrame.fillPoses`) the walk cannot be driven: `noticeNoHands` says so, once
+// (`[soglia] feature hand joints unavailable`); the viewpoints and the Tabletop button work as always (controllers are never required).
 //
 // A debug hook behind `?debug=1` (`window.__sogliaWalk`, src/debug/walk-hook.ts) feeds a speed or synthetic hand poses to the same
 // code path: the emulator cannot bend the fingers of a hand without a custom pose.
@@ -116,7 +118,7 @@ const row: RowState = createRow();
 const samples: Record<Hand, RowHandSample> = { left: createRowHandSample(), right: createRowHandSample() };
 const readers: Record<Hand, HandReader> = { left: createReader(), right: createReader() };
 const body: PlanPoint = { x: 0, z: 0 };
-const reference: WalkReference = { hx: 0, hy: 0, hz: 0, yawRad: 0 };
+const reference: WalkReference = { hx: 0, hy: 0, hz: 0, yawRad: 0, eye: WALK_EYE_HEIGHT };
 const rootPose: MiniatureRoot = { x: 0, y: 0, z: 0, yawRad: 0, scale: 1 };
 const stepScratch: PlanPoint = { x: 0, z: 0 };
 const stepResult: WalkStep = { moved: 0, wanted: 0, progress: 1 };
@@ -128,6 +130,9 @@ let lastHeadYawDeg = 0;
 let sinceSave = 0;
 let dirty = false;
 let moved = false;
+/** True once the body has moved since `beginWalk`: only then the position replaces the view in the store. */
+let walked = false;
+let warnedNoHands = false;
 let hintStarted = -1;
 let noticeUntil = -1;
 let warnedFill = false;
@@ -164,38 +169,32 @@ export function hasHandTracking(world: World): boolean {
   return false;
 }
 
-/** Says why the walk was not entered (a short notice in front of the head), once per request. */
+/** Says that walking cannot be driven (a short notice in front of the head); the log line and the notice come once per page. */
 export function noticeNoHands(): void {
+  if (warnedNoHands) return;
+  warnedNoHands = true;
   swarn('feature hand joints unavailable: walking by rowing needs hand tracking');
   noticeUntil = performance.now() / 1000 + NOTICE_SECONDS;
   active?.showNotice(strings.walk.needsHands);
 }
 
-/** The body spot a walk starts at: the first viewpoint of the house (the room it is in, facing where the viewpoint looks). */
-export function startingSpot(house: House): { x: number; z: number; yawDeg: number } {
-  const v = house.viewpoints[0];
-  if (!v) {
-    const b = context?.walkWorld.bounds;
-    return { x: b ? (b.minX + b.maxX) / 2 : 0, z: b ? (b.minZ + b.maxZ) / 2 : 0, yawDeg: 0 };
-  }
-  return { x: v.position[0], z: v.position[1], yawDeg: v.yawDeg ?? 0 };
-}
-
 /**
- * Starts the walk at the plan spot `spot` (on a free place near it) with the head at `head` (world, `yawDeg` the turn of the head, as
- * for a viewpoint): places `root` so the body is under the head, with the floor `WALK_EYE_HEIGHT` below the eyes, and switches the row
- * on (`showHint`: the first entries show the hint, a restore does not). Returns the spot used (the place and the heading to save), or null when the head pose is not usable (nothing changed).
+ * Starts the view at the plan spot `spot` (a viewpoint or a saved walk position, on a free place near it) with the head at `head` (world,
+ * `yawDeg` the turn of the head, as for a viewpoint): places `root` so the body is under the head, with the floor `eye` metres below the
+ * eyes, and switches the row on (`showHint`: a fresh entry of the first three shows the hint, a restore does not). Returns the spot used
+ * (the place and the heading), or null when the head pose is not usable (nothing changed).
  */
 export function beginWalk(
   root: Object3D,
   head: { x: number; y: number; z: number; yawDeg: number },
   spot: { x: number; z: number; yawDeg: number },
-  showHint = true,
+  eye: number = WALK_EYE_HEIGHT,
+  showHint = false,
 ): { x: number; z: number; yawDeg: number } | null {
   const ctx = context;
   if (!ctx) return null;
   const yawRad = (spot.yawDeg + head.yawDeg) * DEG_TO_RAD;
-  if (![head.x, head.y, head.z, yawRad, spot.x, spot.z].every(Number.isFinite)) {
+  if (![head.x, head.y, head.z, yawRad, spot.x, spot.z, eye].every(Number.isFinite)) {
     swarn('walk pose not usable');
     return null;
   }
@@ -206,6 +205,7 @@ export function beginWalk(
   reference.hy = head.y;
   reference.hz = head.z;
   reference.yawRad = yawRad;
+  reference.eye = eye;
   ctx.root = root;
   placeRoot(ctx);
   resetRow(row);
@@ -213,13 +213,14 @@ export function beginWalk(
   sinceSave = 0;
   dirty = false;
   moved = false;
+  walked = false;
   setWalkFlag(true);
   if (showHint) startHint(ctx);
-  slog(`walk started x=${roundMm(body.x)} z=${roundMm(body.z)} yawDeg=${Math.round(spot.yawDeg)} eye=${WALK_EYE_HEIGHT}`);
+  slog(`walk started x=${roundMm(body.x)} z=${roundMm(body.z)} yawDeg=${Math.round(spot.yawDeg)} eye=${eye}`);
   return { x: roundMm(body.x), z: roundMm(body.z), yawDeg: wrapDegrees(spot.yawDeg) };
 }
 
-/** Stops the walk (the model goes back to the table, the session ended): the position is written to the store first when `save` is true. */
+/** Stops the walk (the model goes back to the table, the session ended): the position is written to the store first when `save` is true and the body has moved. */
 export function endWalk(save: boolean): void {
   const ctx = context;
   if (!ctx || !isWalking()) return;
@@ -309,10 +310,12 @@ function placeRoot(ctx: WalkContext): void {
 }
 
 function flushToStore(ctx: WalkContext): void {
-  const spot = walkPosition();
-  ctx.store.dispatch(setView({ kind: 'walk', x: spot.x, z: spot.z, yawDeg: spot.yawDeg }));
   sinceSave = 0;
   dirty = false;
+  // A viewpoint that was only looked at stays a `viewpoint` view: the walk view replaces it only when the body has moved.
+  if (!walked) return;
+  const spot = walkPosition();
+  ctx.store.dispatch(setView({ kind: 'walk', x: spot.x, z: spot.z, yawDeg: spot.yawDeg }));
 }
 
 // --- The hint ------------------------------------------------------------------------------------------------------------------------
@@ -512,6 +515,7 @@ export class WalkSystem extends createSystem({}) {
       if (stepResult.wanted > 0 && stepResult.progress < 0.3) row.speed *= Math.exp(-dt / 0.12);
       placeRoot(ctx);
       moved = true;
+      if (stepResult.moved > 0) walked = true;
       dirty = true;
       sinceSave += dt;
       // The first stroke ends the hint.

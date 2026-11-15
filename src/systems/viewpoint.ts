@@ -9,7 +9,7 @@
 //
 // ENTERING. A pinch whose point is within 0.025 m of a marker claims the hand as `viewpoint` (priority between `furniture`
 // and `two-hands`; refused while a piece is in a hand) and starts the transition: fade out (0.2 s), then, with the screen
-// black, the model is placed at real scale around the head (src/logic/viewpoint-pose.ts: the point of the plan falls
+// black, the model is placed at real scale around the head (src/systems/walk.ts, `walkRoot`: the point of the plan falls
 // under the head, the floor is `eyeHeight` below it), the walls are rebuilt at ceiling height, the table base and the
 // markers are hidden and `AppState.view` becomes `viewpoint`; then fade in (0.2 s). The head never moves (rule 2): the
 // MODEL moves, behind the black. Everything that changes happens in ONE call (`applySwap`), so a fade that is cancelled
@@ -21,6 +21,11 @@
 // within reach (`pickParamsForScale(1)` in the grab). The `miniature` part of the store is NOT touched: going back
 // to the table-top view puts the root back to `anchor + offset` with the stored scale and yaw, so the model is exactly where
 // it was.
+//
+// WALKING. There is no separate way in: every real-scale view is a walk that has not started yet (plan docs/plans/WALK.md). The same swap
+// arms the row gesture of src/systems/walk.ts (both fists pulled back like a rowing stroke): the body moves on the plan along the gaze,
+// with the collisions and the comfort vignette. `AppState.view` is `viewpoint` until the body has really moved; then the walk system writes
+// `walk` (plan position and heading) in its place. A restore of either brings the user back to the spot, without the coach.
 //
 // A SESSION. `view` is saved with the rest of the state. When a session ends the table-top look is restored without
 // touching the store, and when the next session places the model (D3) the saved viewpoint is entered again at once,
@@ -44,7 +49,8 @@ import {
   type MarkerBlock,
   type MarkerCandidate,
 } from '../logic/viewpoint-markers';
-import { viewpointRoot, eyeHeightOf } from '../logic/viewpoint-pose';
+import { eyeHeightOf } from '../logic/viewpoint-pose';
+import { WALK_EYE_HEIGHT } from '../logic/walk';
 import { createInstancedMarkers, type InstancedMarkers } from '../ui/instanced-markers';
 import type { FadeOverlay } from '../ui/fade-overlay';
 import { palette } from '../ui/theme';
@@ -53,8 +59,8 @@ import { endMiniatureGesture } from './miniature-gesture';
 import { endMiniaturePan } from './miniature-pan';
 import { onMiniatureReplaced, setPlinthVisible, syncMiniature } from './miniature';
 import { onPinchStart, pinchClaims, pinchPoint, type Hand } from './pinch-input';
-import { isRealScale, isRoomView, isTabletopLocked, setRealScaleFlag, setTransitionFlag } from './view-mode';
-import { beginWalk, endWalk, hasHandTracking, noticeNoHands, startingSpot } from './walk';
+import { isRealScale, isTabletopLocked, setRealScaleFlag, setTransitionFlag } from './view-mode';
+import { beginWalk, endWalk, hasHandTracking, noticeNoHands } from './walk';
 
 const DEG_TO_RAD = Math.PI / 180;
 const RAD_TO_DEG = 180 / Math.PI;
@@ -96,7 +102,6 @@ const head = new Vector3();
 const headQuaternion = new Quaternion();
 const forward = new Vector3();
 const scratchWorld = new Vector3();
-const poseScratch = { x: 0, y: 0, z: 0, yawRad: 0, scale: 1 };
 
 /** Creates the markers and registers the system. Register it after the furniture grab and BEFORE the one-hand drag. */
 export function createViewpoint(
@@ -178,51 +183,41 @@ function applyRealScaleLook(ctx: ViewpointContext): void {
 }
 
 /**
- * Puts the model at real scale around the head for `viewpoint` and switches the look of the scene (walls, base,
- * markers, flags). Returns false, changing nothing, when the head pose is not usable.
+ * Puts the model at real scale around the head with the body at `spot` (plan position and heading: a viewpoint, or a saved walk position)
+ * and the floor `eye` metres under the eyes, and switches the look of the scene (walls, base, markers, flags). The walk system places the
+ * root (src/systems/walk.ts) and arms the row gesture: walking is on in every real-scale view. `fresh` is true for a viewpoint the user just
+ * entered (not a restore): it shows the coach on the first three. Returns the spot used (the free place nearest to `spot`), or null,
+ * changing nothing, when the head pose or the root is not usable.
  */
-function placeAtViewpoint(ctx: ViewpointContext, viewpoint: Viewpoint): boolean {
-  const object = ctx.root.object3D;
-  if (!object) return false;
-  const headPose = readHead(ctx);
-  if (!headPose) return false;
-  const pose = viewpointRoot(viewpoint, ctx.center, headPose, poseScratch);
-  if (![pose.x, pose.y, pose.z, pose.yawRad].every(Number.isFinite)) {
-    swarn(`viewpoint pose not usable id=${viewpoint.id}`);
-    return false;
-  }
-  // A running gesture or drag would write its last values over the new pose: end them first.
-  endMiniatureGesture();
-  endMiniaturePan();
-  object.scale.setScalar(pose.scale);
-  object.position.set(pose.x, pose.y, pose.z);
-  object.rotation.set(0, pose.yawRad, 0);
-  object.updateMatrixWorld(true);
-  applyRealScaleLook(ctx);
-  return true;
-}
-
-/**
- * Puts the model at real scale around the head for a walk that starts at `spot` (plan position and heading): the walk system places
- * the root (src/systems/walk.ts) and this switches the look. Returns the spot used, or null (nothing changed) when the head or the
- * root is not usable.
- */
-function placeAtWalk(
+function placeAt(
   ctx: ViewpointContext,
   spot: { x: number; z: number; yawDeg: number },
-  showHint: boolean,
+  eye: number,
+  fresh: boolean,
 ): { x: number; z: number; yawDeg: number } | null {
   const object = ctx.root.object3D;
   if (!object) return null;
   const headPose = readHead(ctx);
   if (!headPose) return null;
+  // A running gesture or drag would write its last values over the new pose: end them first.
   endMiniatureGesture();
   endMiniaturePan();
-  const used = beginWalk(object, headPose, spot, showHint);
+  const handsOn = hasHandTracking(ctx.world);
+  const used = beginWalk(object, headPose, spot, eye, fresh && handsOn);
   if (!used) return null;
   object.updateMatrixWorld(true);
   applyRealScaleLook(ctx);
+  // Without the joints of the hands the row cannot be read: the viewpoint works, a notice says why the walk does not (once).
+  if (fresh && !handsOn) noticeNoHands();
   return used;
+}
+
+/** `placeAt` for a viewpoint of the house, at its own eye height and heading. */
+function placeAtViewpoint(ctx: ViewpointContext, viewpoint: Viewpoint, fresh: boolean): boolean {
+  const spot = { x: viewpoint.position[0], z: viewpoint.position[1], yawDeg: viewpoint.yawDeg ?? 0 };
+  if (placeAt(ctx, spot, eyeHeightOf(viewpoint), fresh)) return true;
+  swarn(`viewpoint pose not usable id=${viewpoint.id}`);
+  return false;
 }
 
 /** Puts the table-top look back: the root at `anchor + offset` with the stored scale and yaw, cut walls, base, markers. */
@@ -285,7 +280,7 @@ function enter(ctx: ViewpointContext, viewpoint: Viewpoint): void {
     ctx,
     { kind: 'enter', id: viewpoint.id, swapped: false },
     () => {
-      if (placeAtViewpoint(ctx, viewpoint)) ctx.store.dispatch(setView({ kind: 'viewpoint', id: viewpoint.id }));
+      if (placeAtViewpoint(ctx, viewpoint, true)) ctx.store.dispatch(setView({ kind: 'viewpoint', id: viewpoint.id }));
     },
     (durationMs) => slog(formatEntered(viewpoint, durationMs)),
   );
@@ -314,33 +309,6 @@ export function requestTabletop(source: 'menu' | 'button'): boolean {
   );
 }
 
-/**
- * Goes inside the model with a fade and starts the walk (plan docs/plans/WALK.md): the user becomes a person at the scale of the model, at
- * the first viewpoint of the house, looking where it looks. `source` is who asked (the "Walk inside" button beside the model). Returns true
- * when the fade started. Does nothing at real scale, in the room view or while a fade runs; without hand tracking it says so and stays on the
- * table (the row gesture needs the joints of the hands, controllers are never required).
- */
-export function requestWalk(source: 'button'): boolean {
-  void source;
-  const ctx = context;
-  if (!ctx || transition !== null || isRealScale() || isRoomView() || !ctx.world.renderer.xr.isPresenting) return false;
-  if (!hasHandTracking(ctx.world)) {
-    noticeNoHands();
-    return false;
-  }
-  const spot = startingSpot(ctx.house);
-  slog('walk transition start from=tabletop');
-  return startTransition(
-    ctx,
-    { kind: 'enter', id: 'walk', swapped: false },
-    () => {
-      const used = placeAtWalk(ctx, spot, true);
-      if (used) ctx.store.dispatch(setView({ kind: 'walk', x: used.x, z: used.z, yawDeg: used.yawDeg }));
-    },
-    (durationMs) => slog(`walk entered durationMs=${Math.round(durationMs)}`),
-  );
-}
-
 /** The "Tabletop" item of the menu (T3.12): goes back to the table-top model with a fade. */
 export function returnToTabletop(): void {
   requestTabletop('menu');
@@ -364,7 +332,7 @@ function restoreSavedView(ctx: ViewpointContext): void {
   const view = ctx.store.get().view;
   if (view.kind === 'walk') {
     if (isRealScale()) placeOnTable(ctx);
-    const used = placeAtWalk(ctx, view, false);
+    const used = placeAt(ctx, view, WALK_EYE_HEIGHT, false);
     if (!used) return;
     slog(`walk restored x=${used.x} z=${used.z}`);
     return;
@@ -377,7 +345,7 @@ function restoreSavedView(ctx: ViewpointContext): void {
     return;
   }
   if (isRealScale()) placeOnTable(ctx);
-  if (!placeAtViewpoint(ctx, viewpoint)) return;
+  if (!placeAtViewpoint(ctx, viewpoint, false)) return;
   slog(`viewpoint restored id=${viewpoint.id}`);
   slog(formatEntered(viewpoint, 0));
 }

@@ -7,7 +7,7 @@
 // everything that hangs from it is hidden (the root of the model is not visible), its buttons stay away (`isModelHidden`) and its
 // gestures are off (`isTabletopLocked`). Logs `mr view=room|model`.
 //
-// In the MODEL view the toggle is the top floor (the fifth) of the fixed button column beside the model (Menu, Issues, View, Walk inside,
+// In the MODEL view the toggle is the top floor (the fourth) of the fixed button column beside the model (Menu, Issues, View,
 // My room; the slot is computed by the menu button system and read from `getRoomToggleSlot`, same side, size and spacing as the others) and
 // the head-anchored pair is not shown: the fixed Menu button is there already. In the ROOM view the column is away with the model, so the
 // pair "Model" + "Menu" is anchored in front of the head as below.

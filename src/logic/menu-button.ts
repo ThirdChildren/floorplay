@@ -352,39 +352,6 @@ export function viewButtonAnchors(issues: Readonly<ButtonPair>, out: ButtonPair 
   return out;
 }
 
-// --- The "Walk inside" buttons (plan docs/plans/WALK.md) ----------------------------------------------------------------------
-
-/** Stable ids of the two "Walk inside" buttons, a fourth floor above the "View" buttons: one hand enters the model and walks there. */
-export const WALK_BUTTON_IDS: Readonly<Record<ButtonSide, string>> = {
-  left: 'ui:walk-button-left',
-  right: 'ui:walk-button-right',
-};
-/** Size of a "Walk inside" button panel in UIKit units (centimetres): as tall as the others, wide enough for its words at 2.4 bold. */
-export const WALK_BUTTON_PANEL = { width: 16, height: 6 } as const;
-export const WALK_BUTTON_HALF_WIDTH = WALK_BUTTON_PANEL.width / 200;
-export const WALK_BUTTON_HALF_HEIGHT = WALK_BUTTON_PANEL.height / 200;
-/** A "Walk inside" button is this much higher than the "View" button below it (centre to centre, metres): 1 cm free between the rectangles. */
-export const WALK_BUTTON_LIFT = 0.07;
-
-/**
- * Places the two "Walk inside" buttons above the two "View" buttons in `view` (already placed by `viewButtonAnchors`): the same ring
- * position and the same yaw, WALK_BUTTON_LIFT higher. Writes into `out` and returns it.
- */
-export function walkButtonAnchors(view: Readonly<ButtonPair>, out: ButtonPair = createButtonPair()): ButtonPair {
-  for (let i = 0; i < 2; i += 1) {
-    const side: ButtonSide = i === 0 ? 'left' : 'right';
-    const button = out[i];
-    button.id = WALK_BUTTON_IDS[side];
-    button.side = side;
-    button.x = view[i].x;
-    button.y = view[i].y + WALK_BUTTON_LIFT;
-    button.z = view[i].z;
-    button.yawRad = view[i].yawRad;
-    button.halfWidth = WALK_BUTTON_HALF_WIDTH;
-  }
-  return out;
-}
-
 /**
  * Makes the pick rectangles of `buttons` `factor` times as wide as `halfWidth` (metres): the buttons are wider while the text is
  * large (the box holds a text of 3.0 cm, D58). A factor that is not at least 1 and finite counts as 1. Allocates nothing.
@@ -400,28 +367,28 @@ export function formatViewButtonView(view: Readonly<ButtonView>): string {
   return `view button view distance=${view.distance.toFixed(3)} angleDeg=${view.angleDeg.toFixed(1)}`;
 }
 
-// --- The "My room" toggle, fifth floor of the column (mixed reality mode, plan MR) ---------------------------------------------
+// --- The "My room" toggle, fourth floor of the column (mixed reality mode, plan MR) ---------------------------------------------
 
 /** Size of the "My room" toggle in UIKit units (centimetres): 12 x 6, as tall as the other floors of the column. */
 export const ROOM_COLUMN_BUTTON_HALF_WIDTH = ROOM_BUTTON_HALF_WIDTH;
-/** The toggle is this much higher than the "Walk inside" button below it (centre to centre, metres): 1 cm free between the rectangles. */
+/** The toggle is this much higher than the "View" button below it (centre to centre, metres): 1 cm free between the rectangles. */
 export const ROOM_COLUMN_BUTTON_LIFT = 0.07;
 
 /**
- * Places the two "My room" slots above the two "Walk inside" buttons in `walk` (already placed by `walkButtonAnchors`): the same ring
+ * Places the two "My room" slots above the two "View" buttons in `view` (already placed by `viewButtonAnchors`): the same ring
  * position and the same yaw, ROOM_COLUMN_BUTTON_LIFT higher. The panel itself is one (`ui:room-button`, src/systems/room-view.ts): only the
  * slot of the side that is shown is used. Writes into `out` and returns it.
  */
-export function roomButtonSlots(walk: Readonly<ButtonPair>, out: ButtonPair = createButtonPair()): ButtonPair {
+export function roomButtonSlots(view: Readonly<ButtonPair>, out: ButtonPair = createButtonPair()): ButtonPair {
   for (let i = 0; i < 2; i += 1) {
     const side: ButtonSide = i === 0 ? 'left' : 'right';
     const button = out[i];
     button.id = ROOM_BUTTON_ID;
     button.side = side;
-    button.x = walk[i].x;
-    button.y = walk[i].y + ROOM_COLUMN_BUTTON_LIFT;
-    button.z = walk[i].z;
-    button.yawRad = walk[i].yawRad;
+    button.x = view[i].x;
+    button.y = view[i].y + ROOM_COLUMN_BUTTON_LIFT;
+    button.z = view[i].z;
+    button.yawRad = view[i].yawRad;
     button.halfWidth = ROOM_COLUMN_BUTTON_HALF_WIDTH;
   }
   return out;

@@ -1,86 +1,40 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { MAX_WALK_SPEED } from '../../src/logic/row-gesture';
-import {
-  BUTTON_HALF_HEIGHT,
-  ISSUE_BUTTON_HALF_HEIGHT,
-  VIEW_BUTTON_HALF_HEIGHT,
-  VIEW_BUTTON_LIFT,
-  WALK_BUTTON_HALF_HEIGHT,
-  WALK_BUTTON_HALF_WIDTH,
-  WALK_BUTTON_IDS,
-  WALK_BUTTON_LIFT,
-  WALK_BUTTON_PANEL,
-  createButtonPair,
-  pickButton,
-  viewButtonAnchors,
-  walkButtonAnchors,
-} from '../../src/logic/menu-button';
+import { BUTTON_HALF_HEIGHT, VIEW_BUTTON_HALF_HEIGHT, createButtonPair, issueButtonAnchors, pickButton, viewButtonAnchors } from '../../src/logic/menu-button';
 import { fillButtonColumn, type ButtonColumn } from '../../src/logic/menu-follow';
 import { vignetteStep, vignetteTarget, VIGNETTE_MAX, VIGNETTE_MIN_SPEED } from '../../src/logic/vignette';
 import { strings } from '../../src/ui/strings';
 
-describe('the "Walk inside" button', () => {
-  const place = () => {
+describe('the walk texts and the fixed button column', () => {
+  it('has no "Walk inside" button any more: walking starts at a viewpoint', () => {
+    expect(Object.keys(strings.walk)).toEqual(['hint', 'needsHands']);
+    expect(existsSync('public/ui/walk-button.uikitml')).toBe(false);
+    const column = readFileSync('src/systems/menu-button.ts', 'utf8');
+    expect(column).not.toMatch(/walkPanels|walkButtons|requestWalk/);
+  });
+
+  it('keeps the coach words and plain English', () => {
+    expect(strings.walk.hint).toBe('Row with both fists to walk');
+    for (const text of [strings.walk.hint, strings.walk.needsHands]) expect(text).toMatch(/^[\x20-\x7e]+$/);
+  });
+
+  it('the fixed column is Menu, Issues, View: 7 cm apart, 1 cm free between the rectangles', () => {
     const menu = createButtonPair();
     menu[1].x = 0.3;
     menu[1].y = 1.4;
     menu[1].z = -0.5;
     menu[1].yawRad = 0.4;
-    menu[0].id = 'x';
-    const issues = createButtonPair();
-    issues[1].x = 0.3;
-    issues[1].y = 1.47;
-    issues[1].z = -0.5;
-    issues[1].yawRad = 0.4;
+    const issues = issueButtonAnchors(menu);
     const view = viewButtonAnchors(issues);
-    const walk = walkButtonAnchors(view);
-    return { menu, issues, view, walk };
-  };
-
-  it('sits 7 cm above the View button on the same ring position, with its own ids', () => {
-    const { view, walk } = place();
-    expect(walk[1].y - view[1].y).toBeCloseTo(WALK_BUTTON_LIFT, 12);
-    expect(walk[1].x).toBe(view[1].x);
-    expect(walk[1].z).toBe(view[1].z);
-    expect(walk[1].yawRad).toBe(view[1].yawRad);
-    expect(walk[0].id).toBe(WALK_BUTTON_IDS.left);
-    expect(walk[1].id).toBe('ui:walk-button-right');
-    expect(walk[1].halfWidth).toBe(WALK_BUTTON_HALF_WIDTH);
-  });
-
-  it('leaves 1 cm between its rectangle and the View button below, like the other floors', () => {
-    expect(WALK_BUTTON_LIFT - VIEW_BUTTON_HALF_HEIGHT - WALK_BUTTON_HALF_HEIGHT).toBeCloseTo(VIEW_BUTTON_LIFT - ISSUE_BUTTON_HALF_HEIGHT - VIEW_BUTTON_HALF_HEIGHT, 12);
-    expect(WALK_BUTTON_HALF_HEIGHT).toBe(BUTTON_HALF_HEIGHT);
-  });
-
-  it('a pinch picks the right floor of the four', () => {
-    const { menu, issues, view, walk } = place();
-    const all = [menu[1], issues[1], view[1], walk[1]];
-    const p = { x: walk[1].x, y: walk[1].y, z: walk[1].z };
-    expect(pickButton(p, all)).toBe(walk[1]);
-    expect(pickButton({ ...p, y: view[1].y }, all)).toBe(view[1]);
-    expect(pickButton({ ...p, y: walk[1].y + 0.04 }, all)).toBeNull();
-  });
-
-  it('makes the column of fixed buttons taller and wider, and leaves it alone without it', () => {
-    const { menu, issues, view, walk } = place();
-    const a: ButtonColumn = { x: 0, z: 0, halfWidth: 0, yBottom: 0, yTop: 0 };
-    const b: ButtonColumn = { x: 0, z: 0, halfWidth: 0, yBottom: 0, yTop: 0 };
-    fillButtonColumn(a, menu[1], issues[1], view[1]);
-    fillButtonColumn(b, menu[1], issues[1], view[1], walk[1]);
-    expect(b.yTop - a.yTop).toBeCloseTo(WALK_BUTTON_LIFT + WALK_BUTTON_HALF_HEIGHT - VIEW_BUTTON_HALF_HEIGHT, 12);
-    expect(b.halfWidth).toBeCloseTo(WALK_BUTTON_HALF_WIDTH, 12);
-    expect(b.yBottom).toBe(a.yBottom);
-  });
-
-  it('has a layout file of the size the logic says, and its words are plain English', () => {
-    const layout = readFileSync('public/ui/walk-button.uikitml', 'utf8');
-    expect(layout).toContain(`width: ${WALK_BUTTON_PANEL.width};`);
-    expect(layout).toContain(`height: ${WALK_BUTTON_PANEL.height};`);
-    expect(strings.walk.button).toBe('Walk inside');
-    expect(strings.walk.hint).toBe('Row with both fists to walk');
-    for (const text of [strings.walk.button, strings.walk.hint, strings.walk.needsHands]) expect(text).toMatch(/^[\x20-\x7e]+$/);
+    const all = [menu[1], issues[1], view[1]];
+    const p = { x: view[1].x, y: view[1].y, z: view[1].z };
+    expect(pickButton(p, all)).toBe(view[1]);
+    expect(pickButton({ ...p, y: view[1].y + 0.04 }, all)).toBeNull();
+    const column: ButtonColumn = { x: 0, z: 0, halfWidth: 0, yBottom: 0, yTop: 0 };
+    fillButtonColumn(column, menu[1], issues[1], view[1]);
+    expect(column.yTop).toBeCloseTo(view[1].y + VIEW_BUTTON_HALF_HEIGHT, 12);
+    expect(column.yBottom).toBeCloseTo(menu[1].y - BUTTON_HALF_HEIGHT, 12);
   });
 });
 
