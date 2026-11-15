@@ -63,6 +63,11 @@ export default defineAssets({
     type: AssetType.UIKitML,
     priority: 'lazy',
   },
+  'walk-button': {
+    url: `${import.meta.env.BASE_URL}ui/walk-button.uikitml`,
+    type: AssetType.UIKitML,
+    priority: 'lazy',
+  },
   'coach-panel': {
     url: `${import.meta.env.BASE_URL}ui/coach-panel.uikitml`,
     type: AssetType.UIKitML,

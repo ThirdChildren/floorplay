@@ -1,0 +1,37 @@
+// Debug-only (`?debug=1`) hook for the walk (plan docs/plans/WALK.md): `window.__sogliaWalk`.
+//
+// The emulator (IWER) moves the wrist of a hand but cannot bend its fingers the way a dig does, so the gesture recognition itself is
+// tested with synthetic joint poses in Vitest (tests/unit/dig-gesture.test.ts). This hook lets the QA drive the REST of the walk in
+// the emulator through the same code path the real gesture uses (the speed goes through the same step, collisions, root placement,
+// vignette and store as a dig):
+//   drive(speed, seconds)  walk at `speed` m/s along the gaze for `seconds` (as if the hands had dug at that speed)
+//   enter() / leave()      the same requests as the "Walk inside" button and the "Tabletop" button
+//   status()               { walking, speed, x, z, vignette, left, right } (`left`/`right` say why a hand does not qualify)
+//   hands(l, r)            synthetic hand poses for `updateDig` (null, null = back to the real joints)
+// Nothing here is in the normal path: the hook only exists with `?debug=1`.
+
+import { slog } from '../log';
+import { requestTabletop, requestWalk } from '../systems/viewpoint';
+import { debugDrive, debugHandSamples, walkStatus } from '../systems/walk';
+import type { DigHandSample } from '../logic/dig-gesture';
+
+interface WalkHook {
+  drive(speed: number, seconds: number): void;
+  enter(): boolean;
+  leave(): boolean;
+  status(): ReturnType<typeof walkStatus>;
+  hands(left: DigHandSample | null, right: DigHandSample | null): void;
+}
+
+export function attachWalkHook(): void {
+  if (typeof window === 'undefined') return;
+  const hook: WalkHook = {
+    drive: (speed, seconds) => debugDrive(speed, seconds),
+    enter: () => requestWalk('button'),
+    leave: () => requestTabletop('button'),
+    status: () => walkStatus(),
+    hands: (left, right) => debugHandSamples(left, right),
+  };
+  (window as unknown as { __sogliaWalk?: WalkHook }).__sogliaWalk = hook;
+  slog('debug walk hook ready (window.__sogliaWalk)');
+}

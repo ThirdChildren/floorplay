@@ -53,7 +53,8 @@ import { endMiniatureGesture } from './miniature-gesture';
 import { endMiniaturePan } from './miniature-pan';
 import { onMiniatureReplaced, setPlinthVisible, syncMiniature } from './miniature';
 import { onPinchStart, pinchClaims, pinchPoint, type Hand } from './pinch-input';
-import { isRealScale, isTabletopLocked, setRealScaleFlag, setTransitionFlag } from './view-mode';
+import { isRealScale, isRoomView, isTabletopLocked, setRealScaleFlag, setTransitionFlag } from './view-mode';
+import { beginWalk, endWalk, hasHandTracking, noticeNoHands, startingSpot } from './walk';
 
 const DEG_TO_RAD = Math.PI / 180;
 const RAD_TO_DEG = 180 / Math.PI;
@@ -154,6 +155,28 @@ function showMarkers(ctx: ViewpointContext, visible: boolean): void {
   });
 }
 
+/** The head pose as `viewpointRoot` wants it (world metres, the turn of the head in degrees), or null when it is not usable. */
+function readHead(ctx: ViewpointContext): { x: number; y: number; z: number; yawDeg: number } | null {
+  const player = ctx.world.player.head;
+  player.getWorldPosition(head);
+  player.getWorldQuaternion(headQuaternion);
+  forward.set(0, 0, -1).applyQuaternion(headQuaternion);
+  const yawDeg = yawFromForward(forward.x, forward.z) * RAD_TO_DEG;
+  if (![head.x, head.y, head.z, yawDeg].every(Number.isFinite)) return null;
+  return { x: head.x, y: head.y, z: head.z, yawDeg };
+}
+
+/** Everything that makes the model a real-scale one except the pose of the root: no gestures, cut walls at ceiling height, no base, no markers. */
+function applyRealScaleLook(ctx: ViewpointContext): void {
+  // A selected room has a label on a floor of the model: there are no room labels at real scale.
+  const selected = ctx.store.get().selectedRoomId;
+  if (selected !== null) ctx.store.dispatch(selectRoom(selected));
+  setHouseWallCut(ctx.house.ceilingHeight);
+  setPlinthVisible(false);
+  showMarkers(ctx, false);
+  setRealScaleFlag(true);
+}
+
 /**
  * Puts the model at real scale around the head for `viewpoint` and switches the look of the scene (walls, base,
  * markers, flags). Returns false, changing nothing, when the head pose is not usable.
@@ -161,36 +184,51 @@ function showMarkers(ctx: ViewpointContext, visible: boolean): void {
 function placeAtViewpoint(ctx: ViewpointContext, viewpoint: Viewpoint): boolean {
   const object = ctx.root.object3D;
   if (!object) return false;
-  const player = ctx.world.player.head;
-  player.getWorldPosition(head);
-  player.getWorldQuaternion(headQuaternion);
-  forward.set(0, 0, -1).applyQuaternion(headQuaternion);
-  const headYawDeg = yawFromForward(forward.x, forward.z) * RAD_TO_DEG;
-  const pose = viewpointRoot(viewpoint, ctx.center, { x: head.x, y: head.y, z: head.z, yawDeg: headYawDeg }, poseScratch);
+  const headPose = readHead(ctx);
+  if (!headPose) return false;
+  const pose = viewpointRoot(viewpoint, ctx.center, headPose, poseScratch);
   if (![pose.x, pose.y, pose.z, pose.yawRad].every(Number.isFinite)) {
     swarn(`viewpoint pose not usable id=${viewpoint.id}`);
     return false;
   }
-  // A running gesture or drag would write its last values over the new pose.
+  // A running gesture or drag would write its last values over the new pose: end them first.
   endMiniatureGesture();
   endMiniaturePan();
-  // A selected room has a label on a floor of the model: there are no room labels at real scale.
-  const selected = ctx.store.get().selectedRoomId;
-  if (selected !== null) ctx.store.dispatch(selectRoom(selected));
-
   object.scale.setScalar(pose.scale);
   object.position.set(pose.x, pose.y, pose.z);
   object.rotation.set(0, pose.yawRad, 0);
   object.updateMatrixWorld(true);
-  setHouseWallCut(ctx.house.ceilingHeight);
-  setPlinthVisible(false);
-  showMarkers(ctx, false);
-  setRealScaleFlag(true);
+  applyRealScaleLook(ctx);
   return true;
 }
 
+/**
+ * Puts the model at real scale around the head for a walk that starts at `spot` (plan position and heading): the walk system places
+ * the root (src/systems/walk.ts) and this switches the look. Returns the spot used, or null (nothing changed) when the head or the
+ * root is not usable.
+ */
+function placeAtWalk(
+  ctx: ViewpointContext,
+  spot: { x: number; z: number; yawDeg: number },
+  showHint: boolean,
+): { x: number; z: number; yawDeg: number } | null {
+  const object = ctx.root.object3D;
+  if (!object) return null;
+  const headPose = readHead(ctx);
+  if (!headPose) return null;
+  endMiniatureGesture();
+  endMiniaturePan();
+  const used = beginWalk(object, headPose, spot, showHint);
+  if (!used) return null;
+  object.updateMatrixWorld(true);
+  applyRealScaleLook(ctx);
+  return used;
+}
+
 /** Puts the table-top look back: the root at `anchor + offset` with the stored scale and yaw, cut walls, base, markers. */
-function placeOnTable(ctx: ViewpointContext): void {
+function placeOnTable(ctx: ViewpointContext, saveWalk = true): void {
+  // A walk ends here: its position goes to the store first unless the view is about to be replaced by the tabletop.
+  endWalk(saveWalk);
   const object = ctx.root.object3D;
   if (object) {
     const m = ctx.store.get().miniature;
@@ -263,16 +301,43 @@ export function requestTabletop(source: 'menu' | 'button'): boolean {
   const ctx = context;
   if (!ctx || !isRealScale() || transition !== null) return false;
   const view = ctx.store.get().view;
-  const id = view.kind === 'viewpoint' ? view.id : '';
-  slog(`viewpoint transition start id=${id} from=viewpoint`);
+  const id = view.kind === 'viewpoint' ? view.id : view.kind === 'walk' ? 'walk' : '';
+  slog(`viewpoint transition start id=${id} from=${view.kind === 'walk' ? 'walk' : 'viewpoint'}`);
   return startTransition(
     ctx,
     { kind: 'exit', id, swapped: false },
     () => {
-      placeOnTable(ctx);
+      placeOnTable(ctx, false);
       ctx.store.dispatch(setView(TABLETOP_VIEW));
     },
     (durationMs) => slog(`viewpoint exited id=${id} durationMs=${Math.round(durationMs)}`),
+  );
+}
+
+/**
+ * Goes inside the model with a fade and starts the walk (plan docs/plans/WALK.md): the user becomes a person at the scale of the model, at
+ * the first viewpoint of the house, looking where it looks. `source` is who asked (the "Walk inside" button beside the model). Returns true
+ * when the fade started. Does nothing at real scale, in the room view or while a fade runs; without hand tracking it says so and stays on the
+ * table (the dig gesture needs the joints of the hands, controllers are never required).
+ */
+export function requestWalk(source: 'button'): boolean {
+  void source;
+  const ctx = context;
+  if (!ctx || transition !== null || isRealScale() || isRoomView() || !ctx.world.renderer.xr.isPresenting) return false;
+  if (!hasHandTracking(ctx.world)) {
+    noticeNoHands();
+    return false;
+  }
+  const spot = startingSpot(ctx.house);
+  slog('walk transition start from=tabletop');
+  return startTransition(
+    ctx,
+    { kind: 'enter', id: 'walk', swapped: false },
+    () => {
+      const used = placeAtWalk(ctx, spot, true);
+      if (used) ctx.store.dispatch(setView({ kind: 'walk', x: used.x, z: used.z, yawDeg: used.yawDeg }));
+    },
+    (durationMs) => slog(`walk entered durationMs=${Math.round(durationMs)}`),
   );
 }
 
@@ -297,6 +362,13 @@ export function cancelViewTransition(): void {
 /** The saved viewpoint put back at the start of a session (after the placement of D3), without a fade. */
 function restoreSavedView(ctx: ViewpointContext): void {
   const view = ctx.store.get().view;
+  if (view.kind === 'walk') {
+    if (isRealScale()) placeOnTable(ctx);
+    const used = placeAtWalk(ctx, view, false);
+    if (!used) return;
+    slog(`walk restored x=${used.x} z=${used.z}`);
+    return;
+  }
   if (view.kind !== 'viewpoint') return;
   const viewpoint = findViewpoint(ctx, view.id);
   if (!viewpoint) {

@@ -18,8 +18,9 @@ export function setButtonColumn(
   issues: Readonly<ButtonAnchor>,
   view: Readonly<ButtonAnchor>,
   side: 'left' | 'right',
+  walk?: Readonly<ButtonAnchor>,
 ): void {
-  fillButtonColumn(column, menu, issues, view);
+  fillButtonColumn(column, menu, issues, view, walk);
   shown = true;
   tie = side === 'right' ? 1 : -1;
 }

@@ -35,6 +35,7 @@ import { closeIssuePanel, resumeIssuePanel, suspendIssuePanel } from './issue-pa
 import { closeViewPanel, resumeViewPanel, suspendViewPanel } from './view-panel';
 import { resumePalmMenu, suspendPalmMenu } from './palm-menu';
 import { cancelViewTransition } from './viewpoint';
+import { suspendWalk } from './walk';
 import { resumePinchInput, suspendPinchInput } from './pinch-input';
 import type { Persistence } from './persistence';
 
@@ -59,6 +60,7 @@ export function attachLifecycle(world: World, persistence: Persistence): Lifecyc
 
   const suspendInput = (): void => {
     cancelViewTransition(); // (2) a fade stops; the scene is either unchanged or already complete (T3.12)
+    suspendWalk(); // (2) the walk stops where the body is and its position goes to the store (plan WALK)
     cancelHeldFurniture('suspend'); // (2) before the pinch flags go down
     cancelHeldRoomPiece('suspend'); // (2) a virtual piece of the room view too (mixed reality mode): a new one goes, a taken one goes back
     closeRoomCards('suspend'); // (4) the cards of the room view (a real object, a virtual piece) close like the other panels

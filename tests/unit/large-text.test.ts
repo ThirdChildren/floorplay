@@ -102,6 +102,7 @@ describe('the fixed buttons grow in width by the factor of the text and hold the
     fits('view-button', strings.view.button, 8);
     fits('issue-button', strings.issues.button, 9);
     fits('tabletop-button', strings.menu.tabletop, 13);
+    fits('walk-button', strings.walk.button, 16);
   });
   it('the pick rectangles grow with the boxes, never shrink, and a bad factor changes nothing', () => {
     const pair = createButtonPair();

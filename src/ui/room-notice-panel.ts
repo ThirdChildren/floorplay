@@ -25,9 +25,10 @@ export class RoomNoticePanel {
   private text = '';
   private shown = false;
 
-  constructor(world: World) {
+  /** `stableId` names the entity: the walk hint (plan WALK) is a second notice with its own id. */
+  constructor(world: World, stableId: string = ROOM_NOTICE_ID) {
     const entity = world.createTransformEntity();
-    tagEntity(entity, ROOM_NOTICE_ID);
+    tagEntity(entity, stableId);
     entity.addComponent(PanelUI, { config: PANEL_ASSET });
     if (entity.object3D) entity.object3D.visible = false;
     this.entity = entity;

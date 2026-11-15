@@ -180,6 +180,15 @@ export const strings = {
   viewpoint: {
     tabletopButton: 'Tabletop',
   },
+  /** Walking inside the model with the dig gesture (plan docs/plans/WALK.md). */
+  walk: {
+    /** The fixed button beside the model that takes the user inside it. */
+    button: 'Walk inside',
+    /** The first time: how to walk. Plain ASCII, one short line. */
+    hint: 'Dig with both hands, palms down, to walk',
+    /** Hand joints are not available (controllers only): the walk cannot be driven, so the user stays at the table. */
+    needsHands: 'Walking needs hand tracking. Put the controllers down.',
+  },
   /** The mixed reality mode (`?mr=1`, plan MR): the toggle between the model and the real room, and the card of a real object. */
   room: {
     /** The toggle in the model view; in the room view it reads `toModel`. */

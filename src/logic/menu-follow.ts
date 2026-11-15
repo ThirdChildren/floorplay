@@ -16,7 +16,7 @@
 // Looking straight at the strip puts the menu beside it, outside the 30 degree cone; that is the price of never covering a button
 // (the menu comes back into the cone as soon as the gaze leaves the strip). Allocates nothing.
 
-import { BUTTON_HALF_HEIGHT, BUTTON_HALF_WIDTH, ISSUE_BUTTON_HALF_WIDTH, VIEW_BUTTON_HALF_HEIGHT, VIEW_BUTTON_HALF_WIDTH, type ButtonAnchor } from './menu-button';
+import { BUTTON_HALF_HEIGHT, BUTTON_HALF_WIDTH, ISSUE_BUTTON_HALF_WIDTH, VIEW_BUTTON_HALF_HEIGHT, VIEW_BUTTON_HALF_WIDTH, WALK_BUTTON_HALF_HEIGHT, WALK_BUTTON_HALF_WIDTH, type ButtonAnchor } from './menu-button';
 import type { PanelExtent } from './menu';
 import { pinnedPanelAnchor } from './menu-anchor';
 import { panelViewBox, viewBoxOverlap, type ViewBox } from './panel-arbiter';
@@ -33,19 +33,26 @@ export interface ButtonColumn {
 
 /**
  * Fills `out` with the column of the three fixed buttons of one side: `menu` is the lowest (Menu), `issues` the middle, `view` the top
- * (their `halfWidth` is the widened one at large text). The strip is as wide as the widest button and as tall as the three together.
+ * (their `halfWidth` is the widened one at large text). The strip is as wide as the widest button and as tall as the three together;
+ * an optional fourth `walk` button above them makes it taller.
  */
 export function fillButtonColumn(
   out: ButtonColumn,
   menu: Readonly<ButtonAnchor>,
   issues: Readonly<ButtonAnchor>,
   view: Readonly<ButtonAnchor>,
+  walk?: Readonly<ButtonAnchor>,
 ): ButtonColumn {
   out.x = menu.x;
   out.z = menu.z;
   out.halfWidth = Math.max(menu.halfWidth ?? BUTTON_HALF_WIDTH, issues.halfWidth ?? ISSUE_BUTTON_HALF_WIDTH, view.halfWidth ?? VIEW_BUTTON_HALF_WIDTH);
   out.yBottom = menu.y - BUTTON_HALF_HEIGHT;
   out.yTop = view.y + VIEW_BUTTON_HALF_HEIGHT;
+  // The fourth floor, "Walk inside" (plan WALK): the strip is as wide and as tall as it needs to hold it too.
+  if (walk) {
+    out.halfWidth = Math.max(out.halfWidth, walk.halfWidth ?? WALK_BUTTON_HALF_WIDTH);
+    out.yTop = walk.y + WALK_BUTTON_HALF_HEIGHT;
+  }
   return out;
 }
 

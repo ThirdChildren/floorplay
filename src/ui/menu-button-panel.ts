@@ -11,10 +11,10 @@ import { applyPanelLook } from './panel-theme';
 import { buttonLook } from './theme';
 
 /** The "Menu" button (8 x 6 cm), the "Issues" button above it (9 x 6 cm, T4.6a) and the "View" button above that (8 x 6 cm, T5.5): same look, own layout file. */
-export type ButtonPanelKind = 'menu' | 'issues' | 'view';
-const PANEL_ASSET: Readonly<Record<ButtonPanelKind, string>> = { menu: 'menu-button', issues: 'issue-button', view: 'view-button' };
-const ROOT_ELEMENT: Readonly<Record<ButtonPanelKind, string>> = { menu: 'menu-button-root', issues: 'issue-button-root', view: 'view-button-root' };
-const TEXT_ELEMENT: Readonly<Record<ButtonPanelKind, string>> = { menu: 'menu-button-text', issues: 'issue-button-text', view: 'view-button-text' };
+export type ButtonPanelKind = 'menu' | 'issues' | 'view' | 'walk';
+const PANEL_ASSET: Readonly<Record<ButtonPanelKind, string>> = { menu: 'menu-button', issues: 'issue-button', view: 'view-button', walk: 'walk-button' };
+const ROOT_ELEMENT: Readonly<Record<ButtonPanelKind, string>> = { menu: 'menu-button-root', issues: 'issue-button-root', view: 'view-button-root', walk: 'walk-button-root' };
+const TEXT_ELEMENT: Readonly<Record<ButtonPanelKind, string>> = { menu: 'menu-button-text', issues: 'issue-button-text', view: 'view-button-text', walk: 'walk-button-text' };
 /** Drawn after the scene (and its transparent parts) so it is never covered; the menu uses the same order. */
 const BUTTON_RENDER_ORDER = 1000;
 

@@ -351,6 +351,39 @@ export function viewButtonAnchors(issues: Readonly<ButtonPair>, out: ButtonPair 
   return out;
 }
 
+// --- The "Walk inside" buttons (plan docs/plans/WALK.md) ----------------------------------------------------------------------
+
+/** Stable ids of the two "Walk inside" buttons, a fourth floor above the "View" buttons: one hand enters the model and walks there. */
+export const WALK_BUTTON_IDS: Readonly<Record<ButtonSide, string>> = {
+  left: 'ui:walk-button-left',
+  right: 'ui:walk-button-right',
+};
+/** Size of a "Walk inside" button panel in UIKit units (centimetres): as tall as the others, wide enough for its words at 2.4 bold. */
+export const WALK_BUTTON_PANEL = { width: 16, height: 6 } as const;
+export const WALK_BUTTON_HALF_WIDTH = WALK_BUTTON_PANEL.width / 200;
+export const WALK_BUTTON_HALF_HEIGHT = WALK_BUTTON_PANEL.height / 200;
+/** A "Walk inside" button is this much higher than the "View" button below it (centre to centre, metres): 1 cm free between the rectangles. */
+export const WALK_BUTTON_LIFT = 0.07;
+
+/**
+ * Places the two "Walk inside" buttons above the two "View" buttons in `view` (already placed by `viewButtonAnchors`): the same ring
+ * position and the same yaw, WALK_BUTTON_LIFT higher. Writes into `out` and returns it.
+ */
+export function walkButtonAnchors(view: Readonly<ButtonPair>, out: ButtonPair = createButtonPair()): ButtonPair {
+  for (let i = 0; i < 2; i += 1) {
+    const side: ButtonSide = i === 0 ? 'left' : 'right';
+    const button = out[i];
+    button.id = WALK_BUTTON_IDS[side];
+    button.side = side;
+    button.x = view[i].x;
+    button.y = view[i].y + WALK_BUTTON_LIFT;
+    button.z = view[i].z;
+    button.yawRad = view[i].yawRad;
+    button.halfWidth = WALK_BUTTON_HALF_WIDTH;
+  }
+  return out;
+}
+
 /**
  * Makes the pick rectangles of `buttons` `factor` times as wide as `halfWidth` (metres): the buttons are wider while the text is
  * large (the box holds a text of 3.0 cm, D58). A factor that is not at least 1 and finite counts as 1. Allocates nothing.

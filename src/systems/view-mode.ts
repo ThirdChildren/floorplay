@@ -7,6 +7,7 @@
 let realScale = false;
 let transition = false;
 let roomView = false;
+let walking = false;
 
 /** True while the house is shown at real scale (a viewpoint is entered). */
 export function isRealScale(): boolean {
@@ -46,4 +47,16 @@ export function setRealScaleFlag(value: boolean): void {
 
 export function setTransitionFlag(value: boolean): void {
   transition = value;
+}
+
+/**
+ * True while the user walks inside the model with the dig gesture (plan docs/plans/WALK.md). Walking is a real-scale view: `realScale`
+ * is true too, so every table-top gesture is off; the flag only says that the dig gesture drives the model under the head.
+ */
+export function isWalking(): boolean {
+  return walking;
+}
+
+export function setWalkFlag(value: boolean): void {
+  walking = value;
 }

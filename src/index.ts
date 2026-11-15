@@ -67,6 +67,8 @@ import { createTabletopButton } from './systems/tabletop-button';
 import { createPins } from './systems/pins';
 import { createSun } from './systems/sun';
 import { createViewpoint } from './systems/viewpoint';
+import { createWalk } from './systems/walk';
+import { attachWalkHook } from './debug/walk-hook';
 import { isRealScale } from './systems/view-mode';
 import { chooseMrEntry, mixedRealityOptions, watchMrSessionRefusal } from './systems/mixed-reality';
 import { withoutSessionOffer } from './systems/xr-entry';
@@ -349,6 +351,9 @@ async function start(): Promise<void> {
     // after the menu and the grab (their pinch listeners run first) and before the drag (a marker is never a pan).
     const fadeOverlay = createFadeOverlay(world);
     createViewpoint(world, store, result.house, miniature.root, built.entity, fadeOverlay);
+    // Walking inside the model with the dig gesture (plan WALK): after the viewpoint system, which owns the change of view.
+    createWalk(world, store, result.house, miniature.root.object3D ?? null);
+    if (params.debug) attachWalkHook();
     // The pins of the issues (T4.4): one instanced mesh and a light entity per visible issue, after the viewpoint markers.
     createPins(world, store, result.house, built.entity, miniature.root, infoPoints);
     if (params.debug) attachPinDraftKey(result.house);
