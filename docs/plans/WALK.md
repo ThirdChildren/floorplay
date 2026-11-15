@@ -26,7 +26,7 @@ Owner request (2026-11-15), rule 2 of `CLAUDE.md` (amended): besides the viewpoi
    close to the chest) and 18-65 cm below the eyes to start (12-75 cm to keep). A pinch locks the hand out for 0.4 s after it ends
    (so every pinch, grab and the two-hand rotate/zoom gesture, which is made of pinches, never walks); the hand must be qualified
    0.12 s before it counts; a stroke is the smoothed backward wrist speed >= 0.18 m/s, mostly backward (not sideways, ratio 1.4), in
-   BOTH hands at once. Speed += 10 (m/s per m of coordinated stroke), max 5 m/s perceived; it decays with a 0.7 s time constant while
+   BOTH hands at once. Speed += 24 (m/s per m of coordinated stroke), max 12 m/s perceived; it decays with a 0.7 s time constant while
    the hands hold the pose and 0.3 s when a hand leaves it. Direction = the horizontal gaze of the head (the user turns by turning
    the head/body; no snap turn). The pinch vs fist distinction: a pinch keeps the index finger out towards the thumb (index tip
    13-15 cm from the wrist) and the `selectstart` state shuts the hand out anyway.
@@ -37,7 +37,7 @@ Owner request (2026-11-15), rule 2 of `CLAUDE.md` (amended): besides the viewpoi
    clamp. A step is cut into <= 5 cm substeps and the circle is pushed out of every rectangle it overlaps: it slides along walls.
    Walking into a wall bleeds the speed (time constant 0.12 s). Furniture does not block (decision: keep it simple).
 7. **Comfort vignette** (`ui:comfort-vignette`): ONE head-locked quad (child of the camera, 0.5 m ahead) with a tiny ShaderMaterial,
-   no texture, no post-processing; strength from speed (0.05 -> 5 m/s: 0 -> 0.85, rise 0.12 s, fall 0.45 s); hidden (no draw call)
+   no texture, no post-processing; strength from speed (0.05 -> 12 m/s: 0 -> 0.85, rise 0.12 s, fall 0.45 s); hidden (no draw call)
    when the strength is under 0.01. Measured in IWER: +1 draw call per view while it shows.
 8. **Feature detection.** Without hand joints (controllers only, or no `XRFrame.fillPoses`) "Walk inside" does not enter: the log says
    `[soglia] feature hand joints unavailable` and a notice says "Walking needs hand tracking. Put the controllers down." The viewpoints

@@ -61,10 +61,10 @@ export const STROKE_DIRECTION_RATIO = 1.4;
 export const STROKE_MAX_SPEED = 3;
 /** Time constant of the smoothing of the hand speed (seconds). */
 export const SPEED_FILTER_SECONDS = 0.06;
-/** Walking speed gained per metre of coordinated stroke ((m/s) per m). A 25 cm stroke adds about 2.5 m/s. */
-export const STROKE_GAIN = 10;
-/** The walking speed never goes above this, perceived metres per second (raised from 1 after the first headset test: too slow). */
-export const MAX_WALK_SPEED = 5;
+/** Walking speed gained per metre of coordinated stroke ((m/s) per m). A 25 cm stroke adds about 6 m/s. */
+export const STROKE_GAIN = 24;
+/** The walking speed never goes above this, perceived metres per second (raised from 1 to 5 to 12 after headset tests: too slow). */
+export const MAX_WALK_SPEED = 12;
 /** The speed decays with this time constant while the hands keep the pose but do not stroke (seconds). */
 export const DECAY_SECONDS = 0.7;
 /** The speed decays faster, with this time constant, when a hand leaves the pose (seconds). */
