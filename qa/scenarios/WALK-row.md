@@ -1,4 +1,4 @@
-# WALK-row: walking inside the tabletop model by rowing with both fists
+# WALK-row: walking at real scale by rowing with both fists (on from the first viewpoint entry)
 
 **Type**: PC (IWER, headless). **Rules**: 2 (amended), 3, 5, 8, 9. Plan: `docs/plans/WALK.md`.
 
@@ -6,11 +6,11 @@
 
 `dev-params.local.txt` = `house=apartment-a&reset=1&debug=1&intro=0&seed=1`. Start with
 `npx @iwsdk/cli dev up --ai-mode agent --headless --allow-browser-automation` (the last flag only to evaluate the helpers below with
-`browser run`). `browser reload`, `xr enter`, `xr set-input-mode {"mode":"hand"}`. The emulator head is at y = 1.6 and the hands
+`browser run`). `browser reload`, `xr enter`, `xr set-input-mode {"mode":"hand"}`. There is no "Walk inside" button: walking is on as soon as a viewpoint marker is pinched. The emulator head is at y = 1.6 and the hands
 default to (+-0.25, 1.5, -0.4), which is not the chest zone: the helper places the fists at `y = head - 0.35`, `z = -0.717` (the wrist
 joint is 0.117 m behind the hand position, so the wrist is 0.6 m ahead).
 
-Helper `qa/scenarios/WALK-row.helper.mjs` (copy it inside the workspace, `npx @iwsdk/cli browser run <copy> --timeout 90000`). IWER's hand
+Helper `qa/scenarios/WALK-row.helper.mjs` (run it AFTER step 2; copy it inside the workspace, `npx @iwsdk/cli browser run <copy> --timeout 90000`). IWER's hand
 has only the open (`default`), `pinch` and `point` poses, so the helper registers a `fist` pose on both hands (finger joints except
 the metacarpals pulled to 0.47 of their distance to the wrist: tips about 8.5 cm from the wrist), then moves
 `IWER_DEVICE.hands.left|right.position` every 50 ms and samples `window.__sogliaWalk.status()`. Two `xr animate-to` calls run one after
@@ -20,8 +20,8 @@ the other, so they cannot make a two-hand stroke: use the page-side helper. It p
 
 | # | Step | Expected |
 |---|---|---|
-| 1 | Tabletop view, session on | `ui:walk-button-right` exists above `ui:view-button-right`; screenshot shows "Walk inside" at the top of the column |
-| 2 | Pinch the button (hand set to the button minus the pinch offset; `xr select` 0.6 s) | `walk button pressed`, any open View/Issues/menu closes, `walk transition start`, fade out/swap/in 250-1000 ms (IWER), `walk started x=2.9 z=3.3 yawDeg=0 eye=1.6`, `walk entered`; `ui:walk-hint` shows once |
+| 1 | Tabletop view, session on | the fixed column has Menu, Issues and View only (no `ui:walk-button-*` entity, `ecs find namePattern walk-button` is empty); blue markers on the model |
+| 2 | Pinch marker `viewpoint:V1` (apartment A: world about (-0.13, 1.44, -0.47) on the default table; set the right hand to the marker + (0, 0.0245, 0.012), `xr set-select-value` 1 then 0) | `viewpoint transition start id=V1`, `walk hint shown`, `walk started x=2.9 z=3.3 yawDeg=0 eye=1.2`, `viewpoint entered id=V1 eye=1.20`; store `view` is `viewpoint V1`; `ui:walk-hint` shows once |
 | 3 | `status()` | `walking:true`, `x=2.9, z=3.3`, speed 0 |
 | 4 | Open hands (IWER `default` pose) at the chest, hold and stroke | `left:"fist", right:"fist"` (reason: not a fist), speed 0 |
 | 5 | Both fists (`fist` pose) at the chest, hold | `left:"ok", right:"ok"` |
@@ -34,11 +34,11 @@ the other, so they cannot make a two-hand stroke: use the page-side helper. It p
 | 12 | Walk x to 4.0 (door `w-living-hall` is x 3.6-4.4), face south (`yaw 180`), drive 7 s | the body passes the door and stops at `z = 5.855` (hall south wall) |
 | 13 | Walk at the entrance door (x 6.0-6.9 of `w-south-hall`, z 6.2) | the body cannot leave the house (stops at `z = 5.855`) |
 | 14 | Console | no errors; `[soglia:stats]` calls per view +1 only while the vignette shows |
-| 15 | `browser reload` (no `reset`), `xr enter` | `walk restored x=.. z=..` at the saved spot, no hint |
+| 15 | `browser reload` (no `reset`), `xr enter` | `walk restored x=.. z=..` at the saved spot (`viewpoint restored id=V1` if the body never moved), no hint; walking works at once |
 | 16 | `xr exit`, `xr enter` | walk restored at the same spot (`viewpoint suspended reason=session-end` before) |
 | 17 | F8 (hidden) | speed 0, position in the store; F9 (visible): walk continues |
-| 18 | "Tabletop" button or `__sogliaWalk.leave()` | fade, `walk ended`, `viewpoint exited id=walk`, `view` is `tabletop`, model back on the table, Walk button back |
-| 19 | `xr set-input-mode controller`, request the walk | not entered, `[soglia] feature hand joints unavailable`, notice "Walking needs hand tracking. Put the controllers down." |
+| 18 | "Tabletop" button or `__sogliaWalk.leave()` | fade, `walk ended`, `viewpoint exited id=walk` (or `id=V1`), `view` is `tabletop`, model back on the table |
+| 19 | `xr set-input-mode controller`, enter a viewpoint (headset or a debug entry; IWER pinch needs hands) | the viewpoint works, `[soglia] feature hand joints unavailable` once, notice "Walking needs hand tracking. Put the controllers down."; the row does nothing (not run in IWER, see the report) |
 
 ## What IWER cannot show
 

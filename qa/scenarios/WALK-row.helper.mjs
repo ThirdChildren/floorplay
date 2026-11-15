@@ -1,4 +1,4 @@
-// Real end-to-end row in IWER: a custom 'fist' hand pose is registered in the emulator and both hands are moved from page JS.
+// Real end-to-end row in IWER (run it AFTER a viewpoint marker was pinched: walking starts there): a custom 'fist' hand pose is registered in the emulator and both hands are moved from page JS.
 export default async function run({ frame }) {
   return await frame.evaluate(async () => {
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -42,9 +42,8 @@ export default async function run({ frame }) {
       return peak;
     };
     const Z = -0.717;
-    // 0 enter the walk
-    out.entered = W.enter();
-    await sleep(2500);
+    // 0 walking is on as soon as a viewpoint is entered: pinch a blue marker (WALK-row.md, step 1) before running this helper
+    out.entered = W.status().walking;
     out.afterEnter = status();
     // A open hands (emulator default pose): hold + stroke = no walk
     for (const s of ['left', 'right']) set(s, s === 'left' ? -0.15 : 0.15, CY, Z, 'default');
