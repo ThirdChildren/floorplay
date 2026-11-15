@@ -35,5 +35,5 @@
 - [Panel arbiter (fix/panel-overlap)](panel-arbiter-fix.md) — one pinned panel at a time, arbiter registry, overlap not reproduced, scratch-runtime recipe beside a Quest server
 - [Default viewpoints](viewpoint-default-markers.md) — missing blue markers were data; checkHouse adds a polylabel viewpoint per room; setsid recipe for scratch runtime
 - [UI polish dark glass](ui-polish-dark-glass.md) — theme tokens, restyle-only rule, border+padding layout trap, HC border, menu bar page indicator, measured calls
-- [Walk with the dig gesture](walk-dig.md) — claude/dig-walk: model-moves-under-head design, real-joint IWER stroke recipe (IWER_DEVICE.hands position from page JS, browser run frame), button pinch offsets, thick-wall trap
+- [Walk by rowing with both fists](walk-row.md) — claude/dig-walk: fist + chest-zone thresholds, IWER custom fist pose recipe, scratch runtime on 8777, hysteresis test trap
 - [My room in the button column](room-column-button.md) — fifth floor slot shared via button-column.ts; room view keeps the head pair; 6 cm room buttons; angle numbers

@@ -1,4 +1,4 @@
-# WALK-dig: walking inside the tabletop model with the dig gesture
+# WALK-row: walking inside the tabletop model by rowing with both fists
 
 **Type**: PC (IWER, headless). **Rules**: 2 (amended), 3, 5, 8, 9. Plan: `docs/plans/WALK.md`.
 
@@ -6,12 +6,15 @@
 
 `dev-params.local.txt` = `house=apartment-a&reset=1&debug=1&intro=0&seed=1`. Start with
 `npx @iwsdk/cli dev up --ai-mode agent --headless --allow-browser-automation` (the last flag only to evaluate the helpers below with
-`browser run`). `browser reload`, `xr enter`, `xr set-input-mode {"mode":"hand"}`. Hands default to (+-0.25, 1.5, -0.4), above the
-eyes (head y 1.2), so they are out of the dig zone until placed at `y=0.85, z=-0.6` with `xr set-transform`.
+`browser run`). `browser reload`, `xr enter`, `xr set-input-mode {"mode":"hand"}`. The emulator head is at y = 1.6 and the hands
+default to (+-0.25, 1.5, -0.4), which is not the chest zone: the helper places the fists at `y = head - 0.35`, `z = -0.717` (the wrist
+joint is 0.117 m behind the hand position, so the wrist is 0.6 m ahead).
 
-Helper (page side, through `browser run` with `frame.evaluate`): a stroke moves `IWER_DEVICE.hands.left|right.position` (a Vector3,
-`.set(x, y, z)`) every 50 ms from `z0` to `z1` and back while it samples `window.__sogliaWalk.status()`. Two `xr animate-to` calls run one
-after the other, so they cannot make a two-hand stroke: use the page-side helper.
+Helper `qa/scenarios/WALK-row.helper.mjs` (copy it inside the workspace, `npx @iwsdk/cli browser run <copy> --timeout 90000`). IWER's hand
+has only the open (`default`), `pinch` and `point` poses, so the helper registers a `fist` pose on both hands (finger joints except
+the metacarpals pulled to 0.47 of their distance to the wrist: tips about 8.5 cm from the wrist), then moves
+`IWER_DEVICE.hands.left|right.position` every 50 ms and samples `window.__sogliaWalk.status()`. Two `xr animate-to` calls run one after
+the other, so they cannot make a two-hand stroke: use the page-side helper. It prints the numbers of steps 4-9.
 
 ## Steps and expected results
 
@@ -20,12 +23,12 @@ after the other, so they cannot make a two-hand stroke: use the page-side helper
 | 1 | Tabletop view, session on | `ui:walk-button-right` exists above `ui:view-button-right`; screenshot shows "Walk inside" at the top of the column |
 | 2 | Pinch the button (hand set to the button minus the pinch offset; `xr select` 0.6 s) | `walk button pressed`, any open View/Issues/menu closes, `walk transition start`, fade out/swap/in 250-1000 ms (IWER), `walk started x=2.9 z=3.3 yawDeg=0 eye=1.6`, `walk entered`; `ui:walk-hint` shows once |
 | 3 | `status()` | `walking:true`, `x=2.9, z=3.3`, speed 0 |
-| 4 | Hands flat, palms down, at `y=0.85, z=-0.6` | `left:"ok", right:"ok"` |
-| 5 | Both hands stroke back 0.3 m in 0.5 s, 3 times (`z0=-0.6, z1=-0.25`) | speed rises to 0.3-0.6 m/s (never > 1), `z` decreases (walks along the gaze, -z), vignette 0.1-0.5, speed decays to 0 within ~2 s after the last stroke, `walk stopped` |
-| 6 | One hand strokes, the other holds still | speed stays 0 |
-| 7 | Both hands palms up (`roll 180`) and stroke | speed 0, reason `palm` |
-| 8 | Both hands pinching (`xr set-select-value` 1 on both) and sweep | speed 0, reason `pinch`; the model does not zoom or turn (real scale) |
-| 9 | Release the pinches | after 0.4 s reason `ok` again |
+| 4 | Open hands (IWER `default` pose) at the chest, hold and stroke | `left:"fist", right:"fist"` (reason: not a fist), speed 0 |
+| 5 | Both fists (`fist` pose) at the chest, hold | `left:"ok", right:"ok"` |
+| 6 | Both fists stroke back 0.3 m in 0.5 s, 3 times (return fast) | speed rises to 0.5-1 m/s (never > 1), `z` decreases (walks along the gaze, -z), vignette up to ~0.85, speed decays to 0 within ~2 s after the last stroke, `walk stopped` |
+| 7 | One fist strokes, the other holds still | speed stays 0 |
+| 8 | Fists in the lap (head - 0.9) or raised at the face (head - 0.05) | reason `zone`, speed 0 |
+| 9 | Fists sweep sideways 0.4 m; then both hands pinch (`updatePinchValue(1)`) and stroke | speed 0; reason `pinch`; after the release the reason is `lockout` for 0.4 s, then `ok` |
 | 10 | Face the north wall and walk (`drive(1, 8)` or strokes) | the body stops at `z = 0.125 + 0.22 = 0.345`, speed bleeds to ~0.4-0.5 and decays; no tunnelling |
 | 11 | Turn the head 90 degrees (`xr set-transform headset orientation yaw -90`) and drive at 45 degrees into a wall | the body slides along the wall |
 | 12 | Walk x to 4.0 (door `w-living-hall` is x 3.6-4.4), face south (`yaw 180`), drive 7 s | the body passes the door and stops at `z = 5.855` (hall south wall) |
@@ -39,6 +42,6 @@ after the other, so they cannot make a two-hand stroke: use the page-side helper
 
 ## What IWER cannot show
 
-The gesture reads the joints of IWER's synthetic hand (open, palm down); fingers cannot be bent, so "fist" and "pinch pose without the
-select event" are covered by `tests/unit/dig-gesture.test.ts` only. Real hand-tracking noise, comfort and speed are headset items
-(`qa/device/DEBT.md`, rows WALK).
+The `fist` pose is synthetic (a scaled copy of IWER's open hand): the real finger curl of hand tracking, its noise, how a real pinch
+and a real fist differ in the joints, and the comfort of the stroke are headset items (`qa/device/DEBT.md`, rows WALK). The pinch with
+loose fingers and the single pointing finger are covered by `tests/unit/row-gesture.test.ts` only.
