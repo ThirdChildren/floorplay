@@ -139,6 +139,8 @@ export const uiColors = {
   primary: '#7cc0ff',
   primaryInk: '#06101f',
   secondary: '#26324a',
+  /** A control that cannot be used right now (the arrow with no page to go to): a flat dim grey-blue icon on the surface, not a see-through button. */
+  disabledInk: '#66738c',
 } as const;
 
 /**
@@ -180,6 +182,7 @@ export interface UiColors {
   readonly primary: string;
   readonly primaryInk: string;
   readonly secondary: string;
+  readonly disabledInk: string;
 }
 
 /**
@@ -196,6 +199,7 @@ export const highContrastUiColors: UiColors = {
   primary: '#33d6ff',
   primaryInk: '#000000',
   secondary: '#2b2b2b',
+  disabledInk: '#8c8c8c',
 };
 
 /** The colours of the flat UI panels now: `uiColors`, or `highContrastUiColors` while the contrast preference is on. */

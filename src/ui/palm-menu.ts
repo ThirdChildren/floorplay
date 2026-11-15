@@ -59,7 +59,7 @@ import { PinnedFollower } from './pinned-follow';
 import { BUTTON_ICONS } from './menu-icons';
 import { disposePanelEntity } from './panel-lifecycle';
 import { strings } from './strings';
-import { chipLook, getUiColors, isLargeText, panelScale, uiTokens } from './theme';
+import { chipLook, getUiColors, isLargeText, panelScale } from './theme';
 
 export type PalmMenuMode = 'palm' | 'pinned';
 
@@ -109,6 +109,11 @@ interface UiDocument {
   getElementById: <T>(id: string) => T | null;
 }
 
+/** What the code needs from an icon to change its colour. */
+interface Dimmable {
+  setProperties: (properties: Record<string, unknown>) => void;
+}
+
 interface SlotElements {
   card: UIKit.Container | null;
   name: UIKit.Text | null;
@@ -153,6 +158,8 @@ export class PalmMenuPanel {
   private pageLabel: UIKit.Text | null = null;
   private prevButton: UIKit.Container | null = null;
   private nextButton: UIKit.Container | null = null;
+  /** The arrows drawn on `Back` and `Next`, to be dimmed when there is no page that way. */
+  private arrowIcons: { prev?: Dimmable; next?: Dimmable } = {};
   private pageNumber = 0;
   private pageTotal = 1;
   /** The tabs to draw and the active one; fewer than two tabs means the header is the title. */
@@ -303,6 +310,7 @@ export class PalmMenuPanel {
     this.visibleTabs = [];
     this.activeTab = 'items';
     this.pageLabel = null;
+    this.arrowIcons = {};
     this.prevButton = null;
     this.nextButton = null;
     this.pageNumber = 0;
@@ -434,15 +442,15 @@ export class PalmMenuPanel {
       if (!slot) continue;
       try {
         const Icon = BUTTON_ICONS[button];
-        slot.add(
-          new Icon({
-            width: ICON_SIZE[button] * this.menuScale,
-            height: ICON_SIZE[button] * this.menuScale,
-            color: getUiColors().ink,
-            depthTest: false,
-            renderOrder: ICON_RENDER_ORDER,
-          }),
-        );
+        const icon = new Icon({
+          width: ICON_SIZE[button] * this.menuScale,
+          height: ICON_SIZE[button] * this.menuScale,
+          color: getUiColors().ink,
+          depthTest: false,
+          renderOrder: ICON_RENDER_ORDER,
+        });
+        slot.add(icon);
+        if (button === 'prev' || button === 'next') this.arrowIcons[button] = icon as unknown as Dimmable;
       } catch (error) {
         swarn(`menu icon ${button} unavailable: ${error instanceof Error ? error.message : String(error)}`);
       }
@@ -465,9 +473,22 @@ export class PalmMenuPanel {
   /** Writes the page indicator and the faint look of the arrows that have nowhere to go. */
   private writePage(): void {
     this.pageLabel?.setProperties({ text: this.pageTotal > 1 ? strings.menu.page(this.pageNumber + 1, this.pageTotal) : '' });
-    // A button in use has no opacity of its own, so it inherits the dimming of the root; a faint one has its own.
-    this.prevButton?.setProperties({ opacity: this.pageNumber <= 0 ? uiTokens.disabledOpacity : undefined });
-    this.nextButton?.setProperties({ opacity: this.pageNumber >= this.pageTotal - 1 ? uiTokens.disabledOpacity : undefined });
+    this.writeArrow(this.prevButton, this.arrowIcons.prev, this.pageNumber <= 0);
+    this.writeArrow(this.nextButton, this.arrowIcons.next, this.pageNumber >= this.pageTotal - 1);
+  }
+
+  /**
+   * An arrow with no page that way is flat and dim (surface fill, quiet border, dim icon), never see-through: a translucent button
+   * showed the model through it and looked like a stain. The pinch still works and clamps at the first and the last page.
+   */
+  private writeArrow(button: UIKit.Container | null, icon: Dimmable | undefined, disabled: boolean): void {
+    const c = getUiColors();
+    const look = chipLook(false);
+    button?.setProperties({
+      backgroundColor: disabled ? c.surface : look.backgroundColor,
+      borderColor: disabled ? c.secondary : c.border,
+    });
+    icon?.setProperties({ color: disabled ? c.disabledInk : c.ink });
   }
 
   /** Writes `items` into the item cards; a card without an item is hidden. */

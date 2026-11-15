@@ -49,7 +49,7 @@ import { applyPanelLook } from './panel-theme';
 import { disposePanelEntity } from './panel-lifecycle';
 import { PinnedFollower } from './pinned-follow';
 import { strings } from './strings';
-import { chipLook as themeChipLook, isLargeText, panelScale } from './theme';
+import { buttonLook, chipLook as themeChipLook, getUiColors, isLargeText, panelScale } from './theme';
 
 const PANEL_ASSET = 'issue-panel';
 const ROOT_ELEMENT = 'issue-panel-root';
@@ -88,8 +88,6 @@ const hexColor = (color: number): string => `#${color.toString(16).padStart(6, '
 /** The grid of the form: four rows of two boxes (the categories take four rows, the phrases at most three). */
 const GRID_ROWS = 4;
 const GRID_COLUMNS = 2;
-/** A button that cannot be used yet (`Report` before a phrase is chosen) is drawn faint. */
-const FAINT_OPACITY = 0.4;
 /** Drawn after the scene (and its transparent parts) so it is never covered; the menu uses the same order. */
 const PANEL_RENDER_ORDER = 1000;
 
@@ -686,12 +684,18 @@ export class IssuePanel {
     const back = layout.cells.find((cell) => cell.kind === 'back');
     this.back?.setProperties({ width: (cancel?.width ?? ISSUE_BAR_BUTTON_WIDTH) * this.panelScaleValue, opacity: undefined });
     this.backLabel?.setProperties({ text: strings.issues.form.cancel });
+    // A button that cannot be used yet (`Report` before a phrase is chosen) is flat and dim, never see-through (the model showed through a faint one).
+    const usable = !report || report.enabled;
+    const main = buttonLook('primary');
+    const colors = getUiColors();
     this.closeBox?.setProperties({
       display: report ? 'flex' : 'none',
       width: (report?.width ?? ISSUE_BAR_BUTTON_WIDTH) * this.panelScaleValue,
-      opacity: report && !report.enabled ? FAINT_OPACITY : undefined,
+      opacity: undefined,
+      backgroundColor: usable ? main.backgroundColor : colors.surface,
+      borderColor: usable ? main.borderColor : colors.secondary,
     });
-    this.closeLabel?.setProperties({ text: strings.issues.form.report });
+    this.closeLabel?.setProperties({ text: strings.issues.form.report, color: usable ? main.color : colors.disabledInk });
     this.mid.box?.setProperties({ display: back ? 'flex' : 'none', width: (back?.width ?? ISSUE_BAR_BUTTON_WIDTH) * this.panelScaleValue });
     this.mid.label?.setProperties({ text: strings.issues.form.back });
   }
