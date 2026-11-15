@@ -85,10 +85,17 @@ describe('checkHouse accepts the real house files', () => {
     expect(checkHouse(data).ok).toBe(true);
   });
 
-  it.each(HOUSES)('$file: the returned house is the same object, not a copy', ({ file }) => {
-    const data = load(file);
+  it.each(HOUSES)('$file: the returned house shares its data with the input (only viewpoints can be added)', ({ file }) => {
+    const data = load(file) as House;
+    const explicit = data.viewpoints.length;
     const result = checkHouse(data);
-    expect(result.ok && result.house).toBe(data);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.house.rooms).toBe(data.rooms);
+    expect(result.house.walls).toBe(data.walls);
+    // The input is not changed; the explicit viewpoints come first, unchanged.
+    expect(data.viewpoints).toHaveLength(explicit);
+    expect(result.house.viewpoints.slice(0, explicit)).toEqual(data.viewpoints);
   });
 
   it('countOpenings returns zeros for walls without openings', () => {
