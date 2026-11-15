@@ -10,6 +10,10 @@
 // The "Issues" buttons (T4.6a, D47) are two more panels, 7 cm above the "Menu" ones (`ui:issue-button-left/-right`): same place on
 // the ring, same yaw, 9 x 6 cm, and a pinch on one opens (or closes) the Issues panel instead of the menu.
 //
+// In the mixed reality mode (`?mr=1`) the column has a fifth floor, the "My room" toggle (`ui:room-button`, 12 x 6 cm, 7 cm above "Walk inside"):
+// this system only computes its slot (`roomButtonSlots`) and shares it with the room view system (`button-column.ts`), which owns the panel
+// and the pinch on it.
+//
 // Only ONE side has buttons (UI fix 1): the right by default, the left with the accessibility preference `prefs.leftHandMenu`. The
 // buttons of the other side are hidden and cannot be pinched.
 //
@@ -42,6 +46,7 @@ import {
   formatIssueButtonView,
   formatViewButtonView,
   issueButtonAnchors,
+  roomButtonSlots,
   menuButtonSide,
   pickButton,
   sideIndex,
@@ -50,6 +55,7 @@ import {
   widenButtons,
   BUTTON_HALF_WIDTH,
   ISSUE_BUTTON_HALF_WIDTH,
+  ROOM_COLUMN_BUTTON_HALF_WIDTH,
   VIEW_BUTTON_HALF_WIDTH,
   WALK_BUTTON_HALF_WIDTH,
   type ButtonAnchor,
@@ -119,6 +125,8 @@ export class MenuButtonSystem extends createSystem({
   private readonly issueButtons = createButtonPair();
   private readonly viewButtons = createButtonPair();
   private readonly walkButtons = createButtonPair();
+  /** Where the "My room" toggle goes (the fifth floor); the panel is the room view system's. */
+  private readonly roomSlots = createButtonPair();
   /** The pick targets of each side (left, right): four floors each, disjoint (each is 1 cm above the one below); the objects are shared with the pairs above. */
   private readonly targets: readonly [readonly ButtonAnchor[], readonly ButtonAnchor[]] = [
     [this.buttons[0], this.issueButtons[0], this.viewButtons[0], this.walkButtons[0]],
@@ -173,12 +181,14 @@ export class MenuButtonSystem extends createSystem({
     issueButtonAnchors(this.buttons, this.issueButtons);
     viewButtonAnchors(this.issueButtons, this.viewButtons);
     walkButtonAnchors(this.viewButtons, this.walkButtons);
+    roomButtonSlots(this.walkButtons, this.roomSlots);
     // With large text the boxes are wider (their text is 3.0 cm), and so are the rectangles of the pinch.
     const widen = isLargeText() ? LARGE_TEXT_FACTOR : 1;
     widenButtons(this.buttons, BUTTON_HALF_WIDTH, widen);
     widenButtons(this.issueButtons, ISSUE_BUTTON_HALF_WIDTH, widen);
     widenButtons(this.viewButtons, VIEW_BUTTON_HALF_WIDTH, widen);
     widenButtons(this.walkButtons, WALK_BUTTON_HALF_WIDTH, widen);
+    widenButtons(this.roomSlots, ROOM_COLUMN_BUTTON_HALF_WIDTH, widen);
     // One side only: the buttons of the other hand are hidden.
     const shown = sideIndex(menuButtonSide(ctx.store.get().prefs.leftHandMenu));
     for (let i = 0; i < 2; i += 1) {
@@ -193,7 +203,7 @@ export class MenuButtonSystem extends createSystem({
       ctx.walkPanels[i].place(w.x, w.y, w.z, w.yawRad, on);
     }
     // The pinned menu keeps clear of the column of the shown side (src/logic/menu-follow.ts).
-    setButtonColumn(this.buttons[shown], this.issueButtons[shown], this.viewButtons[shown], shown === 1 ? 'right' : 'left', this.walkButtons[shown]);
+    setButtonColumn(this.buttons[shown], this.issueButtons[shown], this.viewButtons[shown], shown === 1 ? 'right' : 'left', this.walkButtons[shown], this.roomSlots[shown]);
     this.logView(head);
   }
 

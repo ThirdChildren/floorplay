@@ -7,8 +7,13 @@
 // everything that hangs from it is hidden (the root of the model is not visible), its buttons stay away (`isModelHidden`) and its
 // gestures are off (`isTabletopLocked`). Logs `mr view=room|model`.
 //
-// The button is shown while the session is presenting, never at real scale (a viewpoint hides the model's buttons and the room
-// view and real scale exclude each other) and never during a fade. It is anchored where the head looks when it appears and anchored
+// In the MODEL view the toggle is the top floor (the fifth) of the fixed button column beside the model (Menu, Issues, View, Walk inside,
+// My room; the slot is computed by the menu button system and read from `getRoomToggleSlot`, same side, size and spacing as the others) and
+// the head-anchored pair is not shown: the fixed Menu button is there already. In the ROOM view the column is away with the model, so the
+// pair "Model" + "Menu" is anchored in front of the head as below.
+//
+// The toggle is shown while the session is presenting, never at real scale (a viewpoint hides the model's buttons and the room
+// view and real scale exclude each other) and never during a fade. The pair is anchored where the head looks when it appears and anchored
 // again, with a short glide, after it was out of the gaze for a while (the rules of the "Tabletop" button).
 //
 // Register this system AFTER the menu items and the Tabletop button (a pinch that picks a control of an open menu is theirs: its claim
@@ -17,6 +22,7 @@
 
 import { createSystem, Quaternion, Vector3, type Entity, type World } from '@iwsdk/core';
 import { slog } from '../log';
+import { pickButton, type ButtonAnchor } from '../logic/menu-button';
 import { LARGE_TEXT_FACTOR } from '../logic/access';
 import { pitchOfForward, yawOfForward } from '../logic/menu-anchor';
 import { glideYaw, REANCHOR_GLIDE_SECONDS } from '../logic/tabletop-button';
@@ -41,6 +47,7 @@ import {
 import { RoomButtonPanel } from '../ui/room-button-panel';
 import { strings } from '../ui/strings';
 import { isLargeText } from '../ui/theme';
+import { enableRoomToggleSlot, getRoomToggleSlot } from './button-column';
 import { closeMenu, getMenuMode, openPinnedMenu } from './palm-menu';
 import { onPinchStart, pinchClaims, pinchPoint, type Hand } from './pinch-input';
 import { isRealScale, isRoomView, isViewTransitioning, setRoomViewFlag } from './view-mode';
@@ -61,6 +68,7 @@ const listeners = new Set<(view: RoomView) => void>();
 
 /** Creates the button and registers the system. `root` is the entity of the model on the table (`miniature.root`). */
 export function createRoomView(world: World, root: Entity): void {
+  enableRoomToggleSlot();
   context = { panel: new RoomButtonPanel(world, strings.room.toRoom), menuPanel: new RoomButtonPanel(world, strings.menu.button, 'menu'), root };
   world.registerSystem(RoomViewSystem);
 }
@@ -105,7 +113,10 @@ export class RoomViewSystem extends createSystem({}) {
   private toYaw = 0;
   private glide = REANCHOR_GLIDE_SECONDS;
   private shown = false;
+  /** The toggle is shown in the column (the model view), not in the pair. */
+  private columnShown = false;
   private secondsOut = 0;
+  private readonly slotList: Readonly<ButtonAnchor>[] = [];
 
   init(): void {
     this.cleanupFuncs.push(onPinchStart((hand) => this.onPinch(hand)));
@@ -120,24 +131,33 @@ export class RoomViewSystem extends createSystem({}) {
     if (!ctx) return;
     ctx.panel.prepare();
     ctx.menuPanel.prepare();
+    ctx.panel.setText(isRoomView() ? strings.room.toModel : strings.room.toRoom);
     const head = this.world.player.head;
-    const visible =
+    const usable =
       this.world.renderer.xr.isPresenting &&
       head.position.lengthSq() !== 0 &&
       !isRealScale() &&
       !isViewTransitioning() &&
-      ctx.panel.ready &&
-      ctx.menuPanel.ready;
+      ctx.panel.ready;
+    // The model view: the toggle is the top floor of the column (when the column is shown). The room view: the pair in front of the head.
+    const slot = usable && !isRoomView() ? getRoomToggleSlot() : null;
+    this.columnShown = slot !== null;
+    if (slot) {
+      if (this.shown) ctx.menuPanel.place(0, 0, 0, 0, false);
+      this.shown = false;
+      this.secondsOut = 0;
+      ctx.panel.place(slot.x, slot.y, slot.z, slot.yawRad, true);
+      return;
+    }
+    const visible = usable && isRoomView() && ctx.menuPanel.ready;
     if (!visible) {
-      if (this.shown) {
-        ctx.panel.place(0, 0, 0, 0, false);
-        ctx.menuPanel.place(0, 0, 0, 0, false);
-      }
+      // Nothing shows the toggle now: the column is hidden, or the pair is not due.
+      ctx.panel.place(0, 0, 0, 0, false);
+      ctx.menuPanel.place(0, 0, 0, 0, false);
       this.shown = false;
       this.secondsOut = 0;
       return;
     }
-    ctx.panel.setText(isRoomView() ? strings.room.toModel : strings.room.toRoom);
 
     head.getWorldPosition(this.headPosition);
     head.getWorldQuaternion(this.headQuaternion);
@@ -206,13 +226,22 @@ export class RoomViewSystem extends createSystem({}) {
   }
 
   private onPinch(hand: Hand): void {
-    if (!context || !this.shown || !this.world.renderer.xr.isPresenting || isRealScale() || isViewTransitioning()) return;
+    if (!context || !this.world.renderer.xr.isPresenting || isRealScale() || isViewTransitioning()) return;
+    if (!this.shown && !this.columnShown) return;
     // A control of an open menu (or anyone else) has this pinch already: it is not a press on the button.
     if (pinchClaims.ownerOf(hand) !== null) return;
     pinchPoint(hand, this.point);
-    this.centers();
-    const isToggle = pickRoomButton(this.point, this.toggleCenter, this.yaw, widthFactor());
-    const isMenu = !isToggle && pickRoomButton(this.point, this.menuCenter, this.yaw, widthFactor(), ROOM_MENU_BUTTON_HALF_WIDTH);
+    let isToggle = false;
+    let isMenu = false;
+    if (this.columnShown) {
+      // The model view: the toggle is the top floor of the column; the other floors are the menu button system's.
+      const slot = getRoomToggleSlot();
+      isToggle = slot !== null && pickButton(this.point, this.slotTargets(slot)) !== null;
+    } else {
+      this.centers();
+      isToggle = pickRoomButton(this.point, this.toggleCenter, this.yaw, widthFactor());
+      isMenu = !isToggle && pickRoomButton(this.point, this.menuCenter, this.yaw, widthFactor(), ROOM_MENU_BUTTON_HALF_WIDTH);
+    }
     if (!isToggle && !isMenu) return;
     // With a piece in the hand the buttons do not react: the pinch of the other hand rotates the piece.
     if (pinchClaims.anyClaimed('furniture')) {
@@ -229,5 +258,11 @@ export class RoomViewSystem extends createSystem({}) {
     }
     slog(`mr button pressed hand=${hand}`);
     setRoomView(otherView(currentRoomView()));
+  }
+
+  /** The one pick target of the column slot (a list the size of the call: a pinch is an event, not a frame). */
+  private slotTargets(slot: Readonly<ButtonAnchor>): readonly ButtonAnchor[] {
+    this.slotList[0] = slot;
+    return this.slotList;
   }
 }

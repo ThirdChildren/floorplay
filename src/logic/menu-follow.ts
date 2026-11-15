@@ -8,7 +8,7 @@
 //    `FOLLOW_PITCH_DEAD_ZONE_DEG` of pitch), so the cards do not swim under a hand that is about to pinch one; when the gaze leaves the zone the
 //    menu glides to the gaze (exponential, `FOLLOW_GLIDE_SECONDS`, never faster than `FOLLOW_MAX_DEG_PER_SECOND`) and is placed again with the
 //    same rules as at opening (`pinnedPanelAnchor`: 0.5-0.8 m, upright, facing back, inside the 30 degree cone).
-// 2. KEEP CLEAR. The column of fixed buttons (Menu, Issues, View, anchored to the model, never moved) is a vertical strip seen from the head.
+// 2. KEEP CLEAR. The column of fixed buttons (Menu, Issues, View, Walk inside and, in mixed reality, My room, anchored to the model, never moved) is a vertical strip seen from the head.
 //    When the menu and the strip would be closer than `COLUMN_GAP_DEG` on both axes of the view, the heading of the menu is pushed sideways,
 //    on the side of the strip where the menu already is (on the side of the gaze at the opening), to the nearest heading with the gap. A glide
 //    never crosses the strip: it stops at the edge and stays on its side. The menu is turned about the vertical axis only, so the elevation
@@ -16,7 +16,7 @@
 // Looking straight at the strip puts the menu beside it, outside the 30 degree cone; that is the price of never covering a button
 // (the menu comes back into the cone as soon as the gaze leaves the strip). Allocates nothing.
 
-import { BUTTON_HALF_HEIGHT, BUTTON_HALF_WIDTH, ISSUE_BUTTON_HALF_WIDTH, VIEW_BUTTON_HALF_HEIGHT, VIEW_BUTTON_HALF_WIDTH, WALK_BUTTON_HALF_HEIGHT, WALK_BUTTON_HALF_WIDTH, type ButtonAnchor } from './menu-button';
+import { BUTTON_HALF_HEIGHT, BUTTON_HALF_WIDTH, ISSUE_BUTTON_HALF_WIDTH, ROOM_COLUMN_BUTTON_HALF_WIDTH, VIEW_BUTTON_HALF_HEIGHT, VIEW_BUTTON_HALF_WIDTH, WALK_BUTTON_HALF_HEIGHT, WALK_BUTTON_HALF_WIDTH, type ButtonAnchor } from './menu-button';
 import type { PanelExtent } from './menu';
 import { pinnedPanelAnchor } from './menu-anchor';
 import { panelViewBox, viewBoxOverlap, type ViewBox } from './panel-arbiter';
@@ -34,7 +34,7 @@ export interface ButtonColumn {
 /**
  * Fills `out` with the column of the three fixed buttons of one side: `menu` is the lowest (Menu), `issues` the middle, `view` the top
  * (their `halfWidth` is the widened one at large text). The strip is as wide as the widest button and as tall as the three together;
- * an optional fourth `walk` button above them makes it taller.
+ * an optional fourth `walk` button above them makes it taller, and an optional fifth `room` ("My room", mixed reality only) above that.
  */
 export function fillButtonColumn(
   out: ButtonColumn,
@@ -42,6 +42,7 @@ export function fillButtonColumn(
   issues: Readonly<ButtonAnchor>,
   view: Readonly<ButtonAnchor>,
   walk?: Readonly<ButtonAnchor>,
+  room?: Readonly<ButtonAnchor>,
 ): ButtonColumn {
   out.x = menu.x;
   out.z = menu.z;
@@ -52,6 +53,11 @@ export function fillButtonColumn(
   if (walk) {
     out.halfWidth = Math.max(out.halfWidth, walk.halfWidth ?? WALK_BUTTON_HALF_WIDTH);
     out.yTop = walk.y + WALK_BUTTON_HALF_HEIGHT;
+  }
+  // The fifth floor, "My room" (same height as the others).
+  if (room) {
+    out.halfWidth = Math.max(out.halfWidth, room.halfWidth ?? ROOM_COLUMN_BUTTON_HALF_WIDTH);
+    out.yTop = Math.max(out.yTop, room.y + BUTTON_HALF_HEIGHT);
   }
   return out;
 }
