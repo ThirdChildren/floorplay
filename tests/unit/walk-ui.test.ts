@@ -91,7 +91,7 @@ describe('the comfort vignette', () => {
     expect(vignetteTarget(0.3)).toBeGreaterThan(0);
     expect(vignetteTarget(0.6)).toBeGreaterThan(vignetteTarget(0.3));
     expect(vignetteTarget(MAX_WALK_SPEED)).toBeCloseTo(VIGNETTE_MAX, 12);
-    expect(vignetteTarget(10)).toBeCloseTo(VIGNETTE_MAX, 12);
+    expect(vignetteTarget(100)).toBeCloseTo(VIGNETTE_MAX, 12);
   });
 
   it('a bad speed asks for nothing', () => {
