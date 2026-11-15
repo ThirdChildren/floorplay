@@ -34,3 +34,4 @@
 - [Start screen / Enter VR / size overrides](iwsdk-intro-start-screen.md) — offer 'none' + launchXR from a click, reload to apply sizes, how to drive and upload files in the cloud emulator
 - [Panel arbiter (fix/panel-overlap)](panel-arbiter-fix.md) — one pinned panel at a time, arbiter registry, overlap not reproduced, scratch-runtime recipe beside a Quest server
 - [Default viewpoints](viewpoint-default-markers.md) — missing blue markers were data; checkHouse adds a polylabel viewpoint per room; setsid recipe for scratch runtime
+- [UI polish dark glass](ui-polish-dark-glass.md) — theme tokens, restyle-only rule, border+padding layout trap, HC border, menu bar page indicator, measured calls

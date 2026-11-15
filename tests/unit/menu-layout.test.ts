@@ -18,6 +18,8 @@ import {
   MENU_PANEL,
   MENU_TABS,
   MIN_TEXT_SIZE,
+  PAGE_INDICATOR_OFFSET,
+  PAGE_INDICATOR_WIDTH,
   PAGE_SIZE,
   PANEL_CENTER,
   SECTION_GAP,
@@ -55,6 +57,7 @@ const num = (id: string, key: string, fallback = 0): number => {
 function layout(): {
   items: { dx: number; dy: number }[];
   buttons: { dx: number; dy: number }[];
+  page: { dx: number; dy: number };
   tabs: { dx: number; dy: number }[];
   height: number;
 } {
@@ -82,13 +85,18 @@ function layout(): {
   top += num('menu-bar', 'margin-top');
   const buttons: { dx: number; dy: number }[] = [];
   const gap = num('menu-bar', 'gap');
-  const widths = BUTTONS.map((b) => num(`menu-btn-${b}`, 'width'));
+  // The bar reads undo, back, "1/3", next, recenter: the page indicator is a cell of the bar and not a button.
+  const cells = ['menu-btn-undo', 'menu-btn-prev', 'menu-page-box', 'menu-btn-next', 'menu-btn-recenter'];
+  const widths = cells.map((id) => num(id, 'width'));
   const total = widths.reduce((a, b) => a + b, 0) + gap * (widths.length - 1);
   let left = -total / 2;
-  for (const b of BUTTONS) {
-    const w = num(`menu-btn-${b}`, 'width');
-    const h = num(`menu-btn-${b}`, 'height');
-    buttons.push({ dx: (left + w / 2) / 100, dy: (rootHeight / 2 - (top + h / 2)) / 100 });
+  let page: { dx: number; dy: number } | null = null;
+  for (const id of cells) {
+    const w = num(id, 'width');
+    const h = num(id, 'height');
+    const spot = { dx: (left + w / 2) / 100, dy: (rootHeight / 2 - (top + h / 2)) / 100 };
+    if (id === 'menu-page-box') page = spot;
+    else buttons.push(spot);
     left += w + gap;
   }
   const tabs: { dx: number; dy: number }[] = [];
@@ -101,7 +109,7 @@ function layout(): {
     tabs.push({ dx: (tabLeft + w / 2) / 100, dy: (rootHeight / 2 - (headerTop + h / 2)) / 100 });
     tabLeft += w + tabGap;
   }
-  return { items, buttons, tabs, height: top + Math.max(...BUTTONS.map((b) => num(`menu-btn-${b}`, 'height'))) };
+  return { items, buttons, page: page ?? { dx: NaN, dy: NaN }, tabs, height: top + Math.max(...BUTTONS.map((b) => num(`menu-btn-${b}`, 'height'))) };
 }
 
 describe('the single menu panel (palm-menu.uikitml)', () => {
@@ -161,6 +169,11 @@ describe('the single menu panel (palm-menu.uikitml)', () => {
       expect(spot.dx).toBeCloseTo(BUTTON_SLOTS[i].dx, 9);
       expect(spot.dy + PANEL_CENTER.dy).toBeCloseTo(BUTTON_SLOTS[i].dy, 9);
     });
+    // The page indicator sits where the logic says (between the two arrows), with its own width.
+    expect(num('menu-page-box', 'width')).toBe(PAGE_INDICATOR_WIDTH);
+    expect(num('menu-page-box', 'height')).toBe(BAR_HEIGHT);
+    expect(drawn.page.dx).toBeCloseTo(PAGE_INDICATOR_OFFSET.dx, 9);
+    expect(drawn.page.dy + PANEL_CENTER.dy).toBeCloseTo(PAGE_INDICATOR_OFFSET.dy, 9);
     const slots = tabSlots([...MENU_TABS]);
     drawn.tabs.forEach((spot, i) => {
       expect(spot.dx).toBeCloseTo(slots[i].dx, 9);
@@ -177,7 +190,8 @@ describe('the single menu panel (palm-menu.uikitml)', () => {
 
   it('has no text smaller than 2.4 cm anywhere (D37, rule 9)', () => {
     const sizes = [...source.matchAll(/font-size:\s*([0-9.]+)/g)].map((match) => Number(match[1]));
-    expect(sizes.length).toBeGreaterThanOrEqual(PAGE_SIZE * 2 + BUTTONS.length + MENU_TABS.length + 1);
+    // two names and sizes per card, the labels of Undo and Recenter (Back and Next are arrows), the page indicator, the tabs, the title
+    expect(sizes.length).toBeGreaterThanOrEqual(PAGE_SIZE * 2 + 2 + 1 + MENU_TABS.length + 1);
     for (const size of sizes) expect(size).toBeGreaterThanOrEqual(MIN_TEXT_SIZE);
     expect(MIN_TEXT_SIZE).toBe(2.4);
   });
@@ -196,8 +210,14 @@ describe('the single menu panel (palm-menu.uikitml)', () => {
     for (const button of BUTTONS) {
       const box = styleOf(`menu-btn-${button}`);
       const icon = styleOf(`menu-btn-${button}-icon`);
-      const label = styleOf(`menu-btn-${button}-label`);
       const inner = box.height - 2 * box['border-width'];
+      if (button === 'prev' || button === 'next') {
+        // An arrow and nothing else: round, 2.6 cm in a 5.2 x 6.2 button.
+        expect(icon.height, button).toBeLessThanOrEqual(inner);
+        expect(icon.width, button).toBeLessThanOrEqual(box.width - 2 * box['border-width']);
+        continue;
+      }
+      const label = styleOf(`menu-btn-${button}-label`);
       const content = icon.height + icon['margin-bottom'] + label['font-size'] * label['line-height'];
       expect(content, button).toBeLessThanOrEqual(inner);
       expect(icon.width, button).toBeLessThanOrEqual(box.width - 2 * box['border-width']);
@@ -209,8 +229,10 @@ describe('the single menu panel (palm-menu.uikitml)', () => {
   it('has one label and one icon slot for each button, a label for each tab and a name and a size for each card', () => {
     for (const button of BUTTONS) {
       expect(source).toContain(`id="menu-btn-${button}-icon"`);
-      expect(source).toContain(`id="menu-btn-${button}-label"`);
+      // Back and Next are arrows with no label; their names are in the strings and in the anchors.
+      if (button !== 'prev' && button !== 'next') expect(source).toContain(`id="menu-btn-${button}-label"`);
     }
+    expect(source).toContain('id="menu-page-label"');
     for (const tab of MENU_TABS) {
       expect(source).toContain(`id="menu-tab-${tab}"`);
       expect(source).toContain(`id="menu-tab-${tab}-label"`);

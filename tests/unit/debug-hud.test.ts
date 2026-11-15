@@ -1,3 +1,4 @@
+import { uiColors } from '../../src/ui/theme';
 import { describe, expect, it } from 'vitest';
 import {
   HUD_CLEAR_ELEVATION_DEG,
@@ -332,13 +333,13 @@ describe('the panel in the repository', () => {
   it('counts in the hud draw group', () => {
     expect(classifyGroup('ui:debug-hud')).toBe('hud');
   });
-  it('has a layout with one text per line and a white box that the theme can turn black', () => {
+  it('has a layout with one text per line and a surface-coloured box that the theme can turn black', () => {
     const source = readText('public/ui', 'debug-hud.uikitml');
     expect(source).toContain('id="debug-hud-root"');
     for (let i = 0; i < HUD_MAX_LINES; i++) expect(source).toContain(`id="debug-hud-line-${i}"`);
     expect(source).not.toContain(`id="debug-hud-line-${HUD_MAX_LINES}"`);
-    expect(source).toContain('background-color: #ffffff');
-    expect(source).toContain('color: #1a1a1a');
+    expect(source).toContain(`background-color: ${uiColors.surface}`);
+    expect(source).toContain(`color: ${uiColors.ink}`);
     expect((source.match(/<span/g) ?? []).length).toBe(HUD_MAX_LINES);
   });
   it('has English words only', () => {

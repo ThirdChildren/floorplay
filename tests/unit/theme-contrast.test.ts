@@ -96,7 +96,7 @@ describe('every colour of the UIKitML files', () => {
   it('finds the files', () => {
     expect(files.length).toBeGreaterThanOrEqual(15);
   });
-  it.each(files)('%s: text is 4.5:1 on white as it is and 7:1 on black once themed', (file) => {
+  it.each(files)('%s: text is 4.5:1 on the surface as it is and 7:1 on black once themed', (file) => {
     const colors = textColors(readFileSync(`${dir}/${file}`, 'utf8'));
     expect(colors.length).toBeGreaterThan(0);
     for (const c of colors) {
@@ -109,17 +109,20 @@ describe('every colour of the UIKitML files', () => {
         expect(contrastRatio(themedColor('color', c), highContrastUiColors.primary), `${file} ${c} on primary, high`).toBeGreaterThanOrEqual(AAA);
         continue;
       }
-      expect(contrastRatio(c, '#ffffff'), `${file} ${c} normal`).toBeGreaterThanOrEqual(AA);
+      expect(contrastRatio(c, uiColors.surface), `${file} ${c} normal`).toBeGreaterThanOrEqual(AA);
       expect(contrastRatio(c, uiColors.secondary), `${file} ${c} on secondary, normal`).toBeGreaterThanOrEqual(AA);
       setAccessibility({ contrast: true, largeText: false });
       expect(contrastRatio(themedColor('color', c), highContrastUiColors.surface), `${file} ${c} high`).toBeGreaterThanOrEqual(AAA);
       expect(contrastRatio(themedColor('color', c), highContrastUiColors.secondary), `${file} ${c} on secondary, high`).toBeGreaterThanOrEqual(AAA);
     }
   });
-  it('the white surface turns black and the dark border turns yellow; nothing else that is not text changes', () => {
+  it('the surface turns black and the border turns yellow; nothing else that is not text changes', () => {
     setAccessibility({ contrast: true, largeText: false });
-    expect(themedColor('backgroundColor', '#ffffff')).toBe('#000000');
-    expect(themedColor('borderColor', '#1a1a1a')).toBe('#ffd400');
+    expect(themedColor('backgroundColor', uiColors.surface)).toBe('#000000');
+    expect(themedColor('borderColor', uiColors.border)).toBe('#ffd400');
+    // A primary button has a border of its own colour in the normal theme; in high contrast it is the yellow one. The accent text turns cyan.
+    expect(themedColor('borderColor', uiColors.primary)).toBe('#ffd400');
+    expect(themedColor('color', uiColors.primary)).toBe(highContrastUiColors.primary);
     // The two button fills and the text on the primary one follow (UI fix 3).
     expect(themedColor('backgroundColor', uiColors.primary)).toBe(highContrastUiColors.primary);
     expect(themedColor('backgroundColor', uiColors.secondary)).toBe(highContrastUiColors.secondary);
@@ -128,7 +131,7 @@ describe('every colour of the UIKitML files', () => {
     expect(themedColor('backgroundColor', '#9b59d0')).toBe('#9b59d0');
     expect(themedColor('backgroundColor', '#8a8f98')).toBe('#8a8f98');
     setAccessibility({ contrast: false, largeText: false });
-    expect(themedColor('backgroundColor', '#ffffff')).toBe('#ffffff');
+    expect(themedColor('backgroundColor', uiColors.surface)).toBe(uiColors.surface);
   });
 });
 

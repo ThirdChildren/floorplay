@@ -169,14 +169,14 @@ export class ScanCardPanel {
     const main = buttonLook('primary');
     // The pressable button is the primary one (blue, white text); `Added` and `Mine is full` are only a word, faint.
     if (model.action === 'add') {
-      this.add?.setProperties({ backgroundColor: main.backgroundColor, borderColor: colors.border, opacity: 1 });
+      this.add?.setProperties({ backgroundColor: main.backgroundColor, borderColor: main.borderColor, opacity: 1 });
       this.addText?.setProperties({ color: main.color });
     } else {
       this.add?.setProperties({ backgroundColor: colors.surface, borderColor: colors.border, opacity: FAINT_OPACITY });
       this.addText?.setProperties({ color: colors.ink });
     }
     const secondary = buttonLook('secondary');
-    this.close?.setProperties({ backgroundColor: secondary.backgroundColor, borderColor: colors.border });
+    this.close?.setProperties({ backgroundColor: secondary.backgroundColor, borderColor: secondary.borderColor });
     this.closeText?.setProperties({ color: secondary.color });
   }
 }

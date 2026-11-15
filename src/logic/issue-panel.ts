@@ -256,7 +256,7 @@ const BAR_SIDE_X = (ISSUE_PANEL.width / 2 - ISSUE_BAR_BUTTON_WIDTH / 2) / 100;
 
 // The layout of the body of `home` (public/ui/issue-panel.uikitml says the same, a test keeps them equal). Centimetres; the
 // heights are counted from the bottom of the panel (the frame), the widths from its middle line.
-/** Border of the body box (inside its size). */
+/** Border of the body box (inside its size): the file draws a 0.2 cm hairline and keeps 0.2 cm of padding, so the content starts 0.4 cm in, as it always did. */
 export const ISSUE_BODY_BORDER = 0.4;
 /** Space between the border of the body and the first row of `home`. */
 export const HOME_PADDING_TOP = 0.4;

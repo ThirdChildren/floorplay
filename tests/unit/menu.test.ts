@@ -3,6 +3,8 @@ import type { CatalogItem } from '../../src/logic/catalog';
 import { furnitureItems } from '../../src/logic/catalog';
 import {
   BAR_GAP,
+  PAGE_INDICATOR_OFFSET,
+  PAGE_INDICATOR_WIDTH,
   BAR_HEIGHT,
   BUTTON_WIDTH,
   BUTTONS,
@@ -145,8 +147,12 @@ describe('panel sizes', () => {
     for (let i = 0; i + 1 < BUTTONS.length; i += 1) {
       const right = BUTTON_SLOTS[i].dx + BUTTON_HALVES[BUTTONS[i]].halfWidth;
       const nextLeft = BUTTON_SLOTS[i + 1].dx - BUTTON_HALVES[BUTTONS[i + 1]].halfWidth;
-      expect(nextLeft - right).toBeCloseTo(BAR_GAP / 100, 9);
+      // Back and Next have the page indicator between them (a gap on each side of it).
+      const expected = i === 1 ? (PAGE_INDICATOR_WIDTH + 2 * BAR_GAP) / 100 : BAR_GAP / 100;
+      expect(nextLeft - right).toBeCloseTo(expected, 9);
     }
+    // The indicator is centred between the arrows and is not a control.
+    expect(PAGE_INDICATOR_OFFSET.dx).toBeCloseTo((BUTTON_SLOTS[1].dx + BUTTON_SLOTS[2].dx) / 2, 9);
     const barTop = BUTTON_SLOTS[0].dy + BUTTON_HALVES.undo.halfHeight;
     const lowRowBottom = ITEM_SLOTS[4].dy - ITEM_PANEL.height / 200;
     expect(barTop).toBeLessThan(lowRowBottom);
@@ -154,7 +160,8 @@ describe('panel sizes', () => {
 
   it('puts the header above the top row and fills the width of the menu with the bar and with the four tabs', () => {
     expect(TITLE_OFFSET.dy - HEADER_HEIGHT / 200).toBeGreaterThan(ITEM_SLOTS[0].dy + ITEM_PANEL.height / 200);
-    const bar = BUTTONS.reduce((sum, b) => sum + BUTTON_HALVES[b].halfWidth * 200, 0) + BAR_GAP * (BUTTONS.length - 1);
+    // Undo, Back, the page indicator, Next and the fourth button: five cells, four gaps.
+    const bar = BUTTONS.reduce((sum, b) => sum + BUTTON_HALVES[b].halfWidth * 200, 0) + PAGE_INDICATOR_WIDTH + BAR_GAP * BUTTONS.length;
     expect(bar).toBeCloseTo(MENU_WIDTH, 9);
     const tabs = MENU_TABS.reduce((sum, t) => sum + TAB_WIDTH[t], 0) + BAR_GAP * (MENU_TABS.length - 1);
     expect(tabs).toBeCloseTo(MENU_WIDTH, 9);

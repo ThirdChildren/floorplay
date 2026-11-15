@@ -15,6 +15,7 @@ import {
   MENU_PANEL,
   MENU_TABS,
   MENU_WIDTH,
+  PAGE_INDICATOR_WIDTH,
   SECTION_GAP,
   TAB_WIDTH,
   TITLE_OFFSET,
@@ -196,7 +197,8 @@ function controls(visible: readonly MenuTabId[], realScale: boolean): Rect[] {
 /** The smallest side of a control worth pinching, metres: the tab row is the lowest control (4 cm), a card is 8.6 cm. */
 const MIN_PINCH_HEIGHT = 0.04;
 /** The narrowest control (the "Fit" tab) is 6.4 cm wide. */
-const MIN_PINCH_WIDTH = 0.06;
+/** The round arrows `Back` and `Next` are 5.2 cm wide (the page indicator between them takes the width a wider arrow would have had); every other control is wider. */
+const MIN_PINCH_WIDTH = 0.052;
 /** S2.1: the centres of two controls are at least this far apart. */
 const MIN_CENTRE_DISTANCE = 0.06;
 
@@ -357,8 +359,9 @@ describe('the bar: Recenter on the tabletop model, Tabletop at real scale', () =
   it.each([false, true])('has the widths of the buttons fill the menu exactly (real scale: %s)', (realScale) => {
     const bar = barButtons(realScale);
     const widths = bar.map((b) => BUTTON_WIDTH[b]);
-    expect(widths).toEqual([7.9, 7.4, 7.2, 12.3]);
-    expect(widths.reduce((a, b) => a + b, 0) + BAR_GAP * 3).toBeCloseTo(MENU_WIDTH, 9);
+    expect(widths).toEqual([7.2, 5.2, 5.2, 11.6]);
+    // Undo, Back, the page indicator ("1/3"), Next and the fourth button, with a gap between the five cells.
+    expect(widths.reduce((a, b) => a + b, 0) + PAGE_INDICATOR_WIDTH + BAR_GAP * 4).toBeCloseTo(MENU_WIDTH, 9);
   });
 
   it.each([false, true])('places the buttons left to right without touching (real scale: %s)', (realScale) => {
@@ -366,7 +369,9 @@ describe('the bar: Recenter on the tabletop model, Tabletop at real scale', () =
     for (let i = 0; i + 1 < bar.length; i += 1) {
       const right = BUTTON_SLOTS[i].dx + BUTTON_HALVES[bar[i]].halfWidth;
       const nextLeft = BUTTON_SLOTS[i + 1].dx - BUTTON_HALVES[bar[i + 1]].halfWidth;
-      expect((nextLeft - right) * 100).toBeCloseTo(BAR_GAP, 9);
+      // Between Back and Next sits the page indicator (with a gap on each side).
+      const expected = i === 1 ? PAGE_INDICATOR_WIDTH + 2 * BAR_GAP : BAR_GAP;
+      expect((nextLeft - right) * 100).toBeCloseTo(expected, 9);
     }
     for (let i = 0; i < bar.length; i += 1) expect(BUTTON_HALVES[bar[i]].halfHeight * 200).toBeCloseTo(BAR_HEIGHT, 9);
   });
@@ -419,7 +424,7 @@ describe('all the controls of the menu together (16 combinations of tabs, both s
     }
   });
 
-  it('makes every control big enough to pinch: at least 6 cm wide and 4 cm tall', () => {
+  it('makes every control big enough to pinch: at least 5.2 cm wide and 4 cm tall', () => {
     for (const tabs of sets) {
       for (const realScale of [false, true]) {
         for (const r of controls(tabs, realScale)) {

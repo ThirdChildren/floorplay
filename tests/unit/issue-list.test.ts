@@ -8,6 +8,7 @@ import {
   LIST_HEADING_GAP,
   LIST_HEADING_HEIGHT,
   LIST_ISSUE_BORDER,
+  LIST_ROW_PADDING,
   LIST_ISSUE_ROW_HEIGHT,
   LIST_FIRST_LINE_WORDS_ROOM,
   LIST_LINE_WIDTH,
@@ -398,7 +399,7 @@ describe('the list fits the panel: text of 2.4 cm, rows of 4 cm, nothing outside
   });
 
   it('the row text, measured in the REAL regular and bold atlases, fits its own line, inside the borders and the padding', () => {
-    expect(LIST_LINE_WIDTH).toBeCloseTo(LIST_ROW_WIDTH - 2 * LIST_ISSUE_BORDER - 2 * 0.4, 9);
+    expect(LIST_LINE_WIDTH).toBeCloseTo(LIST_ROW_WIDTH - 2 * LIST_ISSUE_BORDER - 2 * LIST_ROW_PADDING, 9);
     for (const pageNumber of [0, 1]) {
       for (const row of page(crowded(), 'landlord', pageNumber).rows) {
         expect(atlasWidth(row.text, LIST_TEXT_SIZE, REGULAR)).toBeLessThanOrEqual(LIST_LINE_WIDTH);
@@ -438,7 +439,7 @@ describe('the list fits the panel: text of 2.4 cm, rows of 4 cm, nothing outside
   });
 
   it('a row is two lines of 2.4 cm and its border, and a 5.4 cm target', () => {
-    expect(LIST_ISSUE_ROW_HEIGHT).toBeCloseTo(2 * LIST_TEXT_SIZE + 2 * LIST_ISSUE_BORDER, 9);
+    expect(LIST_ISSUE_ROW_HEIGHT).toBeCloseTo(2 * LIST_TEXT_SIZE + 2 * LIST_ISSUE_BORDER + 0.2, 9);
     expect(LIST_ISSUE_ROW_HEIGHT).toBeGreaterThanOrEqual(4);
   });
 

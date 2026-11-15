@@ -131,11 +131,9 @@ describe('the text of the menu is at least 2.4 cm and fits where it is drawn (W2
     expect(ITEM_NAME_MAX_WIDTH).toBeCloseTo(ITEM_PANEL.width - 2 * ITEM_BORDER - 2 * ITEM_NAME_CLEARANCE, 9);
   });
 
-  it('fits the four bar labels, in bold, in their buttons (Recenter and Tabletop in the widest)', () => {
+  it('fits the bar labels, in bold, in their buttons (Recenter and Tabletop in the widest; Back and Next are arrows with no label)', () => {
     const labels: Record<string, string> = {
       undo: strings.menu.undo,
-      prev: strings.menu.previous,
-      next: strings.menu.next,
       recenter: strings.menu.recenter,
       tabletop: strings.menu.tabletop,
     };

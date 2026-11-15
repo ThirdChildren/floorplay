@@ -11,7 +11,7 @@
 // with the same layout, for the panels whose six screens are packed to the millimetre: the Issues panel and the menu).
 
 import { applyPanelFont } from './fonts';
-import { LARGE_TEXT_FACTOR, isLargeText, onAccessChange, themedColor, type UiColorProperty } from './theme';
+import { LARGE_TEXT_FACTOR, isHighContrast, isLargeText, onAccessChange, themedColor, uiTokens, type UiColorProperty } from './theme';
 
 interface Walkable {
   getElementById: <T>(id: string) => T | null;
@@ -31,6 +31,8 @@ interface Node {
 const PROPERTIES: readonly UiColorProperty[] = ['backgroundColor', 'borderColor', 'color'];
 /** The lengths that the `layout` mode grows with the text (the root `width` and the paddings), by the name UIKit has for them. */
 const LAYOUT_LENGTHS = ['width', 'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight'] as const;
+/** The four paddings of a box (the high-contrast border takes its extra thickness from them). */
+const PADDINGS = ['paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight'] as const;
 /** Every length of a box, for the `scale` mode. */
 const SCALE_LENGTHS = [
   ...LAYOUT_LENGTHS,
@@ -115,6 +117,7 @@ export function applyPanelTheme(doc: Walkable | undefined, rootId: string, mode:
       }
       if (mode === 'layout' || mode === 'scale') {
         for (const name of mode === 'scale' ? SCALE_LENGTHS : LAYOUT_LENGTHS) {
+          if (name === 'borderWidth') continue; // written below: high contrast thickens it in every mode
           const original = first.lengths[name];
           if (original === undefined) continue;
           // A text that fills its box to the hair (the hint of `home` does) must not wrap differently once everything is 1.25 times
@@ -123,6 +126,23 @@ export function applyPanelTheme(doc: Walkable | undefined, rootId: string, mode:
           const wanted = Math.round(original * factor * air * 1000) / 1000;
           if (lengthOf(current[name]) !== wanted) (patch ??= {})[name] = wanted;
         }
+      }
+    }
+    // The hairline border of the normal theme is drawn `highContrastFactor` times as thick in high contrast (and grows with a `scale` panel).
+    // The extra thickness is taken from the padding of the same box, so the content never moves: the layout (and every pick rectangle that
+    // was computed from it) is the one of the normal theme.
+    const border = first.lengths.borderWidth;
+    if (border !== undefined) {
+      const grow = mode === 'scale' ? factor : 1;
+      const wanted = Math.round(border * (isHighContrast() ? uiTokens.border.highContrastFactor : 1) * grow * 1000) / 1000;
+      if (lengthOf(current.borderWidth) !== wanted) (patch ??= {}).borderWidth = wanted;
+      const extra = wanted - Math.round(border * grow * 1000) / 1000;
+      for (const name of PADDINGS) {
+        const original = first.lengths[name];
+        if (original === undefined) continue;
+        const base = mode === 'layout' || mode === 'scale' ? original * factor : original;
+        const padding = Math.round(Math.max(0, base - extra) * 1000) / 1000;
+        if (lengthOf(current[name]) !== padding) (patch ??= {})[name] = padding;
       }
     }
     if (patch !== null) {

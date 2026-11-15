@@ -11,6 +11,8 @@ import {
   HOME_GAP_Y,
   HOME_HINT_HEIGHT,
   HOME_HINT_TOP_Y,
+  HOME_PADDING_TOP,
+  ISSUE_BODY_BORDER,
   AGENT_ROLE_AVAILABLE,
   HOME_ROLES,
   HOME_TOP_Y,
@@ -288,7 +290,10 @@ describe('the layout file says the same as the slots', () => {
   });
 
   it('the first row starts under the title, the body border and its padding', () => {
-    expect(num(styleOf('issue-panel-body'), 'padding-top')).toBeCloseTo(0.4, 6);
+    // The file draws a 0.2 cm hairline plus padding where the model counts a 0.4 cm border and 0.4 cm of padding: the content starts at the same place.
+    const body = styleOf('issue-panel-body');
+    expect(num(body, 'border-width') + num(body, 'padding-top')).toBeCloseTo(ISSUE_BODY_BORDER + HOME_PADDING_TOP, 6);
+    expect(num(body, 'border-width') + num(body, 'padding-left')).toBeCloseTo(ISSUE_BODY_BORDER, 6);
     expect(HOME_TOP_Y).toBeCloseTo(32.4, 6);
     expect(HOME_HINT_TOP_Y).toBeCloseTo(HOME_TOP_Y - 2 * HOME_CHIP_HEIGHT - 2 * HOME_GAP_Y, 9);
     expect(HOME_ACTIONS_TOP_Y).toBeCloseTo(HOME_HINT_TOP_Y - HOME_HINT_HEIGHT - HOME_GAP_Y, 9);

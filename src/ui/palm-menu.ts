@@ -59,7 +59,7 @@ import { PinnedFollower } from './pinned-follow';
 import { BUTTON_ICONS } from './menu-icons';
 import { disposePanelEntity } from './panel-lifecycle';
 import { strings } from './strings';
-import { chipLook, getUiColors, isLargeText, panelScale } from './theme';
+import { chipLook, getUiColors, isLargeText, panelScale, uiTokens } from './theme';
 
 export type PalmMenuMode = 'palm' | 'pinned';
 
@@ -72,8 +72,8 @@ const ROOT_ELEMENT = 'palm-menu-root';
 const MENU_RENDER_ORDER = 1000;
 /** Icons are drawn just above the panel. */
 const ICON_RENDER_ORDER = 1001;
-/** Icon size in UIKit units; at most the 1.4 cm slot of the layout, so icon (1.4) + gap (0.6) + label (2.64) always fit the 5.4 cm inside a bar button (UI fix 3: they overlapped). */
-const ICON_SIZE: Readonly<Record<ButtonId, number>> = { undo: 1.4, prev: 1.2, next: 1.2, recenter: 1.4 };
+/** Icon size in UIKit units; at most the slot of the layout. `Undo` and `Recenter` stack a 1.4 cm icon, a 0.6 gap and the label (2.64) in the 5.8 cm inside a bar button (UI fix 3: they overlapped); `Back` and `Next` are a 2.6 cm arrow and nothing else. */
+const ICON_SIZE: Readonly<Record<ButtonId, number>> = { undo: 1.4, prev: 2.6, next: 2.6, recenter: 1.4 };
 const BUTTON_LABELS: Readonly<Record<ButtonId, string>> = {
   undo: strings.menu.undo,
   prev: strings.menu.previous,
@@ -149,6 +149,12 @@ export class PalmMenuPanel {
   private titleBox: UIKit.Container | null = null;
   private tabRow: UIKit.Container | null = null;
   private tabElements = new Map<MenuTabId, TabElements>();
+  /** The page indicator and the two arrows (`Back` and `Next` are drawn faint when there is no page in that direction). */
+  private pageLabel: UIKit.Text | null = null;
+  private prevButton: UIKit.Container | null = null;
+  private nextButton: UIKit.Container | null = null;
+  private pageNumber = 0;
+  private pageTotal = 1;
   /** The tabs to draw and the active one; fewer than two tabs means the header is the title. */
   private visibleTabs: readonly MenuTabId[] = [];
   private activeTab: MenuTabId = 'items';
@@ -255,6 +261,16 @@ export class PalmMenuPanel {
     if (this.textApplied) this.writeItems();
   }
 
+  /**
+   * The page indicator and the arrows: `page` is zero-based, `count` the number of pages. "1/3" is shown when there is more than one page;
+   * `Back` is faint on the first page and `Next` on the last. Written in place, kept until the layout is loaded.
+   */
+  setPage(page: number, count: number): void {
+    this.pageNumber = page;
+    this.pageTotal = Math.max(1, count);
+    if (this.textApplied) this.writePage();
+  }
+
   /** The fourth button of the bar: "Recenter" on the table-top model, "Tabletop" at real scale (T3.12). Written in place. */
   setRealScale(realScale: boolean): void {
     if (realScale === this.realScale) return;
@@ -286,6 +302,11 @@ export class PalmMenuPanel {
     this.tabRow = null;
     this.visibleTabs = [];
     this.activeTab = 'items';
+    this.pageLabel = null;
+    this.prevButton = null;
+    this.nextButton = null;
+    this.pageNumber = 0;
+    this.pageTotal = 1;
   }
 
   /** Once per frame while open: fills the text when the document is ready, then follows the hand (`pinned`: stays put). */
@@ -322,9 +343,13 @@ export class PalmMenuPanel {
           });
           this.tabElements.get(tab)?.label?.setProperties({ text: strings.menu.tabs[tab] });
         }
+        this.pageLabel = doc?.getElementById<UIKit.Text>('menu-page-label') ?? null;
+        this.prevButton = doc?.getElementById<UIKit.Container>('menu-btn-prev') ?? null;
+        this.nextButton = doc?.getElementById<UIKit.Container>('menu-btn-next') ?? null;
         this.textApplied = true;
         this.writeTabs();
         this.writeItems();
+        this.writePage();
       }
     }
     if (!this.textApplied) return;
@@ -435,6 +460,14 @@ export class PalmMenuPanel {
       elements.tab?.setProperties({ display: visible ? 'flex' : 'none', backgroundColor: look.backgroundColor });
       elements.label?.setProperties({ color: look.color });
     }
+  }
+
+  /** Writes the page indicator and the faint look of the arrows that have nowhere to go. */
+  private writePage(): void {
+    this.pageLabel?.setProperties({ text: this.pageTotal > 1 ? strings.menu.page(this.pageNumber + 1, this.pageTotal) : '' });
+    // A button in use has no opacity of its own, so it inherits the dimming of the root; a faint one has its own.
+    this.prevButton?.setProperties({ opacity: this.pageNumber <= 0 ? uiTokens.disabledOpacity : undefined });
+    this.nextButton?.setProperties({ opacity: this.pageNumber >= this.pageTotal - 1 ? uiTokens.disabledOpacity : undefined });
   }
 
   /** Writes `items` into the item cards; a card without an item is hidden. */
