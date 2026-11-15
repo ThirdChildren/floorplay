@@ -151,13 +151,15 @@ export const strings = {
     recenter: 'Recenter',
     /** The fourth button of the bar at real scale (T3.12); the menu does not use it before that task. */
     tabletop: 'Tabletop',
+    /** The control at the right end of the header: ends the session and shows the start screen of the page (Load house file, Furniture sizes, Enter VR). */
+    home: 'Back to home',
     /** Short on purpose: the tabs share one row of the menu at 2.4 cm text (D37). */
     tabs: {
       items: 'Items',
       mine: 'Mine',
     },
-    /** Shown in the header when the catalog is missing; one line at 2.4 cm text. */
-    catalogUnavailable: 'Catalog not loaded',
+    /** Shown in the header when the catalog is missing; one line at 2.6 cm text in the left part of the header (17.6 cm wide, "Back to home" takes the rest). */
+    catalogUnavailable: 'No catalog',
     /** The fixed buttons beside the model (T3.3b): they open and close the pinned menu with one hand. */
     button: 'Menu',
     /** The page indicator between the two arrows of the bar: "1/3" (short: the cell is 5.4 cm wide at 2.4 cm text). */

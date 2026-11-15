@@ -1,13 +1,18 @@
 <div id="palm-menu-root" style="display: flex; flex-direction: column; align-items: center; width: 36; height: 37.6;">
-  <div id="palm-menu-title-box" style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 36; height: 4; background-color: #141b2a; border-radius: 2; border-width: 0.2; border-color: #6b7fa8;">
-    <span id="palm-menu-title" style="font-size: 2.6; font-weight: bold; color: #7cc0ff; line-height: 1.1; text-align: center;">-</span>
-  </div>
-  <div id="menu-tab-row" style="display: none; flex-direction: row; justify-content: center; width: 36; height: 4; gap: 0.4;">
-    <div id="menu-tab-items" style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 17.8; height: 4; background-color: #26324a; border-radius: 2; border-width: 0.2; border-color: #6b7fa8;">
-      <span id="menu-tab-items-label" style="font-size: 2.4; font-weight: bold; color: #f3f6fb; line-height: 1.1; text-align: center;">-</span>
+  <div id="menu-header" style="display: flex; flex-direction: row; justify-content: flex-start; width: 36; height: 4; gap: 0.4;">
+    <div id="palm-menu-title-box" style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 17.6; height: 4; background-color: #141b2a; border-radius: 2; border-width: 0.2; border-color: #6b7fa8;">
+      <span id="palm-menu-title" style="font-size: 2.6; font-weight: bold; color: #7cc0ff; line-height: 1.1; text-align: center;">-</span>
     </div>
-    <div id="menu-tab-mine" style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 17.8; height: 4; background-color: #26324a; border-radius: 2; border-width: 0.2; border-color: #6b7fa8;">
-      <span id="menu-tab-mine-label" style="font-size: 2.4; font-weight: bold; color: #f3f6fb; line-height: 1.1; text-align: center;">-</span>
+    <div id="menu-tab-row" style="display: none; flex-direction: row; justify-content: center; width: 17.6; height: 4; gap: 0.4;">
+      <div id="menu-tab-items" style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 8.6; height: 4; background-color: #26324a; border-radius: 2; border-width: 0.2; border-color: #6b7fa8;">
+        <span id="menu-tab-items-label" style="font-size: 2.4; font-weight: bold; color: #f3f6fb; line-height: 1.1; text-align: center;">-</span>
+      </div>
+      <div id="menu-tab-mine" style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 8.6; height: 4; background-color: #26324a; border-radius: 2; border-width: 0.2; border-color: #6b7fa8;">
+        <span id="menu-tab-mine-label" style="font-size: 2.4; font-weight: bold; color: #f3f6fb; line-height: 1.1; text-align: center;">-</span>
+      </div>
+    </div>
+    <div id="menu-btn-home" style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 18; height: 4; background-color: #26324a; border-radius: 2; border-width: 0.2; border-color: #6b7fa8;">
+      <span id="menu-btn-home-label" style="font-size: 2.4; font-weight: bold; color: #f3f6fb; line-height: 1.1; text-align: center;">-</span>
     </div>
   </div>
   <div id="menu-row-1" style="display: flex; flex-direction: row; justify-content: flex-start; width: 36; margin-top: 0.4; gap: 0.4;">

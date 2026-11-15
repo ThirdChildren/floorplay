@@ -20,6 +20,7 @@
 //   tab      -> shows that tab (`menu tab mine`, then its first page).
 //   Back/Next -> turn the page.
 //   Recenter -> `recenterMiniature()` on the store (offset and scale back to the start).
+//   Back to home (`ui:menu-home`, the right end of the header) -> `backToHome()`: ends the session, the start screen shows again.
 //
 // Nothing here allocates per frame: the poses are written into preallocated vectors.
 
@@ -29,6 +30,7 @@ import type { CatalogItem } from '../logic/catalog';
 import {
   BUTTON_HALVES,
   BUTTON_SLOTS,
+  HOME_SLOT,
   ITEM_HALF,
   ITEM_NAME_MAX_WIDTH,
   ITEM_NAME_SIZE,
@@ -67,6 +69,7 @@ import { fitLine } from '../logic/text-fit';
 import { MenuAnchor } from '../ui/menu-anchor';
 import { strings } from '../ui/strings';
 import { panelFontSupports } from '../ui/fonts';
+import { backToHome } from './back-home';
 import { endMiniaturePan } from './miniature-pan';
 import { getMenuMode, getPalmMenuPanel } from './palm-menu';
 import type { PalmMenuPanel } from '../ui/palm-menu';
@@ -147,6 +150,8 @@ interface Control {
   catalogId?: string;
   tab?: MenuTabId;
   button?: ButtonId | 'tabletop';
+  /** "Back to home" at the right end of the header. */
+  home?: boolean;
 }
 
 /** A control as seen by `pickRect`: its id, its current world position and its size in the plane of the menu. */
@@ -260,6 +265,13 @@ export class MenuItemsSystem extends createSystem({}) {
       half: BUTTON_HALVES[button],
       button,
     }));
+    // "Back to home" is built and disposed with the bar (it is not a bar button: it has no icon, no page, no real-scale variant).
+    this.buttonControls.push({
+      anchor: new MenuAnchor(this.world, stableId.ui('menu-home')),
+      offset: HOME_SLOT,
+      half: HOME_SLOT,
+      home: true,
+    });
   }
 
   /** One anchor per tab when there is a choice (two tabs or more), and the header of the menu to match. */
@@ -358,6 +370,10 @@ export class MenuItemsSystem extends createSystem({}) {
     // The Rotate button comes first (T5.14): a pinch that pressed it is not a second press on a control under it.
     if (pinchClaims.ownerOf(hand) === 'menu' || !pinchClaims.claim(hand, 'menu')) return;
     const control = hit.control;
+    if (control.home) {
+      backToHome();
+      return;
+    }
     if (control.tab !== undefined) {
       this.selectTab(ctx, menu, control.tab);
       return;

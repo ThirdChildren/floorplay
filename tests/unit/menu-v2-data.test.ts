@@ -278,8 +278,8 @@ describe('no text is smaller than 2.4 cm (rule 9, D37)', () => {
 
   it('gives every text element of the layout file a font size of at least the minimum (a text with none would get a default)', () => {
     const spans = [...source.matchAll(/<span\b[^>]*>/g)].map((match) => match[0]);
-    // The title, 6 names, 6 measures, the labels of Undo and Recenter (Back and Next are arrows), the page indicator and 2 tabs.
-    expect(spans).toHaveLength(1 + 6 * 2 + 2 + 1 + 2);
+    // The title, 6 names, 6 measures, the labels of Undo and Recenter (Back and Next are arrows), the page indicator, 2 tabs and Back to home.
+    expect(spans).toHaveLength(1 + 6 * 2 + 2 + 1 + 2 + 1);
     for (const span of spans) {
       const size = /font-size:\s*([0-9.]+)/.exec(span);
       expect(size, span).not.toBeNull();

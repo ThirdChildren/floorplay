@@ -21,6 +21,9 @@ import {
   MENU_TABS,
   MENU_WIDTH,
   PICK_DEPTH,
+  HEADER_LEFT_WIDTH,
+  HOME_SLOT,
+  HOME_WIDTH,
   TAB_WIDTH,
   TITLE_OFFSET,
   barButtons,
@@ -163,8 +166,10 @@ describe('panel sizes', () => {
     // Undo, Back, the page indicator, Next and the fourth button: five cells, four gaps.
     const bar = BUTTONS.reduce((sum, b) => sum + BUTTON_HALVES[b].halfWidth * 200, 0) + PAGE_INDICATOR_WIDTH + BAR_GAP * BUTTONS.length;
     expect(bar).toBeCloseTo(MENU_WIDTH, 9);
+    // The header is the tab row (or the title) and "Back to home": the two tabs fill the left part, the home control the right end.
     const tabs = MENU_TABS.reduce((sum, t) => sum + TAB_WIDTH[t], 0) + BAR_GAP * (MENU_TABS.length - 1);
-    expect(tabs).toBeCloseTo(MENU_WIDTH, 9);
+    expect(tabs).toBeCloseTo(HEADER_LEFT_WIDTH, 9);
+    expect(tabs + BAR_GAP + HOME_WIDTH).toBeCloseTo(MENU_WIDTH, 9);
     expect(MENU_EXTENT.halfWidth * 200).toBeCloseTo(MENU_WIDTH, 9);
   });
 });
@@ -213,11 +218,11 @@ describe('tabs (D37)', () => {
     for (const tab of MENU_TABS) expect(formatTabLine(tab)).toBe(`menu tab ${tab}`);
   });
 
-  it('places the two tabs side by side across the whole menu', () => {
+  it('places the two tabs side by side across the left part of the header', () => {
     const slots = tabSlots(['items', 'mine']);
     expect(slots.map((s) => s.tab)).toEqual(['items', 'mine']);
     expect(slots[0].dx - slots[0].halfWidth).toBeCloseTo(-MENU_EXTENT.halfWidth, 9);
-    expect(slots[1].dx + slots[1].halfWidth).toBeCloseTo(MENU_EXTENT.halfWidth, 9);
+    expect(slots[1].dx + slots[1].halfWidth).toBeCloseTo(-MENU_EXTENT.halfWidth + HEADER_LEFT_WIDTH / 100, 9);
     for (let i = 0; i + 1 < slots.length; i += 1) {
       expect(slots[i + 1].dx - slots[i + 1].halfWidth - (slots[i].dx + slots[i].halfWidth)).toBeCloseTo(BAR_GAP / 100, 9);
     }
@@ -227,12 +232,12 @@ describe('tabs (D37)', () => {
     }
   });
 
-  it('centres one or two tabs on the menu', () => {
+  it('centres one or two tabs on the left part of the header', () => {
     for (const visible of [['items'], ['items', 'mine'], ['mine']] as MenuTabId[][]) {
       const slots = tabSlots(visible);
       const left = slots[0].dx - slots[0].halfWidth;
       const right = slots[slots.length - 1].dx + slots[slots.length - 1].halfWidth;
-      expect(left + right).toBeCloseTo(0, 9);
+      expect(left + right).toBeCloseTo(TITLE_OFFSET.dx * 2, 9);
     }
     expect(tabSlots([])).toEqual([]);
   });

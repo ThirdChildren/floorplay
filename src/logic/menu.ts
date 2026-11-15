@@ -135,8 +135,15 @@ export const BAR_GAP = 0.4;
 export const BUTTON_PANEL = { width: BUTTON_WIDTH.recenter, height: BAR_HEIGHT } as const;
 /** Height of the header: the tab row or the title, centimetres. */
 export const HEADER_HEIGHT = 4;
-/** Width of each tab, centimetres: the two tabs share the row (36) with the gap of `BAR_GAP` between them. */
-export const TAB_WIDTH: Readonly<Record<MenuTabId, number>> = { items: 17.8, mine: 17.8 };
+/**
+ * Width of the "Back to home" control at the right end of the header, centimetres (T-home). "Back to home" is 15.9 cm at 2.4 bold, so
+ * it keeps 0.5 cm or more free inside its border on each side.
+ */
+export const HOME_WIDTH = 18;
+/** Width of the left part of the header (the title, or the tab row): what is left of the menu width after the home control and one gap. */
+export const HEADER_LEFT_WIDTH = MENU_WIDTH - HOME_WIDTH - BAR_GAP;
+/** Width of each tab, centimetres: the two tabs share the left part of the header (17.6) with the gap of `BAR_GAP` between them. "Items" is 6.5 cm at 2.4 bold. */
+export const TAB_WIDTH: Readonly<Record<MenuTabId, number>> = { items: 8.6, mine: 8.6 };
 /** Border of an item card in UIKit units (public/ui/palm-menu.uikitml). */
 export const ITEM_BORDER = 0.2;
 /** Space kept between the text of an item name and the border of its card, per side, in UIKit units. */
@@ -156,8 +163,8 @@ export const ITEM_SIZE_MARGIN = 0.8;
 export const MIN_TEXT_SIZE = 2.4;
 export const ITEM_NAME_MIN_SIZE = MIN_TEXT_SIZE;
 
-/** Width of the title panel in UIKit units (centimetres): as wide as the menu. */
-export const TITLE_PANEL_WIDTH = MENU_WIDTH;
+/** Width of the title panel in UIKit units (centimetres): the left part of the header (the home control takes the rest). */
+export const TITLE_PANEL_WIDTH = HEADER_LEFT_WIDTH;
 /** Height of the title panel in UIKit units (centimetres): the header. */
 export const TITLE_PANEL_HEIGHT = HEADER_HEIGHT;
 
@@ -178,14 +185,25 @@ function rowCentres(widths: readonly number[], gap: number): number[] {
   });
 }
 
-/** Where the title sits: the header, above the grid. */
-export const TITLE_OFFSET: Offset = { dx: 0, dy: (HEADER_BOTTOM + HEADER_HEIGHT / 2) / 100 };
+/** Centre of the left part of the header (title, or tab row) from the middle line of the menu, metres. */
+const HEADER_LEFT_CENTRE = (-MENU_WIDTH / 2 + HEADER_LEFT_WIDTH / 2) / 100;
+
+/** Where the title sits: the left part of the header, above the grid. */
+export const TITLE_OFFSET: Offset = { dx: HEADER_LEFT_CENTRE, dy: (HEADER_BOTTOM + HEADER_HEIGHT / 2) / 100 };
 
 /** The six item slots, row by row from the top left. */
 export const ITEM_SLOTS: readonly Offset[] = Array.from({ length: GRID_ROWS }, (_, row) => {
   const dy = (GRID_BOTTOM + (GRID_ROWS - 1 - row) * (ITEM_PANEL.height + GRID_GAP) + ITEM_PANEL.height / 2) / 100;
   return rowCentres(new Array<number>(GRID_COLUMNS).fill(ITEM_PANEL.width), GRID_GAP).map((dx) => ({ dx, dy }));
 }).flat();
+
+/** The slot of "Back to home": the right end of the header (T-home). It is a control of its own, never a tab or a bar button. */
+export const HOME_SLOT: Offset & HalfSize = {
+  dx: (MENU_WIDTH / 2 - HOME_WIDTH / 2) / 100,
+  dy: (HEADER_BOTTOM + HEADER_HEIGHT / 2) / 100,
+  halfWidth: HOME_WIDTH / 200,
+  halfHeight: HEADER_HEIGHT / 200,
+};
 
 /** Height of the centre of the bar, metres from the bottom of the menu. */
 const BAR_CENTRE = (BAR_BOTTOM + BAR_HEIGHT / 2) / 100;
@@ -221,13 +239,13 @@ export interface TabSlot extends Offset, HalfSize {
   readonly tab: MenuTabId;
 }
 
-/** Where the tabs of the tab row are: `visible` tabs side by side, the row centred on the menu. */
+/** Where the tabs of the tab row are: `visible` tabs side by side, the row centred on the left part of the header. */
 export function tabSlots(visible: readonly MenuTabId[]): TabSlot[] {
   const centres = rowCentres(visible.map((tab) => TAB_WIDTH[tab]), BAR_GAP);
   const dy = (HEADER_BOTTOM + HEADER_HEIGHT / 2) / 100;
   return visible.map((tab, i) => ({
     tab,
-    dx: centres[i],
+    dx: HEADER_LEFT_CENTRE + centres[i],
     dy,
     halfWidth: TAB_WIDTH[tab] / 200,
     halfHeight: HEADER_HEIGHT / 200,

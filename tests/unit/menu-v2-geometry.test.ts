@@ -18,7 +18,9 @@ import {
   MENU_TABS,
   MIN_TEXT_SIZE,
   TAB_WIDTH,
+  HOME_WIDTH,
   TITLE_OFFSET,
+  TITLE_PANEL_WIDTH,
   tabSlots,
   type Offset,
 } from '../../src/logic/menu';
@@ -154,8 +156,10 @@ describe('the text of the menu is at least 2.4 cm and fits where it is drawn (W2
   });
 
   it('fits the title and the "no catalog" message on one line of the header', () => {
-    expect(width(strings.menu.title, 2.6, BOLD)).toBeLessThan(MENU_PANEL.width - 2);
-    expect(width(strings.menu.catalogUnavailable, 2.6, BOLD)).toBeLessThan(MENU_PANEL.width - 2);
+    // The title takes the left part of the header; "Back to home" takes the right end.
+    expect(width(strings.menu.title, 2.6, BOLD)).toBeLessThan(TITLE_PANEL_WIDTH - 2);
+    expect(width(strings.menu.catalogUnavailable, 2.6, BOLD)).toBeLessThan(TITLE_PANEL_WIDTH - 2);
+    expect(width(strings.menu.home, 2.4, BOLD)).toBeLessThan(HOME_WIDTH - 2 * ITEM_BORDER - 0.5);
   });
 });
 

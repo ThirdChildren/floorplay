@@ -44,6 +44,7 @@ import { createIssuePanel } from './systems/issue-panel';
 import { createViewPanel } from './systems/view-panel';
 import { createMenuButton } from './systems/menu-button';
 import { createMenuItems, setMenuPickDebug, setMenuTabData } from './systems/menu-items';
+import { createBackHome } from './systems/back-home';
 import { attachLifecycle } from './systems/lifecycle';
 import {
   attachPersistence,
@@ -286,6 +287,8 @@ async function start(): Promise<void> {
     createRoomLabel(world, store, result.house);
     createOnboarding(world, store);
     createMenuHint(world, store);
+    // "Back to home" of the menu (ends the session so the start screen shows again): ready before the menu can be pinched.
+    createBackHome(world, intro !== null);
     createPalmMenu(world, store, merged ? strings.menu.title : strings.menu.catalogUnavailable);
     // Recenter changes the scale and the offset in the store: keep the model in step with them. Only a change of
     // the `miniature` part counts (the reducer keeps its identity otherwise), so a drag in progress is not disturbed.
