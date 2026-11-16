@@ -1,62 +1,62 @@
-# Formati dei dati
+# Data formats
 
-Tutti i file sono JSON, **in inglese** (chiavi e valori: i valori compaiono nell'interfaccia).
-Gli schemi in `schemas/` sono la fonte di verità; `logic-tester` li usa nei test.
+All files are JSON, **in English** (keys and values: the values appear in the interface).
+The schemas in `schemas/` are the source of truth; `logic-tester` uses them in the tests.
 
-## Sistema di coordinate
+## Coordinate system
 
-- Unità: **metri**. Pianta sul piano **x–z**: `x` verso destra, `z` verso il basso del disegno
-  ("verso chi guarda"). `y` è l'altezza.
-- Un punto 2D in pianta è `[x, z]`; un punto 3D è `[x, y, z]`.
-- `northAngleDeg`: angolo **in senso orario** dalla direzione "su" della pianta (−z) al nord vero.
-  Esempio: facciata principale (lato z = 0) esposta a sud-est → il "su" della pianta punta a 135°
-  → il nord è a 225° in senso orario → `northAngleDeg: 225`.
+- Unit: **metres**. The plan lies on the **x–z** plane: `x` to the right, `z` towards the bottom of the drawing
+  ("towards the viewer"). `y` is height.
+- A 2D point on the plan is `[x, z]`; a 3D point is `[x, y, z]`.
+- `northAngleDeg`: angle **clockwise** from the plan's "up" direction (−z) to true north.
+  Example: main facade (side z = 0) facing south-east → the plan's "up" points to 135°
+  → north is at 225° clockwise → `northAngleDeg: 225`.
 
 ## house (`public/houses/*.json`, schema `schemas/house.schema.json`)
 
-| Campo | Significato |
+| Field | Meaning |
 |---|---|
-| `id`, `title`, `areaM2`, `floor` | identità e dati dell'annuncio (area commerciale) |
-| `location` | `{ lat, lon }` per il calcolo del sole (posizione indicativa) |
-| `northAngleDeg`, `ceilingHeight` | orientamento e altezza soffitto |
-| `rooms[]` | `id`, `name`, `polygon` (punti `[x, z]` in senso orario), `floorMaterial` |
+| `id`, `title`, `areaM2`, `floor` | identity and listing data (commercial area) |
+| `location` | `{ lat, lon }` for the sun calculation (approximate position) |
+| `northAngleDeg`, `ceilingHeight` | orientation and ceiling height |
+| `rooms[]` | `id`, `name`, `polygon` (`[x, z]` points, clockwise), `floorMaterial` |
 | `walls[]` | `id`, `from`, `to`, `thickness`, `exterior`, `openings[]` |
-| `openings[]` | `id`, `type` (`door`/`window`), `offset` (m dall'estremo `from`), `width` (luce netta), `height`, `sill` (finestre), `connects` (porte: due id di stanza o `"outside"`), `entrance` |
-| `viewpoints[]` | `id`, `room`, `position` `[x, z]`, `yawDeg` (0 = verso −z, orario), `eyeHeight` |
-| ↳ stanze senza punto di vista | ogni stanza deve avere un marcatore blu sul plastico: se il file non nomina un punto di vista per una stanza, il caricatore (`checkHouse`) ne aggiunge uno in coda (`V<n>` libero), nel punto della stanza più lontano dai muri (sempre dentro il poligono, anche per stanze a L), rivolto alla porta più vicina o, senza porte, al lato più lungo. I punti di vista scritti nel file non cambiano mai |
-| `fixtures[]` | oggetti fissi indicabili dall'inquilino: `id`, `name`, `room`, `category`, `position` `[x, y, z]` |
-| `staging` | preset "Furnish": `{ "<style>": [{ catalogId, position [x, z], rotationDeg }] }` |
+| `openings[]` | `id`, `type` (`door`/`window`), `offset` (m from the `from` end), `width` (clear width), `height`, `sill` (windows), `connects` (doors: two room ids or `"outside"`), `entrance` |
+| `viewpoints[]` | `id`, `room`, `position` `[x, z]`, `yawDeg` (0 = towards −z, clockwise), `eyeHeight` |
+| ↳ rooms without a viewpoint | every room must have a blue marker on the model: if the file does not name a viewpoint for a room, the loader (`checkHouse`) adds one at the end (a free `V<n>`), at the point of the room farthest from the walls (always inside the polygon, even for L-shaped rooms), facing the nearest door or, without doors, the longest side. Viewpoints written in the file never change |
+| `fixtures[]` | fixed objects the tenant can point at: `id`, `name`, `room`, `category`, `position` `[x, y, z]` |
+| `staging` | "Furnish" presets: `{ "<style>": [{ catalogId, position [x, z], rotationDeg }] }` |
 
-Categorie (`category`): `plumbing`, `electrical`, `appliances`, `furniture`, `floors_walls`,
+Categories (`category`): `plumbing`, `electrical`, `appliances`, `furniture`, `floors_walls`,
 `windows_doors`, `other`.
 
-## Regola di passaggio (FitCheck) — RIMOSSA il 2026-11-14
+## Passage rule (FitCheck) — REMOVED on 2026-11-14
 
-> **Rimossa** (correzioni dell'interfaccia, `qa/reports/UI-FIX-2026-11-14.md`): l'app non mostra più nessun messaggio sul passaggio dalle porte (`Fits` / `Won't fit` / `Fits when disassembled` / `No route`), né i marcatori sulle porte, né la scheda `Fit` del menu. `src/logic/door-graph.ts` e `src/logic/fit-check.ts` non esistono più. Il testo qui sotto resta come storia; i campi `kind: "mobility"` e `disassemblable` restano nel formato dei dati (schemi invariati) ma l'app non li usa.
+> **Removed** (interface fixes, `qa/reports/UI-FIX-2026-11-14.md`): the app no longer shows any message about passing through doors (`Fits` / `Won't fit` / `Fits when disassembled` / `No route`), nor the markers on the doors, nor the `Fit` tab of the menu. `src/logic/door-graph.ts` and `src/logic/fit-check.ts` no longer exist. The text below stays as history; the fields `kind: "mobility"` and `disassemblable` stay in the data format (schemas unchanged) but the app does not use them.
 
-Semplificata e dichiarata come tale nell'app (seconda riga fissa dell'etichetta: "Simplified check").
-Logica pura in `src/logic/door-graph.ts` e `src/logic/fit-check.ts` (D34 in `docs/plans/M3.md`).
+Simplified and declared as such in the app (second fixed line of the label: "Simplified check").
+Pure logic in `src/logic/door-graph.ts` and `src/logic/fit-check.ts` (D34 in `docs/plans/M3.md`).
 
-1. Percorso: dalla porta con `entrance: true` alla stanza di destinazione, sul grafo delle porte
-   (`connects`; nodi = stanze + `outside`), cammino con meno porte (a parità, la prima in ordine
-   di file). Solo la porta d'ingresso può collegare `outside`. Stanza sconosciuta, casa senza
-   ingresso o stanza isolata: `no-route` ("No route from the entrance to this room").
-2. **Mobile** (`kind: "furniture"`) con dimensioni `w x d x h`: ordinate crescenti `a <= b <= c`.
-   Passa da una porta se `a <= width + 0.01` e `b <= height` (lo si può inclinare); la tolleranza
-   di 1 cm vale solo per i mobili.
-3. **Sedia a rotelle / passeggino** (`kind: "mobility"` nel catalogo): passa se
-   `size[0] + 2 x 0.05 <= width`, **senza** tolleranza (solo 1e-9 per il rumore numerico dei
-   decimali: 0,70 + 0,10 passa da una porta di 0,80, non da una di 0,79). L'altezza della porta
-   non conta e un pezzo di mobilità non si smonta mai.
-4. **Corridoi non verificati**: il file della casa non ha alcun dato di corridoio (larghezza,
-   curve), quindi il FitCheck guarda solo le porte. Nelle case demo il corridoio di A è largo
-   1,6 m e non cambierebbe nessun esito. È la ragione del "Simplified check".
-5. Il risultato indica **la prima porta del percorso** che non passa e il motivo. Codici
-   **distinti** dai motivi di posa di M2: `door-too-narrow`, `door-too-low`, `fits-disassembled`,
-   `no-route` (più `fits`). **Non** si riusa mai `blocks-door`: è la zona libera di 0,30 m
-   davanti a una porta e resta un motivo di posa non valida. Un mobile con `disassemblable: true`
-   bloccato da una porta è `fits-disassembled` (mai "blocked").
-6. Testi (cm interi, nome corto in minuscolo senza "My " iniziale), in `strings.fit`:
+1. Route: from the door with `entrance: true` to the destination room, on the door graph
+   (`connects`; nodes = rooms + `outside`), path with the fewest doors (on a tie, the first in file
+   order). Only the entrance door can connect `outside`. Unknown room, home without an
+   entrance or isolated room: `no-route` ("No route from the entrance to this room").
+2. **Furniture** (`kind: "furniture"`) with dimensions `w x d x h`: sorted ascending `a <= b <= c`.
+   It passes through a door if `a <= width + 0.01` and `b <= height` (it can be tilted); the 1 cm
+   tolerance applies only to furniture.
+3. **Wheelchair / stroller** (`kind: "mobility"` in the catalog): it passes if
+   `size[0] + 2 x 0.05 <= width`, **without** tolerance (only 1e-9 for the numeric noise of
+   decimals: 0.70 + 0.10 passes through a door of 0.80, not through one of 0.79). The door height
+   does not matter and a mobility piece is never disassembled.
+4. **Unverified corridors**: the house file has no corridor data (width,
+   turns), so the FitCheck looks only at doors. In the demo homes the corridor of A is
+   1.6 m wide and would not change any result. This is the reason for the "Simplified check".
+5. The result indicates **the first door on the route** that does not let it through and the reason. Codes
+   **distinct** from the placement reasons of M2: `door-too-narrow`, `door-too-low`, `fits-disassembled`,
+   `no-route` (plus `fits`). `blocks-door` is **never** reused: it is the free zone of 0.30 m
+   in front of a door and remains an invalid-placement reason. A piece with `disassemblable: true`
+   blocked by a door is `fits-disassembled` (never "blocked").
+6. Texts (whole cm, short name in lowercase without a leading "My "), in `strings.fit`:
    `Won't fit: the door is 80 cm wide, the sofa's shortest side is 85 cm` /
    `Won't fit: the door is 75 cm wide, the wheelchair needs 80 cm` /
    `Won't fit: the door is 210 cm high, the sofa needs 230 cm` /
@@ -64,33 +64,33 @@ Logica pura in `src/logic/door-graph.ts` e `src/logic/fit-check.ts` (D34 in `doc
    `Fits: the narrowest door on the way is 90 cm wide` /
    `No route from the entrance to this room`.
 
-Esiti attesi sui dati demo (porte di A: `d-entrance` 0,90, `d-living`/`d-bedroom`/`d-study` 0,80,
-`d-bathroom` 0,75; di B: tutte 0,90 tranne `d-bathroom` 0,80):
-- divano 85 x 95 x 230 (`my-sofa`): bloccato su `d-living` (80 cm) in A, passa nel soggiorno di B;
-- letto `my-bed` (smontabile): `fits-disassembled` su `d-entrance` (90 cm) verso qualunque stanza;
-- sedia a rotelle 70 cm (servono 80): bloccata su `d-bathroom` (75 cm) in A, passa nel bagno di B;
-- passeggino 60 cm (servono 70): passa anche dal bagno di A.
+Expected results on the demo data (doors of A: `d-entrance` 0.90, `d-living`/`d-bedroom`/`d-study` 0.80,
+`d-bathroom` 0.75; of B: all 0.90 except `d-bathroom` 0.80):
+- sofa 85 x 95 x 230 (`my-sofa`): blocked on `d-living` (80 cm) in A, passes into the living room of B;
+- `my-bed` bed (disassemblable): `fits-disassembled` on `d-entrance` (90 cm) towards any room;
+- wheelchair 70 cm (80 needed): blocked on `d-bathroom` (75 cm) in A, passes into the bathroom of B;
+- stroller 60 cm (70 needed): passes even through the bathroom of A.
 
 ## catalog (`public/catalog/catalog.json`)
 
-`items[]`: `id`, `name`, `kind` (`furniture` | `mobility`), `size` `[w, d, h]` in metri,
-`disassemblable` (letti, armadi, tavoli; il campo resta nel formato ma non è più usato dall'app dopo la rimozione del FitCheck), `model` (percorso glb, `null` finché l'`asset-curator` non lo assegna), `credit` (id in `CREDITS.md`).
-Schema: `schemas/catalog.schema.json` (vale anche per `my-furniture.json`: senza `model` serve `owner`; con `model` serve `credit`).
-Validazione a mano in `src/logic/catalog.ts` (`checkCatalog`), con in più id univoci. I pezzi piatti
-(`size[2] ≤ 0.02`, il tappeto) non collidono con altri mobili e non bloccano le porte.
+`items[]`: `id`, `name`, `kind` (`furniture` | `mobility`), `size` `[w, d, h]` in metres,
+`disassemblable` (beds, wardrobes, tables; the field stays in the format but is no longer used by the app after the removal of the FitCheck), `model` (glb path, `null` until the `asset-curator` assigns it), `credit` (id in `CREDITS.md`).
+Schema: `schemas/catalog.schema.json` (it also applies to `my-furniture.json`: without `model` it needs `owner`; with `model` it needs `credit`).
+Hand-written validation in `src/logic/catalog.ts` (`checkCatalog`), with unique ids in addition. Flat pieces
+(`size[2] ≤ 0.02`, the rug) do not collide with other furniture and do not block doors.
 
-### Posa dei mobili (`rotationDeg`, `position`)
+### Furniture pose (`rotationDeg`, `position`)
 
-Vale per `house.staging[].rotationDeg`, per lo stato dell'app e per il catalogo (`size = [w, d, h]`):
+It applies to `house.staging[].rotationDeg`, to the app state and to the catalog (`size = [w, d, h]`):
 
-- `position` = **centro dell'impronta** `[x, z]` in metri della pianta; il pezzo sta a terra (y = 0).
-- `rotationDeg` ∈ {0, 90, 180, 270}, **in senso orario visto dall'alto** con la pianta disegnata con −z in
-  alto (come `viewpoints[].yawDeg`). Un altro valore si porta al quarto di giro più vicino.
-- **Fronte**: a 0° il fronte del mobile guarda **−z** (verso l'alto della pianta).
-- **Impronta** sulla pianta: `[w, d]` a 0° e 180°, `[d, w]` a 90° e 270°.
-- In Three.js: `object.rotation.y = −rotationDeg · π / 180` (stessa convenzione dei muri).
-- Le `rotationDeg` di `staging.scandinavian` non seguono ancora il fronte (sedie e armadio guardano il lato
-  sbagliato): non cambiano l'impronta e si rivedono in M5.
+- `position` = **centre of the footprint** `[x, z]` in plan metres; the piece stands on the floor (y = 0).
+- `rotationDeg` ∈ {0, 90, 180, 270}, **clockwise seen from above** with the plan drawn with −z at
+  the top (like `viewpoints[].yawDeg`). Any other value is brought to the nearest quarter turn.
+- **Front**: at 0° the front of the furniture faces **−z** (towards the top of the plan).
+- **Footprint** on the plan: `[w, d]` at 0° and 180°, `[d, w]` at 90° and 270°.
+- In Three.js: `object.rotation.y = −rotationDeg · π / 180` (same convention as the walls).
+- The `rotationDeg` values of `staging.scandinavian` do not yet follow the front (chairs and wardrobe face the
+  wrong side): they do not change the footprint and will be reviewed in M5.
 
 ### Size overrides of the catalog (browser storage, start screen)
 
@@ -124,21 +124,21 @@ Automated QA that does not use the start screen must set `intro=0` (in the URL o
 
 ## my furniture (`public/demo/my-furniture.json`)
 
-Come `catalog.items`, con `owner: "me"`. In MR le misure possono arrivare dal pizzico sugli spigoli.
+Like `catalog.items`, with `owner: "me"`. In MR the measurements can come from pinching the corners.
 
 ## issue (`public/demo/issues-*.json`, schema `schemas/issue.schema.json`)
 
-| Campo | Significato |
+| Field | Meaning |
 |---|---|
-| `id`, `houseId` | identità |
-| `kind` | `issue` (segnalazione), `question` (domanda all'agente), `baseline` (difetto del verbale), `info` (punto informativo) |
-| `position` | `[x, y, z]` in coordinate della casa |
-| `fixtureId` | opzionale, se ancorata a un fixture |
-| `category`, `urgency` | categoria come sopra; `low` / `medium` / `urgent` |
-| `text`, `audio` | testo; percorso della nota vocale (opzionale) |
-| `status` | `open` → `in_progress` → `resolved` → `archived` (solo per `issue`) |
-| `history[]` | `{ at, by, event, note? }` con `by` ∈ `tenant`, `landlord`, `agent`, `visitor` |
+| `id`, `houseId` | identity |
+| `kind` | `issue` (report), `question` (question to the agent), `baseline` (defect in the move-in report), `info` (info point) |
+| `position` | `[x, y, z]` in house coordinates |
+| `fixtureId` | optional, if anchored to a fixture |
+| `category`, `urgency` | category as above; `low` / `medium` / `urgent` |
+| `text`, `audio` | text; path of the voice note (optional) |
+| `status` | `open` → `in_progress` → `resolved` → `archived` (only for `issue`) |
+| `history[]` | `{ at, by, event, note? }` with `by` ∈ `tenant`, `landlord`, `agent`, `visitor` |
 
-Transizioni valide di `status`: `open→in_progress` (landlord), `in_progress→resolved` (landlord),
-`resolved→archived` (tenant conferma), `resolved→in_progress` (tenant rifiuta). Le altre sono vietate.
-Colori: open rosso, in_progress arancione, resolved verde, archived grigio, baseline blu.
+Valid `status` transitions: `open→in_progress` (landlord), `in_progress→resolved` (landlord),
+`resolved→archived` (tenant confirms), `resolved→in_progress` (tenant rejects). The others are forbidden.
+Colors: open red, in_progress orange, resolved green, archived grey, baseline blue.

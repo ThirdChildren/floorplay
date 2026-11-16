@@ -1,23 +1,23 @@
-# Smoke test IWER nel cloud — 2026-10-10
+# IWER smoke test in the cloud — 2026-10-10
 
-Ambiente: macchina cloud Linux, runtime già avviato headless (`dev up --ai-mode agent --headless`, porta 8081,
-SwiftShader = rendering software). Strumenti MCP `xr_*`/`browser_*`/`ecs_*` non disponibili in sessione:
-usata la CLI `npx @iwsdk/cli`. Nessun codice dell'app modificato. Parametri: `house=apartment-a&reset=1&debug=1`
-tramite `dev-params.local.txt` (ignorato da git).
+Environment: Linux cloud machine, runtime already started headless (`dev up --ai-mode agent --headless`, port 8081,
+SwiftShader = software rendering). The MCP tools `xr_*`/`browser_*`/`ecs_*` were not available in the session:
+the `npx @iwsdk/cli` CLI was used. No app code was modified. Parameters: `house=apartment-a&reset=1&debug=1`
+via `dev-params.local.txt` (ignored by git).
 
-## Esito per passo
+## Result per step
 
-| # | Passo | Esito | Verifica |
+| # | Step | Result | Check |
 |---|---|---|---|
 | 0 | `dev status` | PASS | `"browserConnected": true`, `"browserCommandReady": true` |
-| 1 | Sessione XR: stato + accettazione | PASS | prima `sessionActive: false`, `sessionOffered: true`; dopo `xr enter` → `"sessionActive": true`, `"sessionMode": "immersive-vr"`, `enabledFeatures: ["local-floor","bounded-floor","hand-tracking","viewer","local"]` |
-| 2 | Input a mani | PASS | `xr set-input-mode {"mode":"hand"}` → `"activeDevices": ["hand-left","hand-right"]` |
-| 3 | App viva (S1.1) | PASS | `ecs find ^house:` → `house:apartment-a` (entityIndex 13); `^room:` → 5 entità; `^wall:` → 13 entità. Log: `[soglia] house loaded apartment-a rooms=5 walls=13 doors=5 windows=7` |
-| 4 | Console senza errori | PASS | buffer di 43 righe (`count: 200`, nessun filtro): 38 `log` + 5 `info` (navigazioni), **0 `error`, 0 `warn`**; riverifica a fine prova con filtro error/warn: `"result": []` |
+| 1 | XR session: status + accept | PASS | before: `sessionActive: false`, `sessionOffered: true`; after `xr enter` → `"sessionActive": true`, `"sessionMode": "immersive-vr"`, `enabledFeatures: ["local-floor","bounded-floor","hand-tracking","viewer","local"]` |
+| 2 | Hand input | PASS | `xr set-input-mode {"mode":"hand"}` → `"activeDevices": ["hand-left","hand-right"]` |
+| 3 | App alive (S1.1) | PASS | `ecs find ^house:` → `house:apartment-a` (entityIndex 13); `^room:` → 5 entities; `^wall:` → 13 entities. Log: `[soglia] house loaded apartment-a rooms=5 walls=13 doors=5 windows=7` |
+| 4 | Console without errors | PASS | buffer of 43 lines (`count: 200`, no filter): 38 `log` + 5 `info` (navigations), **0 `error`, 0 `warn`**; re-checked at the end of the run with the error/warn filter: `"result": []` |
 | 5 | Screenshot | PASS | `qa/reports/cloud-smoke-2026-10-10.png` (800x800, 45 KB) |
-| 6 | Report | PASS | questo file |
+| 6 | Report | PASS | this file |
 
-## Log citati (dopo il reload con `dev-params.local.txt`)
+## Logs quoted (after the reload with `dev-params.local.txt`)
 
 ```
 [soglia] params source=dev-file house=apartment-a role=visitor reset=true seed=1 debug=true time=-
@@ -32,78 +32,78 @@ tramite `dev-params.local.txt` (ignorato da git).
 [soglia] house loaded apartment-a rooms=5 walls=13 doors=5 windows=7
 [soglia] onboarding step=pinch
 [soglia] furniture models loaded=14 fallback=0
-[soglia] miniature placed x=0.000 y=1.350 z=-0.450 yawDeg=0.0 scale=0.0500   (dopo l'ingresso in XR)
+[soglia] miniature placed x=0.000 y=1.350 z=-0.450 yawDeg=0.0 scale=0.0500   (after entering XR)
 ```
 
-Statistiche (`[soglia:stats]`), fuori sessione XR e poi in XR:
+Statistics (`[soglia:stats]`), outside the XR session and then in XR:
 
 ```
 [soglia:stats] fps=5 calls=25 views=1 callsPerView=25 triangles=1468 geometries=37 textures=3
 [soglia:stats] fps=6 calls=70 views=2 callsPerView=35 triangles=21592 geometries=46 textures=5
-[soglia:stats] fps=8 calls=70 views=2 callsPerView=35 triangles=21592 geometries=46 textures=5   (ultima riga letta)
+[soglia:stats] fps=8 calls=70 views=2 callsPerView=35 triangles=21592 geometries=46 textures=5   (last line read)
 ```
 
-Budget CLAUDE.md (≤ 100 draw call, ≤ 150k triangoli): 70 draw call totali (35 per vista), 21.592 triangoli → entro il budget
-(indicativo; solo plastico + onboarding, casa vuota). Gli fps (5–9) non sono significativi (SwiftShader).
+CLAUDE.md budget (≤ 100 draw calls, ≤ 150k triangles): 70 draw calls in total (35 per view), 21,592 triangles → within budget
+(indicative; only the miniature + onboarding, empty house). The fps (5–9) are not meaningful (SwiftShader).
 
-Nota sul buffer: contiene anche il primo caricamento, precedente alla scrittura del file, con
+Note on the buffer: it also contains the first load, from before the file was written, with
 `[soglia] params source=default house=apartment-a role=visitor reset=false seed=1 debug=false time=-`.
-Il passaggio a `source=dev-file` conferma che il canale D1 funziona nel cloud.
+The switch to `source=dev-file` confirms that the D1 channel works in the cloud.
 
-Screenshot (in sessione XR, mani attive): si vede dall'alto il plastico bianco/grigio della casa con i pavimenti in legno
-sul tavolo scuro, sotto un cielo sfumato azzurro, con i due contorni bianchi delle mani fantasma ai lati e un oggetto
-azzurro semitrasparente al centro (presumibilmente l'indicazione dell'onboarding "pinch", non verificato).
+Screenshot (in the XR session, hands active): seen from above, the white/grey miniature of the house with wooden floors
+on the dark table, under a light blue gradient sky, with the two white outlines of the ghost hands at the sides and a
+semi-transparent light blue object in the centre (presumably the "pinch" onboarding cue, not verified).
 
-## Comandi CLI esatti che hanno funzionato (per docs/SETUP_CLOUD.md)
+## Exact CLI commands that worked (for docs/SETUP_CLOUD.md)
 
-Da `/home/user/soglia`:
+From `/home/user/soglia`:
 
 ```bash
-npx @iwsdk/cli dev status                                   # controllare browserCommandReady: true
+npx @iwsdk/cli dev status                                   # check browserCommandReady: true
 echo "house=apartment-a&reset=1&debug=1" > dev-params.local.txt
-npx @iwsdk/cli browser reload --input-json '{}'             # ricarica e rilegge dev-params.local.txt
+npx @iwsdk/cli browser reload --input-json '{}'             # reloads and re-reads dev-params.local.txt
 npx @iwsdk/cli xr status --input-json '{}'
-npx @iwsdk/cli xr enter --input-json '{}'                   # = xr_accept_session (NON "accept-session")
+npx @iwsdk/cli xr enter --input-json '{}'                   # = xr_accept_session (NOT "accept-session")
 npx @iwsdk/cli xr set-input-mode --input-json '{"mode":"hand"}'
-npx @iwsdk/cli ecs find --input-json '{"namePattern":"^house:"}'   # idem "^room:" (5) e "^wall:" (13)
+npx @iwsdk/cli ecs find --input-json '{"namePattern":"^house:"}'   # same for "^room:" (5) and "^wall:" (13)
 npx @iwsdk/cli browser logs --input-json '{"count":200}'
 npx @iwsdk/cli browser logs --input-json '{"count":200,"level":["error","warn"]}'
 npx @iwsdk/cli browser logs --input-json '{"count":200,"pattern":"soglia:stats"}'
 npx @iwsdk/cli browser screenshot --input-json '{}' --output-file /home/user/soglia/qa/reports/cloud-smoke-2026-10-10.png
 ```
 
-## Differenze rispetto al flusso MCP
+## Differences from the MCP flow
 
-- Nomi delle azioni diversi: `xr enter` (non `accept-session`), `browser logs`, `browser reload`, `ecs find`, `ecs systems`.
-  Mappatura MCP → CLI nell'help di ogni azione (`... --help`, riga "MCP tool:").
-- Ogni comando è un processo `npx` separato: l'output è una busta JSON `{"ok":..., "data":{"result":...}}`.
-  `--raw` dà il risultato grezzo; `--output-file` per gli screenshot (altrimenti file temporaneo in `data.screenshotPath`).
-- `browser logs` restituisce JSON molto verboso (ogni riga con args/frameUrl/ecc.; il banner IWSDK è multilinea):
-  conviene salvare l'output in un file e filtrarlo (`python3 -I`) o usare `pattern`/`level`.
-- Non ci sono statistiche di profilo né `ecs snapshot/diff` provati in questa smoke (non richiesti).
+- Different action names: `xr enter` (not `accept-session`), `browser logs`, `browser reload`, `ecs find`, `ecs systems`.
+  MCP → CLI mapping in the help of each action (`... --help`, line "MCP tool:").
+- Every command is a separate `npx` process: the output is a JSON envelope `{"ok":..., "data":{"result":...}}`.
+  `--raw` gives the raw result; `--output-file` for screenshots (otherwise a temporary file in `data.screenshotPath`).
+- `browser logs` returns very verbose JSON (each line with args/frameUrl/etc.; the IWSDK banner is multiline):
+  it is better to save the output to a file and filter it (`python3 -I`) or use `pattern`/`level`.
+- No profile statistics or `ecs snapshot/diff` were tried in this smoke test (not requested).
 
-## Tempi osservati
+## Observed times
 
-- Avvio runtime (log di `dev status`): lancio browser 09:10:38 → `running` 09:11:02 (~24 s).
-- App dopo il reload: `world ready` ~4,5 s dopo la navigazione; scena completa (modelli mobili) ~5,5 s.
-- `dev status` ~1 s; `xr status`/`xr enter` ~1 s; `browser reload` ~3,3 s; `browser screenshot` ~5,6 s (SwiftShader).
+- Runtime start (log of `dev status`): browser launch 09:10:38 → `running` 09:11:02 (~24 s).
+- App after the reload: `world ready` ~4.5 s after the navigation; full scene (furniture models) ~5.5 s.
+- `dev status` ~1 s; `xr status`/`xr enter` ~1 s; `browser reload` ~3.3 s; `browser screenshot` ~5.6 s (SwiftShader).
 
-## Trappole
+## Traps
 
-1. Scrivere `dev-params.local.txt` NON basta: serve `browser reload` dopo la scrittura (altrimenti resta `source=default`).
-2. L'ordine corretto è reload → `xr enter` → `set-input-mode`: il reload chiude la sessione XR (`sessionOffered: true` di nuovo).
-3. Nel buffer dei log restano le righe del caricamento precedente al reload: leggere per timestamp o per `source=dev-file`.
-4. `dev-params.local.txt` è rimasto nella radice (ignorato da git, `.gitignore:48`): cancellarlo o riscriverlo prima della prova successiva.
-5. L'help di `xr` senza azione esce con `ok:false` / `cli_error` (è solo l'elenco delle azioni, non un errore reale).
+1. Writing `dev-params.local.txt` is NOT enough: a `browser reload` is needed after writing it (otherwise it stays `source=default`).
+2. The correct order is reload → `xr enter` → `set-input-mode`: the reload closes the XR session (`sessionOffered: true` again).
+3. The log buffer keeps the lines of the load before the reload: read by timestamp or by `source=dev-file`.
+4. `dev-params.local.txt` was left in the root (ignored by git, `.gitignore:48`): delete it or rewrite it before the next run.
+5. The help of `xr` without an action exits with `ok:false` / `cli_error` (it is just the list of actions, not a real error).
 
-## Cosa l'emulatore headless con SwiftShader NON dimostra
+## What the headless emulator with SwiftShader does NOT prove
 
-- fps e tempo per frame reali (qui 5–9 fps con rendering software), quindi nemmeno il 60/72 fps su Quest;
-- precisione e comfort del tracciamento delle mani reali, pizzico reale, affaticamento da seduti;
-- passthrough/MR reali, appoggio sul tavolo, plane/mesh detection, ancore;
-- microfono e riconoscimento vocale;
-- draw call/triangoli sul Quest (qui contati sul renderer desktop, utili come indicazione di regressione);
-- aspetto reale di colori, ombre e testo sui display del visore; campo visivo dei Meta VR Glasses;
-- percezione di scala/profondità in stereo reale (qui 2 viste emulate, screenshot monoscopico 800x800).
+- real fps and frame time (here 5–9 fps with software rendering), so neither 60/72 fps on the Quest;
+- precision and comfort of real hand tracking, real pinch, seated fatigue;
+- real passthrough/MR, placement on the table, plane/mesh detection, anchors;
+- microphone and speech recognition;
+- draw calls/triangles on the Quest (here counted on the desktop renderer, useful as a regression indication);
+- real look of colours, shadows and text on the headset displays; the field of view of the Meta VR Glasses;
+- perception of scale/depth in real stereo (here 2 emulated views, monoscopic 800x800 screenshot).
 
-Nessuna di queste è una prova "sul visore": restano debito per `qa/device/DEBT.md`.
+None of these is a proof "on the headset": they remain debt for `qa/device/DEBT.md`.

@@ -1,125 +1,125 @@
-# Sviluppare Soglia da Claude Code sul web (macchina cloud)
+# Developing Floorplay from Claude Code on the web (cloud machine)
 
-Questa guida vale per le sessioni di Claude Code sul web: una macchina Linux nel cloud, **temporanea**
-(sparisce dopo un periodo di inattività), senza finestra, senza visore. Lo sviluppo del primo
-sviluppatore avviene invece su un PC Fedora: le istruzioni per quel PC (`dnf`, `sudo`, `adb`, finestra
-visibile `collaborate`) **non valgono qui** e quelle del cloud non valgono là. Le note degli agenti
-(`.claude/agent-memory/*/reference_environments.md`) riportano la stessa separazione.
+This guide applies to Claude Code sessions on the web: a Linux machine in the cloud, **temporary**
+(it disappears after a period of inactivity), with no window and no headset. The first
+developer's work happens instead on a Fedora PC: the instructions for that PC (`dnf`, `sudo`, `adb`, visible
+`collaborate` window) **do not apply here** and the cloud ones do not apply there. The agents' notes
+(`.claude/agent-memory/*/reference_environments.md`) record the same separation.
 
-Verificato il **2026-10-10** (sessione sul ramo `m3`, Node 22.22, npm 10.9, `@iwsdk/cli` 1.0.1,
-`playwright-core` 1.63.0). Tutto ciò che non è stato provato è marcato "da verificare".
+Verified on **2026-10-10** (session on the `m3` branch, Node 22.22, npm 10.9, `@iwsdk/cli` 1.0.1,
+`playwright-core` 1.63.0). Everything that was not tried is marked "to be verified".
 
-## 1. Prerequisiti dell'ambiente (li imposta chi gestisce l'ambiente cloud, non il codice)
+## 1. Environment prerequisites (set by whoever manages the cloud environment, not by the code)
 
-| Cosa | Perché | Come si vede se manca |
+| What | Why | How you can tell it is missing |
 |---|---|---|
-| **App GitHub di Claude installata sul repository con permesso di scrittura** | senza, `git push` dà 403 | `git push -u origin m3` → 403 |
-| **Dominio `cdn.playwright.dev` tra i domini ammessi** (Network access dell'ambiente) | l'emulatore ha bisogno di un Chromium compatibile con `playwright-core` 1.63 (revisione **1243**); la macchina ne ha una preinstallata più vecchia (1194) che non basta, quindi la CLI scarica quella giusta alla prima `dev up` | `dev status` resta su `browserCommandReady: false` con `browserNextAction: "Preparing Chromium…"`, poi un errore di download |
-| Registro npm raggiungibile | `npm ci` | `npm ci` fallisce |
+| **Claude GitHub App installed on the repository with write permission** | without it, `git push` gives 403 | `git push -u origin m3` → 403 |
+| **Domain `cdn.playwright.dev` among the allowed domains** (the environment's Network access) | the emulator needs a Chromium compatible with `playwright-core` 1.63 (revision **1243**); the machine has an older preinstalled one (1194) that is not enough, so the CLI downloads the right one on the first `dev up` | `dev status` stays on `browserCommandReady: false` with `browserNextAction: "Preparing Chromium…"`, then a download error |
+| npm registry reachable | `npm ci` | `npm ci` fails |
 
-Come cambiare la rete dell'ambiente: menu dell'ambiente cloud nella barra del titolo della sessione →
-Edit → *Network access* (livello più ampio, oppure il dominio in *Allowed domains*).
-Documentazione: <https://code.claude.com/docs/en/cloud-environments#network-access>.
+How to change the environment's network: cloud environment menu in the session title bar →
+Edit → *Network access* (wider level, or the domain in *Allowed domains*).
+Documentation: <https://code.claude.com/docs/en/cloud-environments#network-access>.
 
-**Nessun altro host** è servito per avviare l'emulatore, aprire la sessione XR e fare gli screenshot
-(provato il 2026-10-10: il download è partito da `https://cdn.playwright.dev/builds/cft/153.0.8010.12/linux64/…`).
-I modelli delle mani/controller sono locali (vedi memoria `iwsdk-external-hosts`).
+**No other host** was needed to start the emulator, open the XR session and take screenshots
+(tried on 2026-10-10: the download started from `https://cdn.playwright.dev/builds/cft/153.0.8010.12/linux64/…`).
+The hand/controller models are local (see memory `iwsdk-external-hosts`).
 
-## 2. Passi che hanno funzionato (nell'ordine)
+## 2. Steps that worked (in order)
 
-Tempi misurati in questa macchina.
+Times measured on this machine.
 
 ```bash
-# 1. ramo e push (verifica che i permessi di scrittura ci siano)
+# 1. branch and push (check that the write permissions are there)
 git fetch origin main
 git checkout -B m3 origin/main
-git push -u origin m3                       # niente 403 = ok
+git push -u origin m3                       # no 403 = ok
 
-# 2. dipendenze e controlli (Node già presente, non serve nvm)
+# 2. dependencies and checks (Node already present, no need for nvm)
 npm ci                                      # ~25 s
 npm run typecheck
-npm test                                    # ~5 s  (2263 test in 38 file il 2026-10-10)
-npm run build                               # ~30 s (solo l'avviso sui chunk > 500 kB)
+npm test                                    # ~5 s  (2263 tests in 38 files on 2026-10-10)
+npm run build                               # ~30 s (only the warning about chunks > 500 kB)
 
-# 3. emulatore headless (vedi sezione 4 per il primo avvio)
+# 3. headless emulator (see section 4 for the first start)
 npx @iwsdk/cli dev up --ai-mode agent --headless
-npx @iwsdk/cli dev status                   # ripetere finché "browserCommandReady": true
+npx @iwsdk/cli dev status                   # repeat until "browserCommandReady": true
 ```
 
-`dev up` ritorna subito con `browserCommandReady: false`. Al **primo avvio di ogni macchina** la CLI
-scarica Chromium 1243 (Chrome for Testing ~187 MiB + headless shell ~114 MiB in `/opt/pw-browsers`,
-≈ 35 s) e poi lancia il browser (≈ 25 s): in tutto circa un minuto prima di `browserCommandReady: true`.
-Non serve `playwright install` e non va eseguito. Il download si perde con la macchina: ogni sessione
-nuova lo rifà.
+`dev up` returns immediately with `browserCommandReady: false`. At the **first start on each machine** the CLI
+downloads Chromium 1243 (Chrome for Testing ~187 MiB + headless shell ~114 MiB in `/opt/pw-browsers`,
+≈ 35 s) and then launches the browser (≈ 25 s): about one minute in all before `browserCommandReady: true`.
+There is no need for `playwright install` and it must not be run. The download is lost with the machine: every
+new session does it again.
 
-Fermare il runtime: `npx @iwsdk/cli dev down`.
+Stop the runtime: `npx @iwsdk/cli dev down`.
 
-## 3. `.mcp.json`: ignorato, con percorsi assoluti, non committato
+## 3. `.mcp.json`: ignored, with absolute paths, not committed
 
-- `.mcp.json` è in `.gitignore` (riga "MCP configs generated by the CLI") e **non esiste in un clone nuovo**.
-- `npx @iwsdk/cli adapter sync` lo crea con **percorsi assoluti** (`/home/user/soglia/node_modules/...`)
-  per `iwsdk-runtime`, `iwsdk-reference` e `metavr`. Un file così **non è portabile** (su Fedora il
-  percorso è un altro), quindi non si toglie dal `.gitignore` e non si committa così com'è.
-- Lo stesso comando crea anche `.cursor/`, `opencode.json`, `.codex/config.toml` e `.vscode/mcp.json`:
-  non servono a Claude Code. I primi due non sono ignorati e sporcherebbero `git status`: **eliminarli**
+- `.mcp.json` is in `.gitignore` (line "MCP configs generated by the CLI") and **does not exist in a fresh clone**.
+- `npx @iwsdk/cli adapter sync` creates it with **absolute paths** (`/home/user/soglia/node_modules/...`)
+  for `iwsdk-runtime`, `iwsdk-reference` and `metavr`. A file like this **is not portable** (on Fedora the
+  path is different), so it is not taken out of `.gitignore` and not committed as it is.
+- The same command also creates `.cursor/`, `opencode.json`, `.codex/config.toml` and `.vscode/mcp.json`:
+  they are not needed by Claude Code. The first two are not ignored and would dirty `git status`: **delete them**
   (`rm -rf .cursor opencode.json .codex .vscode`).
-- **I server MCP si caricano solo all'avvio della sessione.** Nella sessione in cui `.mcp.json` nasce
-  gli strumenti `xr_*`, `browser_*`, `ecs_*` **non compaiono**: si usa la **CLI**, che espone le stesse
-  operazioni (sezione 5). Dalla sessione successiva compaiono solo se il file esiste *prima* dell'avvio.
-- `.claude/settings.json` (tracciato) ha già i permessi `mcp__iwsdk-runtime__*` e
-  `enabledMcpjsonServers`: basta che `.mcp.json` esista.
+- **MCP servers are loaded only at session start.** In the session in which `.mcp.json` is created
+  the `xr_*`, `browser_*`, `ecs_*` tools **do not appear**: use the **CLI**, which exposes the same
+  operations (section 5). From the next session they appear only if the file exists *before* the start.
+- `.claude/settings.json` (tracked) already has the `mcp__iwsdk-runtime__*` permissions and
+  `enabledMcpjsonServers`: it is enough for `.mcp.json` to exist.
 
-- **Verificato il 2026-10-10 (riavvio del processo della sessione):** dopo un riavvio del worker, con
-  `.mcp.json` già presente sul disco, gli strumenti `mcp__iwsdk-runtime__*` e `mcp__iwsdk-reference__*`
-  **compaiono** (mentre `metavr` può restare in `CONNECTION_CLOSED`: non serve al lavoro sul PC). Il
-  riavvio **ferma però il runtime** (`dev status` → `running: false`): va rilanciato con
-  `npx @iwsdk/cli dev up --ai-mode agent --headless` (più rapido della prima volta: Chromium 1243 è già in
-  `/opt/pw-browsers`). Quindi dentro la stessa macchina il file persistente basta; il problema resta
-  una macchina **nuova**, dove il file non esiste ancora.
+- **Verified on 2026-10-10 (restart of the session process):** after a worker restart, with
+  `.mcp.json` already on disk, the `mcp__iwsdk-runtime__*` and `mcp__iwsdk-reference__*` tools
+  **appear** (while `metavr` may stay in `CONNECTION_CLOSED`: it is not needed for the PC work). The
+  restart **does stop the runtime** though (`dev status` → `running: false`): it must be relaunched with
+  `npx @iwsdk/cli dev up --ai-mode agent --headless` (faster than the first time: Chromium 1243 is already in
+  `/opt/pw-browsers`). So inside the same machine the persistent file is enough; the problem remains
+  a **new** machine, where the file does not exist yet.
 
-**Opzioni per averlo già all'avvio nelle sessioni cloud future (decisione dell'utente, non ancora presa):**
+**Options to have it already at start in future cloud sessions (user decision, not yet taken):**
 
-1. *Setup script dell'ambiente* (Edit → Setup script): `npm ci && npx @iwsdk/cli adapter sync && rm -rf .cursor opencode.json .codex .vscode`.
-   Il file nasce con i percorsi giusti della macchina. **Da verificare**: che lo script giri prima
-   dell'avvio di Claude Code, così che il file sia già lì quando i server si caricano.
-2. *Committare una versione con percorsi relativi* (`node_modules/@iwsdk/cli/dist/cli.js mcp stdio`).
-   Provato solo che `node node_modules/@iwsdk/cli/dist/cli.js mcp stdio`, lanciato dalla radice,
-   risponde a `initialize` come `iwsdk-runtime`; **da verificare** che Claude Code lanci i server con la
-   radice del progetto come directory di lavoro. Svantaggio: `adapter sync` su Fedora lo riscrive con
-   percorsi assoluti e sporca la cronologia.
+1. *Environment setup script* (Edit → Setup script): `npm ci && npx @iwsdk/cli adapter sync && rm -rf .cursor opencode.json .codex .vscode`.
+   The file is created with the right paths of the machine. **To be verified**: that the script runs before
+   Claude Code starts, so that the file is already there when the servers load.
+2. *Commit a version with relative paths* (`node_modules/@iwsdk/cli/dist/cli.js mcp stdio`).
+   It was only tried that `node node_modules/@iwsdk/cli/dist/cli.js mcp stdio`, launched from the root,
+   answers `initialize` as `iwsdk-runtime`; **to be verified** that Claude Code launches the servers with the
+   project root as working directory. Drawback: `adapter sync` on Fedora rewrites it with
+   absolute paths and dirties the history.
 
-## 4. Primo avvio dell'emulatore: cosa aspettarsi
+## 4. First start of the emulator: what to expect
 
-- Il rendering è **software (SwiftShader)**: la CLI lo scrive nei log (`no GPU detected`).
-  Gli fps misurati sono 5–9: **non sono significativi**. Draw call e triangoli (`[soglia:stats]`) sì,
-  come indicazione di regressione.
-- Gli screenshot sono 800 × 800 (finestra headless, non 800 × 477 come nella sessione `collaborate`
-  del PC) e funzionano anche con la sessione XR attiva.
-- Il buffer dei log conserva i caricamenti precedenti: leggere per timestamp o cercare
-  `params source=dev-file` per trovare l'inizio del caricamento corrente.
+- Rendering is **software (SwiftShader)**: the CLI writes it in the logs (`no GPU detected`).
+  The measured fps are 5–9: **they are not meaningful**. Draw calls and triangles (`[soglia:stats]`) are,
+  as a regression indication.
+- Screenshots are 800 × 800 (headless window, not 800 × 477 as in the `collaborate` session
+  on the PC) and also work with the XR session active.
+- The log buffer keeps the previous loads: read by timestamp or search for
+  `params source=dev-file` to find the start of the current load.
 
-## 5. Strumenti MCP → CLI
+## 5. MCP tools → CLI
 
-Ogni comando è un processo `npx @iwsdk/cli <dominio> <azione> [--input-json '{...}']`. Senza azione la
-CLI elenca le azioni; `--help` riporta la riga "MCP tool:" con il nome dello strumento equivalente.
-Esito in una busta JSON `{"ok":…, "data":{"result":…}}`.
+Each command is a process `npx @iwsdk/cli <domain> <action> [--input-json '{...}']`. Without an action the
+CLI lists the actions; `--help` shows the "MCP tool:" line with the name of the equivalent tool.
+The result is in a JSON envelope `{"ok":…, "data":{"result":…}}`.
 
-| Strumento MCP | Comando CLI (da `/home/user/soglia`) |
+| MCP tool | CLI command (from `/home/user/soglia`) |
 |---|---|
-| (stato del server) | `npx @iwsdk/cli dev status` |
+| (server status) | `npx @iwsdk/cli dev status` |
 | `xr_get_session_status` | `npx @iwsdk/cli xr status --input-json '{}'` |
-| `xr_accept_session` | `npx @iwsdk/cli xr enter --input-json '{}'` (**non** `accept-session`) |
+| `xr_accept_session` | `npx @iwsdk/cli xr enter --input-json '{}'` (**not** `accept-session`) |
 | `xr_set_input_mode` | `npx @iwsdk/cli xr set-input-mode --input-json '{"mode":"hand"}'` |
 | `ecs_find_entities` | `npx @iwsdk/cli ecs find --input-json '{"namePattern":"^house:"}'` |
-| `browser_get_console_logs` | `npx @iwsdk/cli browser logs --input-json '{"count":200}'` (filtri `level`, `pattern`) |
+| `browser_get_console_logs` | `npx @iwsdk/cli browser logs --input-json '{"count":200}'` (filters `level`, `pattern`) |
 | `browser_reload_page` | `npx @iwsdk/cli browser reload --input-json '{}'` |
-| `browser_screenshot` | `npx @iwsdk/cli browser screenshot --input-json '{}' --output-file qa/reports/<nome>.png` |
+| `browser_screenshot` | `npx @iwsdk/cli browser screenshot --input-json '{}' --output-file qa/reports/<name>.png` |
 
-Le altre azioni (`xr_set_transform`, `xr_select`, `ecs_*`, `browser_profile`, …) hanno lo stesso schema:
-cercarle con `npx @iwsdk/cli xr`, `… ecs`, `… browser`.
+The other actions (`xr_set_transform`, `xr_select`, `ecs_*`, `browser_profile`, …) have the same pattern:
+find them with `npx @iwsdk/cli xr`, `… ecs`, `… browser`.
 
-**Parametri URL** (decisione D1 di `docs/plans/M1.md`): non si naviga con una query string. Si scrive
-`dev-params.local.txt` nella radice (ignorato da git) e **poi** si ricarica la pagina:
+**URL parameters** (decision D1 of `docs/plans/M1.md`): you do not navigate with a query string. Write
+`dev-params.local.txt` in the root (ignored by git) and **then** reload the page:
 
 ```bash
 echo "house=apartment-a&reset=1&debug=1" > dev-params.local.txt
@@ -128,25 +128,25 @@ npx @iwsdk/cli xr enter --input-json '{}'
 npx @iwsdk/cli xr set-input-mode --input-json '{"mode":"hand"}'
 ```
 
-L'**ordine conta**: il reload chiude la sessione XR, quindi reload → `xr enter` → `set-input-mode`.
-Scrivere il file senza ricaricare lascia `params source=default`. A fine prova cancellare il file.
-`browser logs` è molto verboso: usare `pattern`/`level` oppure salvare su file nello scratchpad.
+**Order matters**: the reload closes the XR session, so reload → `xr enter` → `set-input-mode`.
+Writing the file without reloading leaves `params source=default`. At the end of the test delete the file.
+`browser logs` is very verbose: use `pattern`/`level` or save to a file in the scratchpad.
 
-## 6. Regole per le sessioni cloud
+## 6. Rules for cloud sessions
 
-- **Mai finestra visibile**: l'emulatore si avvia sempre con `--headless` (`--ai-mode agent`). Non usare
-  `collaborate` né `--headed`.
-- **Niente `dnf`, `sudo`, `adb`** e niente `quest-integrator`: il visore e Fedora sono sul PC del primo
-  sviluppatore. Ogni prova sul visore resta in `qa/device/DEBT.md`.
-- **La macchina può sparire**: commit piccoli e `git push` dopo ogni gruppo di task, comprese le
-  modifiche alla memoria degli agenti (`.claude/agent-memory/`, tracciata).
-- La CI (`.github/workflows/ci.yml`: `npm ci`, `typecheck`, `test`, `build` su Node 22) deve essere
-  verde sul ramo prima di proseguire.
-- Una **pull request** si apre solo a gate chiuso, verso `main`.
+- **Never a visible window**: the emulator always starts with `--headless` (`--ai-mode agent`). Do not use
+  `collaborate` or `--headed`.
+- **No `dnf`, `sudo`, `adb`** and no `quest-integrator`: the headset and Fedora are on the first
+  developer's PC. Every headset test stays in `qa/device/DEBT.md`.
+- **The machine can disappear**: small commits and `git push` after every group of tasks, including the
+  changes to the agents' memory (`.claude/agent-memory/`, tracked).
+- The CI (`.github/workflows/ci.yml`: `npm ci`, `typecheck`, `test`, `build` on Node 22) must be
+  green on the branch before continuing.
+- A **pull request** is opened only when the gate is closed, towards `main`.
 
-## 7. Cosa l'emulatore nel cloud non dimostra
+## 7. What the emulator in the cloud does not prove
 
-fps e tempo per frame reali; precisione e comfort delle mani reali; passthrough/MR e appoggio sul
-tavolo; microfono; budget grafico sul Quest; resa di colori e testo sui display del visore; percezione
-di scala in stereo. Vedi `qa/reports/cloud-smoke-2026-10-10.md` (prova rapida: sessione XR, mani,
-zero errori in console, screenshot `qa/reports/cloud-smoke-2026-10-10.png`).
+Real fps and time per frame; precision and comfort of real hands; passthrough/MR and placement on the
+table; microphone; graphics budget on the Quest; rendering of colors and text on the headset displays; perception
+of scale in stereo. See `qa/reports/cloud-smoke-2026-10-10.md` (quick test: XR session, hands,
+zero console errors, screenshot `qa/reports/cloud-smoke-2026-10-10.png`).

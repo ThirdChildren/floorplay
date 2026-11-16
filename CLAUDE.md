@@ -1,187 +1,190 @@
-# Soglia — istruzioni di progetto per Claude Code
+# Floorplay — project instructions for Claude Code
 
 @AGENTS.md
 
-> La riga sopra importa le istruzioni ufficiali di Immersive Web SDK che il template
-> (`npm create @iwsdk@latest`) genera in `AGENTS.md`. Valgono sempre: se qualcosa qui
-> sotto le contraddice su come si usa IWSDK, vince `AGENTS.md`; su cosa costruire e con
-> quali regole, vince questo file.
+> The line above imports the official Immersive Web SDK instructions that the template
+> (`npm create @iwsdk@latest`) generates in `AGENTS.md`. They always apply: if anything below
+> contradicts them on how to use IWSDK, `AGENTS.md` wins; on what to build and with
+> which rules, this file wins.
 
-## Il progetto in breve
+## The project in brief
 
-Soglia è un'app **WebXR hands-first** costruita con **Immersive Web SDK (IWSDK)** per la
-*Meta VR Start Developer Competition 2026* — track **Productivity**, divisione **New Experience**.
-Consegna: **18 novembre 2026, 12:00 PT** (21:00 in Italia). Regolamento: `docs/RULES.md`.
+Floorplay is a **hands-first WebXR** app built with the **Immersive Web SDK (IWSDK)** for the
+*Meta VR Start Developer Competition 2026* — track **Productivity**, division **New Experience**.
+Submission deadline: **18 November 2026, 12:00 PT** (21:00 in Italy). Rules: `docs/RULES.md`.
+Repository: `ThirdChildren/floorplay`.
 
-La casa di un annuncio diventa un **plastico da tavolo** (scala 1:20) che si usa solo con le mani:
+The home from a listing becomes a **tabletop model** (1:20 scale) that is used with hands only:
 
-1. **Scegliere** (visitatore): arredare con le mani, provare i *propri* mobili, entrare nelle stanze a grandezza reale, vedere la luce del sole.
-2. **Presentare** (agente): punti informativi, arredo virtuale in un gesto, mappa dell'interesse.
-3. **Vivere** (inquilino e proprietario): segnalazioni ancorate al punto esatto della casa,
-   con stati rosso → arancione → verde, storico e verbale d'ingresso/uscita.
+1. **Choose** (visitor): furnish with your hands, try your *own* furniture, step into the rooms at real size, see the sunlight.
+2. **Present** (agent): info points, virtual furnishing in one gesture, interest map.
+3. **Live** (tenant and owner): issue reports anchored to the exact spot in the home,
+   with red → orange → green states, history, and a move-in/move-out report.
 
-Riferimenti: `docs/ROADMAP.md` (milestone e gate), `docs/DATA_FORMATS.md` (file JSON),
-`docs/DEVICE_CHECKLIST.md` (prove sul visore), `schemas/` (JSON Schema), `public/houses/` (case demo).
+References: `docs/ROADMAP.md` (milestones and gates), `docs/DATA_FORMATS.md` (JSON files),
+`docs/DEVICE_CHECKLIST.md` (headset tests), `schemas/` (JSON Schema), `public/houses/` (demo homes).
 
-## Lingua
+## Language
 
-- **Con l'utente parla in italiano.**
-- **Tutto ciò che finisce nel progetto è in inglese**: codice, identificatori, commenti, messaggi
-  di commit, stringhe dell'interfaccia, dati di esempio, README. Il regolamento richiede un
-  progetto interamente in inglese: nell'app non deve comparire nessuna stringa italiana.
-- Le stringhe visibili stanno tutte in `src/ui/strings.ts` (niente testo sparso nei sistemi).
+- **Talk to the user in Italian.**
+- **Everything that goes into the project is in English**: code, identifiers, comments, commit
+  messages, interface strings, sample data, docs, README. The rules require an entirely English
+  project: no Italian string may appear in the app.
+- All visible strings live in `src/ui/strings.ts` (no text scattered through the systems).
 
-## Regole non negoziabili
+## Non-negotiable rules
 
-Vengono dal regolamento ufficiale e dal design. Un task che ne viola una non è finito.
+They come from the official rules and from the design. A task that violates one is not finished.
 
-1. **Solo mani, dall'inizio alla fine.** Ogni percorso si completa con pizzico e gesti; i
-   controller possono funzionare ma non servono mai.
-2. **Da seduti.** Interazioni entro ~60 cm. **Nessuna locomozione a levetta né teletrasporto**:
-   ci si sposta tra *punti di vista* con una dissolvenza, oppure camminando dentro il plastico
-   con il gesto "scavare" (due mani, palmi in giù), lento e con vignetta di comfort.
-3. **Prestazioni.** Almeno **60 fps sul Quest** (obiettivo 72). Budget di progetto, da tarare sul
-   visore: ≤ 100 draw call, ≤ 150k triangoli visibili, texture ≤ 1024 px, ombre solo dal sole.
-4. **Avvio rapido, pausa e ripresa pulite.** Lo stato si salva da solo; togliendo e rimettendo
-   il visore (o ricaricando la pagina) si riparte dal punto lasciato.
-5. **Feature detection sempre.** Ogni API del browser (SpeechRecognition, MediaRecorder,
-   getUserMedia, plane/mesh detection, anchors, hit test) si usa solo dopo averne verificato
-   l'esistenza, con un'alternativa. L'emulatore su Chrome desktop ha API che il Quest Browser
-   potrebbe non avere.
-6. **Contenuti.** Solo asset **CC0 / pubblico dominio**, forniti da Meta per il concorso o creati
-   da noi. Ogni asset va in `CREDITS.md`. **Niente marchi, loghi, prodotti di marca, persone
-   riconoscibili.**
-   Le eccezioni ammesse (asset di runtime del framework con licenza MIT; eventuali font OFL) sono
-   solo quelle scritte in `docs/RULES.md`: nessun asset non CC0 senza una voce lì.
-7. **Onestà.** Dati simulati (es. mappa dell'interesse) etichettati **"Sample data"** nell'app.
-8. **Campo visivo.** UI essenziale vicino al centro della vista, pannelli a 0,5–0,8 m, niente
-   elementi critici ai bordi: deve funzionare anche con il campo visivo più stretto dei Meta VR Glasses.
-9. **Accessibilità.** Tutto usabile anche con una mano sola (menu del palmo sulla mano destra di default,
-   spostabile sulla sinistra nelle opzioni di accessibilità),
-   tema ad alto contrasto, testo grande.
-10. **Nucleo originale.** Nessun servizio esterno al centro dell'esperienza; la demo funziona
-    senza backend.
-11. **Three.js si importa da `@iwsdk/core`, mai da `'three'`** (una seconda copia della libreria
-    crea bug difficili da trovare).
-12. **Congelamento.** Dopo la consegna (18 nov 2026, 12:00 PT) e fino all'annuncio dei vincitori
-    (~11 dic 2026) il sito pubblicato non si modifica: nessun deploy.
+1. **Hands only, from start to finish.** Every path can be completed with pinch and gestures;
+   controllers may work but are never needed.
+2. **Seated.** Interactions within ~60 cm. **No thumbstick locomotion and no teleport**:
+   the user moves between *viewpoints* with a fade, or walks inside the model at real scale
+   with the "row" gesture (both fists closed, pulled back together like a rowing stroke),
+   slow and with a comfort vignette. Walking is armed as soon as the user enters a room by
+   pinching a viewpoint marker. See `docs/plans/WALK.md`.
+3. **Performance.** At least **60 fps on the Quest** (target 72). Project budget, to be tuned on
+   the headset: ≤ 100 draw calls, ≤ 150k visible triangles, textures ≤ 1024 px, shadows only from the sun.
+4. **Fast start, clean pause and resume.** State saves itself; taking the headset off and putting
+   it back on (or reloading the page) resumes from where the user left off.
+5. **Always feature-detect.** Use every browser API (SpeechRecognition, MediaRecorder,
+   getUserMedia, plane/mesh detection, anchors, hit test) only after checking that it
+   exists, with a fallback. The emulator on desktop Chrome has APIs that the Quest Browser
+   may not have.
+6. **Content.** Only **CC0 / public domain** assets, provided by Meta for the contest or created
+   by us. Every asset goes in `CREDITS.md`. **No trademarks, logos, branded products, or
+   recognizable people.**
+   The allowed exceptions (framework runtime assets under the MIT license; possible OFL fonts) are
+   only those written in `docs/RULES.md`: no non-CC0 asset without an entry there.
+7. **Honesty.** Simulated data (e.g. the interest map) is labelled **"Sample data"** in the app.
+8. **Field of view.** Essential UI near the center of the view, panels at 0.5–0.8 m, no
+   critical elements at the edges: it must also work with the narrowest field of view of the Meta VR Glasses.
+9. **Accessibility.** Everything usable with one hand only (palm menu on the right hand by default,
+   movable to the left hand in the accessibility options),
+   high-contrast theme, large text.
+10. **Original core.** No external service at the center of the experience; the demo works
+    without a backend.
+11. **Import Three.js from `@iwsdk/core`, never from `'three'`** (a second copy of the library
+    creates hard-to-find bugs).
+12. **Freeze.** After submission (18 Nov 2026, 12:00 PT) and until the winners are announced
+    (~11 Dec 2026) the published site is not modified: no deploys.
 
-## Stack e comandi
+## Stack and commands
 
-- IWSDK + TypeScript + Vite, Node ≥ 20.19. Controlla i nomi reali degli script in `package.json`.
-- `npm run dev` — server locale; l'emulatore **IWER** si attiva su `localhost`.
-- `npx @iwsdk/cli dev up --ai-mode agent` — runtime gestito **headless** per gli agenti
-  (server MCP `iwsdk-runtime`: sessione XR, mani, screenshot, profilo, ECS).
-- `npx @iwsdk/cli dev up --ai-mode collaborate` — stessa cosa con finestra **visibile** condivisa
-  con l'utente. Regola IWSDK: **annuncia sempre** un cambio headed/headless prima di riavviare.
-- `npx @iwsdk/cli adapter sync` — registra/aggiorna i server MCP per Claude Code (`.mcp.json`).
-  Se gli strumenti `xr_*`, `browser_*`, `ecs_*` non sono disponibili, eseguilo e chiedi
-  all'utente di riavviare Claude Code.
-- `npm test` — Vitest sulla logica pura. `npm run build` — build di produzione in `dist/`.
+- IWSDK + TypeScript + Vite, Node ≥ 20.19. Check the real script names in `package.json`.
+- `npm run dev` — local server; the **IWER** emulator turns on at `localhost`.
+- `npx @iwsdk/cli dev up --ai-mode agent` — managed **headless** runtime for agents
+  (MCP server `iwsdk-runtime`: XR session, hands, screenshots, profiling, ECS).
+- `npx @iwsdk/cli dev up --ai-mode collaborate` — same thing with a **visible** window shared
+  with the user. IWSDK rule: **always announce** a headed/headless change before restarting.
+- `npx @iwsdk/cli adapter sync` — registers/updates the MCP servers for Claude Code (`.mcp.json`).
+  If the `xr_*`, `browser_*`, `ecs_*` tools are not available, run it and ask
+  the user to restart Claude Code.
+- `npm test` — Vitest on the pure logic. `npm run build` — production build in `dist/`.
 
-## Architettura
+## Architecture
 
 ```
 src/
-  index.ts          World.create(...) e registrazione dei sistemi
-  systems/          sistemi ECS (usano IWSDK / Three.js)
-  components/       componenti ECS
-  logic/            logica PURA: nessun import da @iwsdk/core o three → testabile con Vitest
-  ui/               pannelli e menu del palmo; strings.ts con tutti i testi (inglese)
-  data/             caricamento + validazione dei JSON (house, catalog, issues)
-  debug/            strumenti solo per sviluppo (dietro flag)
+  index.ts          World.create(...) and system registration
+  systems/          ECS systems (use IWSDK / Three.js)
+  components/       ECS components
+  logic/            PURE logic: no import from @iwsdk/core or three → testable with Vitest
+  ui/               panels and palm menu; strings.ts with all the texts (English)
+  data/             loading + validation of the JSON files (house, catalog, issues)
+  debug/            development-only tools (behind a flag)
 public/houses/      apartment-a.json, apartment-b.json
-public/catalog/     catalog.json (+ modelli glb)
+public/catalog/     catalog.json (+ glb models)
 public/demo/        my-furniture.json, issues-apartment-a.json
 schemas/            house.schema.json, issue.schema.json
-tests/unit/         test Vitest
-qa/scenarios/       scenari di accettazione per l'emulatore (Markdown)
-qa/reports/         report QA per milestone
-qa/device/          prove sul visore + DEBT.md (prove rimandate)
+tests/unit/         Vitest tests
+qa/scenarios/       acceptance scenarios for the emulator (Markdown)
+qa/reports/         QA reports per milestone
+qa/device/          headset tests + DEBT.md (deferred tests)
 ```
 
-| Sistema | Responsabilità | Logica pura in `src/logic/` |
+| System | Responsibility | Pure logic in `src/logic/` |
 |---|---|---|
-| `HouseBuilder` | pavimenti, muri con aperture, porte, finestre da `house.json` | geometria delle aperture |
-| `Miniature` | plastico 1:20, rotazione/zoom a due mani, appoggio sul tavolo in MR | trasformazioni di scala |
-| `Furniture` | catalogo, presa, aggancio, collisioni, rotazione 90° | snap e collisioni 2D |
-| `Viewpoint` | punti di vista, passaggio plastico ↔ scala reale | — |
-| `Sun` | posizione del sole (SunCalc), luce e ombre | calcolo azimut/elevazione |
-| `Issues` | segnaposto, categorie, urgenza, stati, verbale | macchina a stati delle segnalazioni |
-| `Roles` | visitatore, agente, inquilino, proprietario | permessi per ruolo |
-| `Persistence` | salvataggio automatico e ripresa | serializzazione dello stato |
-| `Analytics` | mappa dell'interesse dalla direzione della testa | aggregazione |
-| `Accessibility` | una mano, alto contrasto, testo grande | — |
+| `HouseBuilder` | floors, walls with openings, doors, windows from `house.json` | opening geometry |
+| `Miniature` | 1:20 model, two-hand rotate/zoom, placement on the table in MR | scale transforms |
+| `Furniture` | catalog, grab, snap, collisions, 90° rotation | 2D snap and collisions |
+| `Viewpoint` | viewpoints, switching between tabletop model ↔ real scale | — |
+| `Sun` | sun position (SunCalc), light and shadows | azimuth/elevation calculation |
+| `Issues` | markers, categories, urgency, states, report | issue state machine |
+| `Roles` | visitor, agent, tenant, owner | permissions per role |
+| `Persistence` | automatic saving and resume | state serialization |
+| `Analytics` | interest map from head direction | aggregation |
+| `Accessibility` | one hand, high contrast, large text | — |
 
-### Convenzioni per la testabilità (obbligatorie)
+### Testability conventions (mandatory)
 
-- Ogni entità interattiva ha un **id stabile e leggibile** in un componente `StableId`
-  (es. `house:apartment-a`, `room:living`, `wall:w-north`, `door:d-living`, `fixture:washer`,
-  `furniture:bed-double#1`, `pin:issue-014`, `viewpoint:V1`, `ui:palm-menu`). La QA la trova con `ecs_find_entities`.
-- Lo stato applicativo (casa aperta, ruolo, disposizione, segnalazioni, preferenze) vive in **un
-  unico store serializzabile** (`src/logic/state.ts`): è ciò che si salva, si ripristina e si verifica.
-- **Determinismo**: nessun `Math.random` non seminato nella logica; orologio iniettabile per `Sun`
-  e cronologie.
-- **Parametri URL per i test**: `?house=apartment-a&role=tenant&reset=1&seed=1&time=2026-12-21T10:00`
-  caricano stati noti. `?debug=1` mostra le statistiche (draw call, triangoli, fps) e le scrive in
-  console con prefisso `[soglia:stats]`. **`?intro=0`** salta la schermata iniziale (QA automatica,
-  vecchio ingresso con la sessione offerta al browser); senza, la pagina apre la schermata iniziale e
-  la sessione parte solo dal pulsante Enter VR. `reset=1` non cancella le case caricate da file né le
-  misure dei mobili (`soglia:v1:catalog-sizes`). Vedi `docs/DATA_FORMATS.md`.
-- Log utili alla QA con prefisso `[soglia]` e nessun errore in console nel percorso normale.
+- Every interactive entity has a **stable, readable id** in a `StableId` component
+  (e.g. `house:apartment-a`, `room:living`, `wall:w-north`, `door:d-living`, `fixture:washer`,
+  `furniture:bed-double#1`, `pin:issue-014`, `viewpoint:V1`, `ui:palm-menu`). QA finds them with `ecs_find_entities`.
+- Application state (open home, role, layout, issues, preferences) lives in **a
+  single serializable store** (`src/logic/state.ts`): it is what gets saved, restored and verified.
+- **Determinism**: no unseeded `Math.random` in the logic; injectable clock for `Sun`
+  and timelines.
+- **URL parameters for tests**: `?house=apartment-a&role=tenant&reset=1&seed=1&time=2026-12-21T10:00`
+  load known states. `?debug=1` shows the statistics (draw calls, triangles, fps) and writes them to the
+  console with the prefix `[soglia:stats]`. **`?intro=0`** skips the start screen (automated QA,
+  the old entry with the session offered to the browser); without it, the page opens the start screen and
+  the session starts only from the Enter VR button. `reset=1` does not delete homes loaded from file or the
+  furniture measurements (`soglia:v1:catalog-sizes`). See `docs/DATA_FORMATS.md`.
+- QA-friendly logs with the prefix `[soglia]` and no errors in the console on the normal path.
 
-## Due livelli di verifica
+## Two levels of verification
 
-1. **Gate PC (sempre, senza visore).** `npm test` verde, `npm run build` ok, scenari della
-   milestone superati nell'emulatore tramite MCP, nessun errore in console, `contest-reviewer`
-   senza bloccanti. Una milestone è **PC-done** quando passa questo gate.
-2. **Gate visore (quando il Quest è disponibile).** Checklist in `docs/DEVICE_CHECKLIST.md`.
-   Una milestone è **Device-done** quando passa anche questo. Finché il visore non c'è, ogni
-   prova rimandata va in `qa/device/DEBT.md`.
+1. **PC gate (always, without a headset).** `npm test` green, `npm run build` ok, the milestone's
+   scenarios passed in the emulator through MCP, no console errors, `contest-reviewer`
+   with no blockers. A milestone is **PC-done** when it passes this gate.
+2. **Headset gate (when the Quest is available).** Checklist in `docs/DEVICE_CHECKLIST.md`.
+   A milestone is **Device-done** when it also passes this. Until the headset is available, every
+   deferred test goes in `qa/device/DEBT.md`.
 
-Mai scrivere o dire "funziona sul visore" per qualcosa provato solo nell'emulatore.
+Never write or say "it works on the headset" for something tested only in the emulator.
 
-## Subagent e flusso di lavoro
+## Subagents and workflow
 
-Tutti i subagent usano **Sonnet 5.5 con effort high** (vedi `.claude/agents/`).
+All subagents use **Sonnet 5.5 with effort high** (see `.claude/agents/`).
 
-| Agente | Quando usarlo |
+| Agent | When to use it |
 |---|---|
-| `milestone-planner` | all'inizio di ogni milestone: task, criteri di accettazione, scenari QA |
-| `xr-engineer` | ogni modifica al codice dell'app (sistemi, componenti, UI, interazioni) |
-| `logic-tester` | test Vitest della logica pura, schemi JSON, regressioni |
-| `emulator-qa` | eseguire gli scenari nell'emulatore IWER via MCP e scrivere il report |
-| `asset-curator` | trovare, ottimizzare e registrare modelli e texture CC0 |
-| `quest-integrator` | tutto ciò che riguarda il visore: setup, prove, prestazioni reali |
-| `contest-reviewer` | revisione di conformità al regolamento e qualità (sola lettura) |
-| `submission-writer` | testi in inglese: UI, Devpost, istruzioni di test, copione del video |
+| `milestone-planner` | at the start of every milestone: tasks, acceptance criteria, QA scenarios |
+| `xr-engineer` | every change to the app code (systems, components, UI, interactions) |
+| `logic-tester` | Vitest tests of the pure logic, JSON schemas, regressions |
+| `emulator-qa` | run the scenarios in the IWER emulator via MCP and write the report |
+| `asset-curator` | find, optimize and register CC0 models and textures |
+| `quest-integrator` | everything about the headset: setup, tests, real performance |
+| `contest-reviewer` | review of compliance with the rules and of quality (read-only) |
+| `submission-writer` | texts in English: UI, Devpost, testing instructions, video script |
 
-**Ciclo di una milestone**
+**Cycle of a milestone**
 
-1. `milestone-planner` → piano in `docs/plans/Mx.md` + scenari in `qa/scenarios/Mx-*.md`.
-2. Per ogni task: `xr-engineer` implementa (piccolo, un sistema alla volta) → `logic-tester`
-   aggiunge/aggiorna i test → commit.
-3. `emulator-qa` esegue tutti gli scenari della milestone → `qa/reports/Mx-<data>.md`.
-4. `contest-reviewer` → verdetto; i bloccanti tornano a `xr-engineer`.
-5. Gate PC superato → aggiorna lo stato in `docs/ROADMAP.md` e aggiungi le prove rimandate a
+1. `milestone-planner` → plan in `docs/plans/Mx.md` + scenarios in `qa/scenarios/Mx-*.md`.
+2. For each task: `xr-engineer` implements (small, one system at a time) → `logic-tester`
+   adds/updates the tests → commit.
+3. `emulator-qa` runs all the milestone's scenarios → `qa/reports/Mx-<date>.md`.
+4. `contest-reviewer` → verdict; blockers go back to `xr-engineer`.
+5. PC gate passed → update the status in `docs/ROADMAP.md` and add the deferred tests to
    `qa/device/DEBT.md`.
-6. Quando c'è il visore: `quest-integrator` esegue il gate visore delle milestone in debito.
+6. When the headset is available: `quest-integrator` runs the headset gate for the milestones in debt.
 
-Il contesto principale coordina: delega ai subagent, non ripete il loro lavoro, e riassume
-all'utente in italiano cosa è stato fatto e cosa resta.
+The main context coordinates: it delegates to the subagents, does not repeat their work, and summarizes
+to the user in Italian what was done and what remains.
 
 ## Git
 
-- Commit piccoli, in inglese, formato conventional: `feat:`, `fix:`, `test:`, `docs:`, `chore:`.
-- La cronologia dimostra che il progetto è nato dopo il 24 settembre 2026 (divisione New
-  Experience): niente import di codice preesistente, niente riscrittura della storia.
-- Il deploy su GitHub Pages è **manuale** (workflow `pages.yml`): mai durante il congelamento.
-- Mai committare segreti; `.env` è ignorato.
+- Small commits, in English, conventional format: `feat:`, `fix:`, `test:`, `docs:`, `chore:`.
+- The history shows that the project was started after 24 September 2026 (New
+  Experience division): no import of pre-existing code, no history rewriting.
+- Deploying to GitHub Pages is **manual** (workflow `pages.yml`): never during the freeze.
+- Never commit secrets; `.env` is ignored.
 
-## Cosa non fare
+## What not to do
 
-- Aggiungere dipendenze pesanti senza chiedere all'utente.
-- Introdurre locomozione a levetta, teletrasporto (la camminata col gesto "scavare" della regola 2 è l'unica eccezione), interazioni che richiedono il controller.
-- Scrivere testo italiano nell'interfaccia o nei dati.
-- Usare asset senza licenza CC0 verificata o con marchi riconoscibili.
-- Segnare un gate come superato senza il report che lo dimostra.
+- Add heavy dependencies without asking the user.
+- Introduce thumbstick locomotion, teleport (walking with the "row" gesture of rule 2 is the only exception), or interactions that require the controller.
+- Write Italian text in the interface or in the data.
+- Use assets without a verified CC0 license or with recognizable trademarks.
+- Mark a gate as passed without the report that proves it.

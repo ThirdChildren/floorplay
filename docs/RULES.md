@@ -1,134 +1,134 @@
-# Regolamento: cosa conta per Soglia
+# Rules: what matters for Floorplay
 
-Sintesi del regolamento ufficiale letto il 28 settembre 2026:
-https://start-developer-competition-26.devpost.com/rules — in caso di dubbio fa fede il testo ufficiale.
-Il `contest-reviewer` lo ricontrolla a ogni gate.
+Summary of the official rules, read on 28 September 2026:
+https://start-developer-competition-26.devpost.com/rules — in case of doubt the official text prevails.
+The `contest-reviewer` rechecks it at every gate.
 
-**Riletto il 2026-11-11** (Rules, Overview, FAQ e guida Meta "Build and Deploy" di IWSDK): nessun cambiamento
-rispetto a questa sintesi; aggiunti sotto i dettagli del modulo di consegna e dell'hosting.
+**Reread on 2026-11-11** (Rules, Overview, FAQ and the Meta "Build and Deploy" guide for IWSDK): no change
+compared with this summary; the details of the submission form and of hosting were added below.
 
-## Date
+## Dates
 
-- Periodo: dal 24 settembre 2026, 10:00 PT, al **18 novembre 2026, 12:00 PT** (21:00 in Italia).
-- Valutazione: 18 novembre – 9 dicembre 2026. Vincitori: ~11 dicembre 2026.
-- **Dopo la scadenza nessuna modifica** all'entry.
+- Period: from 24 September 2026, 10:00 PT, to **18 November 2026, 12:00 PT** (21:00 in Italy).
+- Judging: 18 November – 9 December 2026. Winners: ~11 December 2026.
+- **No changes to the entry after the deadline.**
 
-## Idoneità
+## Eligibility
 
-- Maggiorenne; Italia non esclusa. Account Meta con accesso sviluppatore; membro Meta VR Start entro la consegna.
-- Una sola partecipazione per persona. Nessun finanziamento Meta precedente per il progetto.
+- Of legal age; Italy is not excluded. Meta account with developer access; Meta VR Start member by the submission date.
+- One entry per person. No previous Meta funding for the project.
 
-## Requisiti del progetto
+## Project requirements
 
-| Requisito | Testo del regolamento (sintesi) | Come si applica |
+| Requirement | Text of the rules (summary) | How it applies |
 |---|---|---|
-| Piattaforma | App VR/MR per dispositivi Meta; WebXR/IWSDK ammesso con link ospitato | GitHub Pages |
-| Divisione New Experience | Ideato e costruito dal 24/9/2026, niente codice preesistente | cronologia git |
-| Hands-first | "Fully usable with hands end-to-end. Controller support optional." | regola 1 di `CLAUDE.md` |
-| Seated | "Designed for seated/stationary use. Limit roomscale or large physical movement." | punti di vista, niente locomozione |
-| Quick engagement | "Fast cold start. Clean pause/resume. Satisfying in ≤10 minutes." | `Persistence`, demo in 3 atti |
-| Originale | Nucleo costruito da noi; involucri di servizi esistenti sconsigliati | nessun servizio esterno centrale |
-| Contenuti | Originali, pubblico dominio o forniti da Meta; terze parti solo se la licenza lo consente | CC0 + `CREDITS.md` |
-| Strumenti | Solo strumenti pubblici o per membri Start; niente strumenti Meta non rilasciati | IWSDK pubblico |
-| Contenuti vietati | Niente marchi, loghi, slogan, prodotti di marca, arte commerciale, persone riconoscibili, contenuti ingannevoli, associazioni con Meta | catalogo generico, "Sample data" |
-| Lingua | "Projects must be entirely in the English language or include English subtitles." Materiali (video, descrizione, istruzioni di test) in inglese | tutto in inglese |
-| Policy | Termini Start, Community Standards, Conduct in VR, Developer App Policies e Content Guidelines; fascia 10+, 13+ o 18+ | rileggere prima di registrare voce/dati |
-| Accesso | Gratuito e accessibile ai giudici fino all'annuncio dei vincitori | link pubblico, senza login |
+| Platform | VR/MR app for Meta devices; WebXR/IWSDK allowed with a hosted link | GitHub Pages |
+| New Experience division | Conceived and built since 24/9/2026, no pre-existing code | git history |
+| Hands-first | "Fully usable with hands end-to-end. Controller support optional." | rule 1 of `CLAUDE.md` |
+| Seated | "Designed for seated/stationary use. Limit roomscale or large physical movement." | viewpoints, no locomotion |
+| Quick engagement | "Fast cold start. Clean pause/resume. Satisfying in ≤10 minutes." | `Persistence`, 3-act demo |
+| Original | Core built by us; wrappers around existing services discouraged | no external service at the center |
+| Content | Original, public domain or provided by Meta; third parties only if the license allows it | CC0 + `CREDITS.md` |
+| Tools | Only public tools or tools for Start members; no unreleased Meta tools | public IWSDK |
+| Prohibited content | No trademarks, logos, slogans, branded products, commercial art, recognizable people, deceptive content, associations with Meta | generic catalog, "Sample data" |
+| Language | "Projects must be entirely in the English language or include English subtitles." Materials (video, description, testing instructions) in English | everything in English |
+| Policies | Start terms, Community Standards, Conduct in VR, Developer App Policies and Content Guidelines; 10+, 13+ or 18+ rating | reread before recording voice/data |
+| Access | Free and accessible to the judges until the winners are announced | public link, no login |
 
-## Regole interne derivate (non dal regolamento)
+## Derived internal rules (not from the official rules)
 
-- **glTF senza compressione Draco e senza texture KTX2.** I decoder di `@iwsdk/core` vengono da
-  `unpkg.com/three@0.<rev>.0` e non esiste un'opzione supportata per percorsi locali. Il nucleo
-  non deve dipendere da servizi esterni (regola 10 di `CLAUDE.md`). Vale per `asset-curator`.
-- **Eccezione alla regola 6 (CC0): asset di runtime del framework con licenza MIT, citati.** I
-  modelli delle mani che IWSDK mostra in una sessione a mani (`generic-hand/left.glb` e
-  `right.glb` del pacchetto `@webxr-input-profiles/assets` 1.0.20, MIT, Copyright 2019 Amazon)
-  non sono CC0 né creati da noi, ma sono parte del framework ufficiale e senza di essi le mani
-  non si vedono. Sono copiati in `public/models/hands/` con la licenza accanto, citati in
-  `CREDITS.md` con autore e licenza. Nessun altro asset non CC0 è ammesso senza una voce analoga
-  qui; sono generici e non raffigurano marchi.
-- **Seconda eccezione alla regola 6 (CC0): il font dei pannelli, Inter con licenza SIL OFL 1.1,
-  citato (decisione dell'utente, 2026-10-05).** I pannelli usano un atlante MSDF generato da noi
-  dal TTF ufficiale di Inter (release v4.1 di `rsms/inter`, Copyright (c) 2016 The Inter Project
-  Authors, nessun Reserved Font Name) con glifi in più (`² · × − ± → ≈`) che il font incluso in
-  `@pmndrs/msdfonts` non ha (verificato a schermo, vedi `docs/plans/M2.md`, "Esiti degli
-  spike"). Non è CC0, ma la OFL permette uso, modifica e ridistribuzione con la licenza accanto:
-  il testo è in `public/fonts/OFL.txt` (e in `assets-src/fonts/OFL.txt` insieme ai TTF
-  sorgente, fuori da `public/` e quindi fuori dalla build), i file `public/fonts/inter-*.json` e
-  `.png` sono citati in `CREDITS.md` (id `font-inter-msdf`). Il font non è un marchio e non si
-  vende da solo. Se i file mancano, l'app ripiega sul font incluso nel framework (solo ASCII).
-- **Terza eccezione alla regola 6 (CC0): le icone dei pulsanti del menu, da `@pmndrs/uikit-lucide`,
-  licenza ISC, citate.** I pulsanti del menu del palmo e il suggerimento hanno un'icona
-  (`Undo2`, `ChevronLeft`, `ChevronRight`, `LocateFixed`, `Hand`) presa dal pacchetto
-  `@pmndrs/uikit-lucide` 1.0.76 (involucro MIT, Copyright 2024 Bela Bohlender e 2023 Coconut
-  Capital). I disegni sono icone Lucide (ISC, Copyright (c) 2026 Lucide Icons and Contributors);
-  i chevron derivano da Feather e sono MIT (Copyright (c) 2013-present Cole Bemis). Non sono CC0,
-  ma le licenze permettono uso e ridistribuzione con il testo accanto: i testi (ISC di Lucide con
-  l'avviso MIT di Feather, MIT del pacchetto) sono in `public/licenses/`, quindi in `dist/`, e le icone sono
-  citate in `CREDITS.md`. Sono incluse nel
-  bundle una per una (nessuna richiesta a un host in esecuzione), stanno sempre accanto a
-  un'etichetta di testo e sono forme generiche: nessun marchio, nessun logo.
-- **Chiarimento della regola 8 (campo visivo): gli ingressi di riserva possono stare fino a 45°
-  (decisione dell'utente, 2026-10-10).** Un controllo che è solo un **ingresso di riserva** a una
-  funzione già raggiungibile in altro modo può stare fino a **45°** dall'asse della vista invece
-  di 30°. Oggi sono i soli pulsanti "Menu" fissi sul plastico (T3.3b di `docs/plans/M3.md`):
-  l'ingresso principale al menu è il palmo in su, i pulsanti servono a chi usa una mano sola
-  (regola 9). Dove stanno: **due pulsanti, uno per lato, sul bordo laterale del plastico (a ±0,45 m
-  dall'ancora), sollevati sopra i pezzi e ruotati verso la testa (solo yaw)**, così che una mano
-  sola raggiunga il più vicino senza attraversare il modello. **Non cambia nulla del resto**: tutto
-  ciò che non è un ingresso di riserva (menu aperto, etichette, avvisi, pannelli di lavoro) resta
-  nel cono di 30°; la distanza dalla testa resta 0,5–0,8 m, il testo ≥ 2,4 cm e nessun elemento
-  critico sta ai bordi. (Prima scelta dell'utente, scartata il 2026-10-10 dopo il calcolo: un solo
-  pulsante al centro del bordo verso l'utente, che cadrebbe a ≈ 0,29 m dalla testa, sotto il minimo
-  di 0,5 m; vedi `docs/plans/M3.md`, D32.)
-- **Host solo di sviluppo: `www.unpkg.com` per la stanza sintetica dell'emulatore IWER** (`dev.emulator.environment` in `iwsdk.config.json`, aggiunto per la realtà mista il 2026-11-11): la scarica il plugin di sviluppo `@iwsdk/vite-plugin-dev` solo con il dev server; non è nel `dist/` (verificato con grep: nel bundle resta solo la stringa inerte della configurazione) e non parte sul Quest con la build pubblicata (voce di conferma in `qa/device/DEBT.md`).
-- **Host esterni noti nel bundle di produzione** (default di `@iwsdk/core` / `@iwsdk/xr-input`,
-  verificato su `@iwsdk/core` 1.0.1, nessuna opzione per cambiarli):
-  `unpkg.com` (decoder Draco/KTX2, scatta solo caricando un glTF compresso, vietato sopra),
-  `cdn.jsdelivr.net` (profili e modelli di **mani e controller**: di default IWSDK scarica da qui
-  il modello `generic-hand` a ogni sessione con mani tracciate, quindi senza rete le mani sono
-  invisibili; dal 2026-10-05 i due glb delle mani sono locali in `public/models/hands/`
-  (`src/systems/local-hands.ts`) e non partono più richieste per le mani; dal 2026-10-05 anche i
-  **controller** non scaricano più nulla: `src/systems/local-controllers.ts` sostituisce il loro
-  visual con una capsula procedurale (nessun glb, nessuna texture) e rimpiazza il loader degli
-  adapter, quindi nell'emulatore IWER, con i controller connessi, non parte alcuna richiesta
-  verso `cdn.jsdelivr.net`; il ripiego, se l'hook non esistesse in una versione futura di IWSDK, è
-  un warning `[soglia] feature controller-loader-hook unavailable`) e `api.dicebear.com` (immagine casuale di default del componente Avatar di `@pmndrs/uikit-horizon`:
-  **non usare mai Avatar senza `src`**).
-  Da ricontrollare a ogni aggiornamento di IWSDK;
-  sul visore va verificato che non partano richieste (`qa/device/DEBT.md`).
+- **glTF without Draco compression and without KTX2 textures.** The `@iwsdk/core` decoders come from
+  `unpkg.com/three@0.<rev>.0` and there is no supported option for local paths. The core
+  must not depend on external services (rule 10 of `CLAUDE.md`). Applies to `asset-curator`.
+- **Exception to rule 6 (CC0): framework runtime assets under the MIT license, credited.** The
+  hand models that IWSDK shows in a hand session (`generic-hand/left.glb` and
+  `right.glb` from the `@webxr-input-profiles/assets` 1.0.20 package, MIT, Copyright 2019 Amazon)
+  are neither CC0 nor made by us, but they are part of the official framework and without them the hands
+  are not visible. They are copied into `public/models/hands/` with the license next to them, credited in
+  `CREDITS.md` with author and license. No other non-CC0 asset is allowed without a similar entry
+  here; they are generic and do not depict trademarks.
+- **Second exception to rule 6 (CC0): the panel font, Inter under the SIL OFL 1.1 license,
+  credited (user decision, 2026-10-05).** The panels use an MSDF atlas generated by us
+  from the official Inter TTF (release v4.1 of `rsms/inter`, Copyright (c) 2016 The Inter Project
+  Authors, no Reserved Font Name) with extra glyphs (`² · × − ± → ≈`) that the font included in
+  `@pmndrs/msdfonts` does not have (verified on screen, see `docs/plans/M2.md`, "Spike
+  outcomes"). It is not CC0, but the OFL allows use, modification and redistribution with the license next to it:
+  the text is in `public/fonts/OFL.txt` (and in `assets-src/fonts/OFL.txt` together with the source
+  TTFs, outside `public/` and therefore outside the build), the `public/fonts/inter-*.json` and
+  `.png` files are credited in `CREDITS.md` (id `font-inter-msdf`). The font is not a trademark and is not
+  sold on its own. If the files are missing, the app falls back to the font included in the framework (ASCII only).
+- **Third exception to rule 6 (CC0): the menu button icons, from `@pmndrs/uikit-lucide`,
+  ISC license, credited.** The palm menu buttons and the hint have an icon
+  (`Undo2`, `ChevronLeft`, `ChevronRight`, `LocateFixed`, `Hand`) taken from the package
+  `@pmndrs/uikit-lucide` 1.0.76 (MIT wrapper, Copyright 2024 Bela Bohlender and 2023 Coconut
+  Capital). The designs are Lucide icons (ISC, Copyright (c) 2026 Lucide Icons and Contributors);
+  the chevrons derive from Feather and are MIT (Copyright (c) 2013-present Cole Bemis). They are not CC0,
+  but the licenses allow use and redistribution with the text next to them: the texts (Lucide's ISC with
+  Feather's MIT notice, the package's MIT) are in `public/licenses/`, therefore in `dist/`, and the icons are
+  credited in `CREDITS.md`. They are included in the
+  bundle one by one (no request to a host at runtime), they always sit next to
+  a text label and are generic shapes: no trademark, no logo.
+- **Clarification of rule 8 (field of view): fallback entry points may sit up to 45°
+  (user decision, 2026-10-10).** A control that is only a **fallback entry point** to a
+  function already reachable in another way may sit up to **45°** from the view axis instead
+  of 30°. Today these are only the fixed "Menu" buttons on the model (T3.3b of `docs/plans/M3.md`):
+  the main entry to the menu is palm up, the buttons are for those who use one hand
+  (rule 9). Where they sit: **two buttons, one per side, on the side edge of the model (at ±0.45 m
+  from the anchor), raised above the pieces and turned towards the head (yaw only)**, so that a single
+  hand reaches the nearest one without crossing the model. **Nothing else changes**: everything
+  that is not a fallback entry point (open menu, labels, notices, work panels) stays
+  in the 30° cone; the distance from the head stays 0.5–0.8 m, the text ≥ 2.4 cm and no critical
+  element sits at the edges. (The user's first choice, discarded on 2026-10-10 after the calculation: a single
+  button in the middle of the edge facing the user, which would fall at ≈ 0.29 m from the head, below the minimum
+  of 0.5 m; see `docs/plans/M3.md`, D32.)
+- **Development-only host: `www.unpkg.com` for the synthetic room of the IWER emulator** (`dev.emulator.environment` in `iwsdk.config.json`, added for mixed reality on 2026-11-11): it is downloaded by the development plugin `@iwsdk/vite-plugin-dev` only with the dev server; it is not in `dist/` (verified with grep: only the inert configuration string remains in the bundle) and it does not start on the Quest with the published build (confirmation entry in `qa/device/DEBT.md`).
+- **Known external hosts in the production bundle** (defaults of `@iwsdk/core` / `@iwsdk/xr-input`,
+  verified on `@iwsdk/core` 1.0.1, no option to change them):
+  `unpkg.com` (Draco/KTX2 decoders, triggered only by loading a compressed glTF, forbidden above),
+  `cdn.jsdelivr.net` (profiles and models of **hands and controllers**: by default IWSDK downloads from here
+  the `generic-hand` model at every session with tracked hands, so without a network the hands are
+  invisible; since 2026-10-05 the two hand glb files are local in `public/models/hands/`
+  (`src/systems/local-hands.ts`) and no more requests start for the hands; since 2026-10-05 the
+  **controllers** also no longer download anything: `src/systems/local-controllers.ts` replaces their
+  visual with a procedural capsule (no glb, no texture) and replaces the adapters' loader,
+  so in the IWER emulator, with the controllers connected, no request starts
+  towards `cdn.jsdelivr.net`; the fallback, if the hook did not exist in a future version of IWSDK, is
+  a warning `[soglia] feature controller-loader-hook unavailable`) and `api.dicebear.com` (default random image of the Avatar component of `@pmndrs/uikit-horizon`:
+  **never use Avatar without `src`**).
+  To be rechecked at every IWSDK update;
+  on the headset it must be verified that no requests start (`qa/device/DEBT.md`).
 
-## Consegna
+## Submission
 
-- Link alla pagina ospitata (GitHub Pages o simili).
-- Video **sotto i 3 minuti**, "as viewed on a Meta Quest device or via XR Simulator or another
-  equivalent emulator", pubblico su YouTube o Vimeo. Riprese reali: "Don't lean on AI-generated video".
-- Descrizione: ispirazione, come è fatto, sviluppi futuri, data di lancio; screenshot consigliati.
-- Track Productivity, divisione New Experience.
-- Modulo Devpost: nome, **tagline ≤ 140 caratteri**, track, divisione, descrizione (consigliate ≤ 500 parole:
-  ispirazione, come è fatto, sviluppi futuri), **data di lancio prevista**, facoltativo "come sono implementate le
-  interazioni con le mani e cosa ti entusiasma del futuro della VR", nomi/email/ruoli del team se c'è.
-- Per IWSDK: link alla pagina ospitata; la guida Meta indica GitHub Pages ("You may also use your preferred hosting
-  solution (e.g., Vercel, Digital Ocean, AWS, Azure)"). Il progetto deve restare gratuito e raggiungibile fino
-  all'annuncio dei vincitori (~11 dic) ed essere giocabile sul **Quest 3/3S** (FAQ: "Project builds need to be playable on
+- Link to the hosted page (GitHub Pages or similar).
+- Video **under 3 minutes**, "as viewed on a Meta Quest device or via XR Simulator or another
+  equivalent emulator", public on YouTube or Vimeo. Real footage: "Don't lean on AI-generated video".
+- Description: inspiration, how it is built, future developments, launch date; screenshots recommended.
+- Track Productivity, division New Experience.
+- Devpost form: name, **tagline ≤ 140 characters**, track, division, description (≤ 500 words recommended:
+  inspiration, how it is built, future developments), **expected launch date**, optional "how the hand
+  interactions are implemented and what excites you about the future of VR", names/emails/roles of the team if any.
+- For IWSDK: link to the hosted page; the Meta guide indicates GitHub Pages ("You may also use your preferred hosting
+  solution (e.g., Vercel, Digital Ocean, AWS, Azure)"). The project must stay free and reachable until
+  the winners are announced (~11 Dec) and be playable on the **Quest 3/3S** (FAQ: "Project builds need to be playable on
   Meta Quest 3/3S").
-- Idoneità (testo attuale): esclusi i residenti in Brasile, Québec e paesi sotto sanzioni; chi entra in Start o abilita
-  l'accesso sviluppatore dopo il 24/9 può partecipare se è in regola al momento della consegna. Il visore non è obbligatorio.
+- Eligibility (current text): residents of Brazil, Québec and sanctioned countries are excluded; those who join Start or enable
+  developer access after 24/9 may participate if they are in good standing at the time of submission. A headset is not required.
 
-## Valutazione
+## Judging
 
-- **Fase 1**: superato/non superato (rientra nel tema, usa le funzioni richieste).
-- **Fase 2**: quattro criteri al 25%.
-  - *Innovation & Creativity*: originalità, rilevanza per la track, uso delle capacità del dispositivo per l'uso ripetuto.
-  - *Experience Design*: seduti, mani, onboarding chiaro, scopo che crea abitudine; **passthrough con uno scopo**
+- **Stage 1**: pass/fail (fits the theme, uses the required features).
+- **Stage 2**: four criteria at 25% each.
+  - *Innovation & Creativity*: originality, relevance to the track, use of the device's capabilities for repeated use.
+  - *Experience Design*: seated, hands, clear onboarding, purpose that builds a habit; **passthrough with a purpose**
     ("the player's real room meaningfully changes the experience"); **FoV-aware design**.
-  - *Technical Implementation*: mani, passthrough, ancoraggio, **min 60 fps sul Quest**, niente bug; per il passthrough
-    riconoscimento della scena e tenuta "in rooms the developer never tested". Lo sguardo è citato per Unity/Unreal ISDK v207+.
-  - *Polish & Presentation*: UI/UX, grafica, suono, materiali di consegna; video onesto che racconta la storia.
-- **Un solo premio per progetto.**
+  - *Technical Implementation*: hands, passthrough, anchoring, **min 60 fps on the Quest**, no bugs; for passthrough
+    scene understanding and robustness "in rooms the developer never tested". Gaze is cited for Unity/Unreal ISDK v207+.
+  - *Polish & Presentation*: UI/UX, graphics, sound, submission materials; honest video that tells the story.
+- **Only one prize per project.**
 
-## Premi speciali rilevanti
+## Relevant special prizes
 
-- **Best First Five Minutes**: si spiega da solo, insegna i gesti senza muri di testo, dà una soddisfazione subito.
-- **Best Accessibility Forward Experience**: alternative ai gesti, navigazione per mobilità ridotta, alto contrasto, inclusività.
-- **Best Reason to Come Back**: progressione e ricompense tra una sessione e l'altra.
+- **Best First Five Minutes**: it explains itself, teaches the gestures without walls of text, gives satisfaction right away.
+- **Best Accessibility Forward Experience**: alternatives to gestures, navigation for reduced mobility, high contrast, inclusivity.
+- **Best Reason to Come Back**: progression and rewards between one session and the next.
