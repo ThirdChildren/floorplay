@@ -5,7 +5,7 @@ metadata:
   type: project
 ---
 
-Fixes after the contest-reviewer verdict "APPROVATO CON AVVISI" (branch `claude/charming-cori-mccw6h`). One commit per point, no attribution lines (the user's instruction beat the reminder).
+Fixes after the contest-reviewer verdict "APPROVED WITH WARNINGS" (branch `claude/charming-cori-mccw6h`). One commit per point, no attribution lines (the user's instruction beat the reminder).
 
 - Warning 3 (honesty of the light): `strings.view.light = 'Simplified light'` in a white bordered box LEFT of Close in the bar of both layouts (`view-panel-note-box` 26.6 x 6.2 normal, 29.6 x 5.8 large; `ViewLayout.noteWidth`). Bar heights are unchanged, so the cone numbers did not move (26.1 / 27.8 deg). The plan's longer sentence ("floor patches through windows only") does NOT fit one line (28.8 cm at 2.4 vs 26.6 box; large has no height for two lines): keep it short. A first version without a box left the text drawn straight on the model (unreadable on the blue): panels need a background. IWER check: normal, large and contrast (yellow border, black box) all fine, 0 warn.
 - Warning 4 (coach in the cone): `coachButtonTextAnchor` in `src/logic/coach.ts` (7 cm under the button, pulled inward, then `anchorInCone` with the 30 deg cone, yawOnly). The button is at 37.6 deg, so 0.15 m from it is impossible (the cone forces 0.18-0.23 m); cone has priority. IWER: text 21 cm wide, centre 0.22 m from the button, 29.99 deg; large text 0.25 m. The text now overlaps the right edge of the `Palm up for the menu` hint box (only the box, not the words); it is in DEBT.

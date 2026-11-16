@@ -5,7 +5,7 @@ metadata:
   type: reference
 ---
 
-Verified 2026-10-10 on the cloud machine (headless IWER). Plan: `docs/plans/M3.md` (D29-D31, "Esiti degli spike").
+Verified 2026-10-10 on the cloud machine (headless IWER). Plan: `docs/plans/M3.md` (D29-D31, "Spike outcomes").
 
 ## Persistence (T3.1a)
 - One store, white-listed restore (`src/logic/persistence.ts`): furniture, nextInstance, history, prefs. NOT miniature, selectedRoomId, role, houseId. M4 adds role and issues to the list, same module. Keys `soglia:v1:state:<house>`; `reset=1` clears every `soglia:v1:*` key first; `furnish=` wins over the saved pieces.
