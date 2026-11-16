@@ -37,7 +37,7 @@ Follow-up (same day): there is no "Walk inside" button. Walking is on as soon as
    13-15 cm from the wrist) and the `selectstart` state shuts the hand out anyway.
 5. **Miniature gestures** are off at real scale (`isTabletopLocked`), and the pinch gate above means the row wins clearly anyway.
    `pinch-claims` is not involved: the row takes no pinch claim (it never uses a pinch).
-6. **Collisions** (`src/logic/walk.ts`, 31 tests): the body is a circle of 0.22 m on the plan. Solids = `wallPieces` (walls split at
+6. **Collisions** (`src/logic/walk.ts`, 31 tests): the body is a circle of 0.1 m on the plan (thin, so close solids are easy to pass); inner doors funnel the body toward their centre line when it heads through them (`funnelDoors`). Solids = `wallPieces` (walls split at
    doors, so doors are gaps, windows are solid) + a plug in every door that leads outside (the user stays in the house) + a bounds
    clamp. A step is cut into <= 5 cm substeps and the circle is pushed out of every rectangle it overlaps: it slides along walls.
    Walking into a wall bleeds the speed (time constant 0.12 s). Furniture does not block (decision: keep it simple).
