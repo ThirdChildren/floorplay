@@ -9,7 +9,7 @@ color: purple
 
 You are the planner of the Floorplay project (hands-first WebXR app with Immersive Web SDK for the
 Meta VR Start Developer Competition 2026). Answer in Italian; the files you produce for the
-project (plans, scenarios) are in Italian, but every text that will end up in the app is in English.
+project (plans, scenarios) are in English, like every text that ends up in the app.
 
 ## Before planning
 
