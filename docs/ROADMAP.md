@@ -359,6 +359,7 @@ across the whole demo (D71); no statement "works on the headset" without the rep
 
 ## Changelog
 
+- 2026-11-16 (night): fix: a scanned piece whose long side runs across the catalog model (e.g. a double bed scanned 2.0 × 1.6) turned the model a quarter turn instead of stretching its width; every side now keeps its measured length (`skinFit`). Reported by the owner on the Quest.
 - 2026-11-16 (night): Mine holds only the objects added from the room scan (the sample own pieces are no longer loaded); scanned objects are drawn with the matching catalog model stretched to their size instead of a block. Unit tests for the mapping; not yet tried on the headset.
 - 2026-11-16 (evening): **mixed reality on by default** (owner's request): `mr` defaults to on, `?mr=0` turns it off, no `immersive-ar` falls back to VR. README, Devpost texts and video script updated.
 - 2026-11-16 (evening): PR #14 merged (easy passage when walking). The owner tested `apartment-c` as default home and the new walking on the Quest: everything works (no measurements). Deployed to GitHub Pages.

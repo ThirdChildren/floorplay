@@ -243,6 +243,27 @@ export function isScanId(id: string): boolean {
 }
 
 /**
+ * How a catalog model of natural size `natural` [width, depth, height] is fitted to a scanned size `size` [width, depth,
+ * height]: `quarterTurn` when the long side of the scan is across the long side of the model (a bed scanned 2.0 x 1.6 and a
+ * model 1.6 x 2.0), so the model is turned a quarter turn instead of being squashed one way and stretched the other; `scale`
+ * is in the axes of the model (x, y = height, z). Each side keeps its own measured length.
+ */
+export function skinFit(
+  size: readonly [number, number, number],
+  natural: readonly [number, number, number],
+): { quarterTurn: boolean; scale: [number, number, number] } {
+  const ratio = (to: number, from: number): number => (from > 1e-6 && Number.isFinite(from) && Number.isFinite(to) ? to / from : 1);
+  const [w, d, h] = size;
+  const [nw, nd, nh] = natural;
+  const quarterTurn = Math.abs(w - d) > 1e-6 && Math.abs(nw - nd) > 1e-6 && w > d !== nw > nd;
+  // Turned, the model's x runs along the depth of the footprint and its z along the width.
+  const scale: [number, number, number] = quarterTurn
+    ? [ratio(d, nw), ratio(h, nh), ratio(w, nd)]
+    : [ratio(w, nw), ratio(h, nh), ratio(d, nd)];
+  return { quarterTurn, scale };
+}
+
+/**
  * The catalog model a piece made from a room scan is drawn with (its "skin"), from the label in its id and its size
  * [width, depth, height] in metres: a scanned bed looks like a bed, a couch like a sofa, and so on. The model is stretched to
  * the measured size. Null when no catalog model fits the label (lamp, other): the piece stays a block.

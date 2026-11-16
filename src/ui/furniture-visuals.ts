@@ -27,7 +27,7 @@ import {
 import { slog, swarn } from '../log';
 import type { CatalogItem } from '../logic/catalog';
 import { modelScale } from '../logic/catalog-sizes';
-import { scanSkinFor } from '../logic/room-scan';
+import { scanSkinFor, skinFit } from '../logic/room-scan';
 import type { OutlineKind } from '../logic/furniture-diff';
 import { palette } from './theme';
 
@@ -171,10 +171,14 @@ export class FurnitureVisuals {
       const gltf = AssetManager.getGLTF(modelAssetId(skin));
       const natural = this.naturalSize.get(skin);
       if (gltf && natural) {
-        const [sx, sy, sz] = modelScale(item, natural);
+        // Each side keeps its measured length; a scan whose long side runs the other way turns the model a quarter turn.
+        const fit = skinFit(item.size, natural);
+        const stretch = new Group();
+        stretch.scale.set(fit.scale[0], fit.scale[1], fit.scale[2]);
+        stretch.add(gltf.scene);
         const holder = new Group();
-        holder.scale.set(sx, sy, sz);
-        holder.add(gltf.scene);
+        if (fit.quarterTurn) holder.rotation.y = Math.PI / 2;
+        holder.add(stretch);
         return holder;
       }
     }

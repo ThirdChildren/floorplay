@@ -23,6 +23,7 @@ import {
   type ScannedPiece,
   type VolumeHit,
   scanSkinFor,
+  skinFit,
 } from '../../src/logic/room-scan';
 import { volumeCenter, type Quat } from '../../src/logic/room-scan-log';
 import { checkOwnFurniture, mergeCatalog, menuSections } from '../../src/logic/catalog';
@@ -490,5 +491,33 @@ describe('scanSkinFor: the catalog model a scanned piece wears', () => {
     ['sofa-3seat', [2.1, 0.9, 0.85], null],
   ])('%s %j -> %s', (id, size, skin) => {
     expect(scanSkinFor(id, size)).toBe(skin);
+  });
+});
+
+describe('skinFit: a catalog model fitted to a scanned size', () => {
+  const bed: [number, number, number] = [1.6, 2.0, 0.95];
+
+  it('keeps a double bed scanned along the same axes unstretched', () => {
+    const fit = skinFit([1.6, 2.0, 0.95], bed);
+    expect(fit.quarterTurn).toBe(false);
+    expect(fit.scale.map((v) => +v.toFixed(3))).toEqual([1, 1, 1]);
+  });
+
+  it('turns a double bed scanned across the model instead of stretching its width', () => {
+    const fit = skinFit([2.0, 1.6, 0.6], bed);
+    expect(fit.quarterTurn).toBe(true);
+    // Model x (its width, 1.6) runs along the scan depth (1.6), model z (its length, 2.0) along the scan width (2.0).
+    expect(fit.scale.map((v) => +v.toFixed(3))).toEqual([1, +(0.6 / 0.95).toFixed(3), 1]);
+  });
+
+  it('gives every side its own measured length', () => {
+    const fit = skinFit([2.2, 0.95, 0.8], [2.1, 0.9, 0.85]);
+    expect(fit.quarterTurn).toBe(false);
+    const drawn = [0.9 * fit.scale[2], 2.1 * fit.scale[0], 0.85 * fit.scale[1]];
+    expect(drawn.map((v) => +v.toFixed(3))).toEqual([0.95, 2.2, 0.8]);
+  });
+
+  it('does not turn a square footprint', () => {
+    expect(skinFit([0.8, 0.8, 0.9], [0.8, 0.8, 0.85]).quarterTurn).toBe(false);
   });
 });
