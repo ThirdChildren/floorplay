@@ -1,16 +1,16 @@
-# Caricare una casa da file JSON (ramo `claude/house-file-upload`)
+# Loading a home from a JSON file (branch `claude/house-file-upload`)
 
-**Decisione dell'utente (2026-11-12)**: aggiungere una funzione per caricare un file JSON di una casa (formato `schemas/house.schema.json`, `docs/DATA_FORMATS.md`) e ottenerne la casa con le sue misure; ramo nuovo da `main`, PR propria; stesso termine della realtà mista (pronta e provata sul visore entro **domenica 15 novembre mattina**, altrimenti resta sul ramo). La casa d'esempio ricavata dal PDF dell'utente **non** si aggiunge al repository.
+**User decision (2026-11-12)**: add a feature to load a home JSON file (format `schemas/house.schema.json`, `docs/DATA_FORMATS.md`) and get the home with its measurements; new branch from `main`, its own PR; same deadline as mixed reality (ready and tested on the headset by **Sunday 15 November morning**, otherwise it stays on the branch). The sample home derived from the user's PDF is **not** added to the repository.
 
-## Decisioni
-- **HF1 · Dove**: nella pagina 2D, prima di entrare in VR (in sessione immersiva il selettore dei file non è disponibile). Un piccolo pannello DOM (testi da `src/ui/strings.ts`, in inglese, grandi e ad alto contrasto) con: casa attuale (titolo e superficie), scelta tra le case demo e quelle caricate, `Load house file` (selettore del sistema, `accept=".json,application/json"`), trascinamento del file sulla pagina, `Remove` per le case caricate. Nascosto durante la sessione XR. Funziona con il puntatore della mano nel Quest Browser (regola 1).
-- **HF2 · Controllo**: il file è dato non fidato: dimensione massima 1 MB, `JSON.parse`, `checkHouse` (stesso controllo delle case demo), limiti di quantità per le prestazioni (regola 3); errori in inglese, leggibili (le prime righe di `checkHouse`), nessun carico parziale; testo mostrato solo come testo (mai HTML).
-- **HF3 · Dove si salva**: nel browser (`localStorage` tramite `createSafeStorage`), chiave `soglia:v1:house-file:<id>` e indice `soglia:v1:house-files`; id con prefisso `file-` (mai in conflitto con `apartment-a`/`apartment-b`); al massimo 5 case; quota piena o storage assente → la casa vale solo per la sessione, con un avviso. Disposizione e segnalazioni di una casa caricata si salvano come per le altre (chiave per casa). Nessun server (regola 10).
-- **HF4 · Apertura**: `?house=file-<id>` apre la casa caricata (il pannello ricarica la pagina con quel parametro); un id `file-*` assente dallo storage mostra il pannello d'errore come una casa sconosciuta, senza richieste di rete. `reset=1` non cancella le case caricate (solo lo stato).
-- **HF5 · Feature detection** (regola 5): `File`, `FileReader`/`Blob.text`, drag and drop e `localStorage` usati solo se esistono, con ripiego.
+## Decisions
+- **HF1 · Where**: on the 2D page, before entering VR (in an immersive session the file picker is not available). A small DOM panel (texts from `src/ui/strings.ts`, in English, large and high-contrast) with: current home (title and area), choice between the demo homes and the loaded ones, `Load house file` (system picker, `accept=".json,application/json"`), dragging the file onto the page, `Remove` for loaded homes. Hidden during the XR session. Works with the hand pointer in the Quest Browser (rule 1).
+- **HF2 · Checking**: the file is untrusted data: maximum size 1 MB, `JSON.parse`, `checkHouse` (same check as the demo homes), quantity limits for performance (rule 3); errors in English, readable (the first lines of `checkHouse`), no partial load; text shown only as text (never HTML).
+- **HF3 · Where it is saved**: in the browser (`localStorage` through `createSafeStorage`), key `soglia:v1:house-file:<id>` and index `soglia:v1:house-files`; id with the prefix `file-` (never in conflict with `apartment-a`/`apartment-b`); at most 5 homes; full quota or missing storage → the home is valid only for the session, with a notice. Layout and issues of a loaded home are saved as for the others (key per home). No server (rule 10).
+- **HF4 · Opening**: `?house=file-<id>` opens the loaded home (the panel reloads the page with that parameter); a `file-*` id missing from storage shows the error panel like an unknown home, without network requests. `reset=1` does not delete the loaded homes (only the state).
+- **HF5 · Feature detection** (rule 5): `File`, `FileReader`/`Blob.text`, drag and drop and `localStorage` used only if they exist, with a fallback.
 
-## Prove sul visore
-Nel Quest Browser: il pulsante `Load house file` apre il selettore dei file (file da Download o da un servizio di file del visore), la casa caricata si apre in VR con le misure giuste, resta dopo la chiusura del browser, `Remove` la toglie.
+## Headset tests
+In the Quest Browser: the `Load house file` button opens the file picker (file from Downloads or from a file service of the headset), the loaded home opens in VR with the right measurements, it stays after closing the browser, `Remove` removes it.
 
 ## Changelog
-- 2026-11-12: piano creato dopo la richiesta dell'utente.
+- 2026-11-12: plan created after the user's request.

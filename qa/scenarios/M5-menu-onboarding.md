@@ -1,45 +1,45 @@
-# S5.7 · Onboarding del pulsante "Menu" (coach a due passi)
+# S5.7 · Onboarding of the "Menu" button (two-step coach)
 
-> **Changelog 2026-11-06**: scenario creato dal piano M5 (D60; T5.15). Completa l'onboarding del menu rimandato da M2/T2.16 (il suggerimento `Palm up for the menu` resta).
+> **Changelog 2026-11-06**: scenario created from the M5 plan (D60; T5.15). It completes the menu onboarding deferred from M2/T2.16 (the hint `Palm up for the menu` stays).
 
-> **Changelog 2026-11-06 (esiti di T5.11 e T5.15)**: (1) `prefs.coach` si salva; un salvato **vecchio senza `coach`** parte da `done` se ci sono pezzi, da `grab` se il menu è già stato aperto, altrimenti da `menu-button`; (2) due passi (D60) con **timeout di 20 s per passo**; log `coach step=menu-button reason=start` → `coach step=grab reason=menu-opened` → `coach step=done reason=placed`, **0** entità `ui:coach-*` alla fine; alla ricarica `coach step=done reason=saved`; (3) passo 1: testo **sotto** il pulsante, a 10 cm da esso (≤ 0,15 m) e a **38°** dal centro della vista; passo 2: sopra il menu; (4) il coach **aspetta** se il pannello Issues o il pannello View è aperto; (5) misure: a freddo con il coach **57** chiamate per vista, menu aperto con il coach `grab` **62**; (6) i pulsanti fissi sono ×1,25 in larghezza con il testo grande: la distanza dal pulsante si legge dal `Transform`.
+> **Changelog 2026-11-06 (outcomes of T5.11 and T5.15)**: (1) `prefs.coach` is saved; an **old save without `coach`** starts from `done` if there are pieces, from `grab` if the menu has already been opened, otherwise from `menu-button`; (2) two steps (D60) with a **20 s timeout per step**; log `coach step=menu-button reason=start` → `coach step=grab reason=menu-opened` → `coach step=done reason=placed`, **0** `ui:coach-*` entities at the end; on reload `coach step=done reason=saved`; (3) step 1: text **below** the button, 10 cm from it (≤ 0.15 m) and at **38°** from the view center; step 2: above the menu; (4) the coach **waits** if the Issues panel or the View panel is open; (5) measurements: cold with the coach **57** calls per view, menu open with the `grab` coach **62**; (6) the fixed buttons are ×1.25 in width with large text: the distance from the button is read from the `Transform`.
 
-> **Changelog 2026-11-06 (gate A/B e correzione W1)**: la verifica 9 era l'unica non soddisfatta al gate A/B (il timeout di 20 s scorreva anche con View o Issues aperti e il coach non tornava). **Corretto**: il timeout ora **va in pausa** con il pannello View o Issues aperto e il coach **ricompare alla chiusura nello stesso passo**; **un pezzo in mano nasconde il coach ma non ferma il timer** (se si tiene un pezzo oltre i 20 s dal primo momento in cui il passo era visibile, scatta `coach step=done reason=timeout`). Nel gate le sequenze vanno eseguite **in un unico blocco di comandi** (la CLI costa ≈ 1 s a chiamata e il coach dura 20 s per passo): per il passo 9 aprire il pannello entro pochi secondi dall'inizio del coach (nel gate: +2,8 s). Budget (verifica 11): al gate A/B, **prima di T5.RA**, K16 = 73 (14 pezzi, suggerimento, etichetta della stanza e coach) e 78 (menu aperto e coach `grab`); dopo T5.RA (−16 chiamate) atteso ≈ 57 e ≈ 62; la soglia ≤ 75 vale per il **rerun**. Gli altri risultati (verifiche 1–8 e 10) erano PASS: passo 1 a 0,096 m dal pulsante e 36,8° dal centro; timeout 20,06 s con la sequenza `start` → `done reason=timeout` (nessun passo `grab` in mezzo).
+> **Changelog 2026-11-06 (gate A/B and fix W1)**: check 9 was the only one not met at gate A/B (the 20 s timeout also ran with View or Issues open and the coach did not come back). **Fixed**: the timeout now **pauses** with the View or Issues panel open and the coach **reappears on closing in the same step**; **a piece in hand hides the coach but does not stop the timer** (if a piece is held beyond 20 s from the first moment the step was visible, `coach step=done reason=timeout` fires). In the gate the sequences must be run **in a single block of commands** (the CLI costs ≈ 1 s per call and the coach lasts 20 s per step): for step 9 open the panel within a few seconds of the start of the coach (in the gate: +2.8 s). Budget (check 11): at gate A/B, **before T5.RA**, K16 = 73 (14 pieces, hint, room label and coach) and 78 (menu open and `grab` coach); after T5.RA (−16 calls) expected ≈ 57 and ≈ 62; the threshold ≤ 75 holds for the **rerun**. The other results (checks 1–8 and 10) were PASS: step 1 at 0.096 m from the button and 36.8° from the center; timeout 20.06 s with the sequence `start` → `done reason=timeout` (no `grab` step in between).
 
-**Milestone**: M5 · **Tipo**: PC (emulatore IWER via MCP `iwsdk-runtime`) · **Regole di `CLAUDE.md`**: 1, 8, 9 · Vedi `docs/plans/M5.md`, D60. Convenzioni: `qa/scenarios/M4-issue-create.md`, onboarding di M1: `qa/scenarios/M1-onboarding.md`.
+**Milestone**: M5 · **Type**: PC (IWER emulator via MCP `iwsdk-runtime`) · **`CLAUDE.md` rules**: 1, 8, 9 · See `docs/plans/M5.md`, D60. Conventions: `qa/scenarios/M4-issue-create.md`, M1 onboarding: `qa/scenarios/M1-onboarding.md`.
 
-## Precondizioni
-- `dev-params.local.txt` = `house=apartment-a&role=visitor&reset=1&seed=1&debug=1&pinch=grip&time=2026-12-21T10:00`. Stato pulito (`reset=1`): `onboardingStep=pinch`, `menuOpened=false`, `coach` al valore iniziale.
+## Preconditions
+- `dev-params.local.txt` = `house=apartment-a&role=visitor&reset=1&seed=1&debug=1&pinch=grip&time=2026-12-21T10:00`. Clean state (`reset=1`): `onboardingStep=pinch`, `menuOpened=false`, `coach` at the initial value.
 
-## Passi
-1. **Prima del coach**: preparazione standard; `ecs_find_entities` `^ui:coach-` (→ 0); log `pattern: "coach|onboarding"`.
-2. **Chiudere l'onboarding di M1**: pizzico breve su una stanza (come S1.6): log `pattern: "onboarding|coach"`; attesa 1,5 s; `ecs_find_entities` `^ui:coach-` (→ `ui:coach-menu-button`, 1) e `^ui:menu-hint$`; `ecs_query_entity` su `ui:coach-menu-button` e `ui:menu-button-right` con `["Transform"]`; `ui_inspect` (testo `Pinch Menu`, `fontSize` ≥ 2,4 cm); `browser_screenshot` → allegare (la mano fantasma sul pulsante).
-3. **Passo 2 del coach**: pizzico su `ui:menu-button-right`; log `pattern: "coach|menu opened"`; `ecs_find_entities` `^ui:coach-` (→ `ui:coach-grab`); `ui_inspect` (testo `Drop it in the house`); `browser_screenshot` → allegare.
-4. **Fine del coach**: prendere `ui:menu-item-chair` e posarlo in soggiorno a `W(1,5; 3,0)`: log `pattern: "coach|furniture placed"`; `ecs_find_entities` `^ui:coach-` (→ 0).
-5. **Persistenza**: attesa 1,5 s, ricaricare senza `reset=1`: log `pattern: "coach"` (→ nessun coach); poi con `reset=1` ripetere i passi 1–2 (il coach torna).
-6. **Strada del palmo**: con `reset=1`, chiudere l'onboarding di M1, poi aprire il menu con il **palmo in su** (`hand-left` a `L_MENU`, `Q_UP`, attesa 0,9 s): `coach step=grab reason=menu-opened` (il passo 1 si salta); chiudere (palmo giù).
-7. **Timeout**: con `reset=1`, chiudere l'onboarding di M1 e **non** toccare nulla per 45 s: `coach step=done reason=timeout` (timeout di 20 s per passo); nessun `ui:coach-*`.
-8. **Con un pezzo in mano non c'è**: durante il passo 2 del coach, tenere un pezzo in mano: il testo del coach sparisce alla presa o non si sovrappone alla mano (nessuna etichetta più vicina di 0,50 m).
-9. **Coach in attesa**: con `reset=1` e l'onboarding di M1 chiuso, aprire subito (entro ≈ 3 s dall'inizio del coach, in un unico blocco di comandi) il pannello View (`ui:view-button-right`) e dopo 25 s richiuderlo (il coach deve essere ancora lì, nello stesso passo); poi lo stesso con il pannello Issues (`ui:issue-button-right`).
-10. Log senza filtro; pulizia.
+## Steps
+1. **Before the coach**: standard setup; `ecs_find_entities` `^ui:coach-` (→ 0); log `pattern: "coach|onboarding"`.
+2. **Close the M1 onboarding**: short pinch on a room (as in S1.6): log `pattern: "onboarding|coach"`; wait 1.5 s; `ecs_find_entities` `^ui:coach-` (→ `ui:coach-menu-button`, 1) and `^ui:menu-hint$`; `ecs_query_entity` on `ui:coach-menu-button` and `ui:menu-button-right` with `["Transform"]`; `ui_inspect` (text `Pinch Menu`, `fontSize` ≥ 2.4 cm); `browser_screenshot` → attach (the ghost hand on the button).
+3. **Coach step 2**: pinch on `ui:menu-button-right`; log `pattern: "coach|menu opened"`; `ecs_find_entities` `^ui:coach-` (→ `ui:coach-grab`); `ui_inspect` (text `Drop it in the house`); `browser_screenshot` → attach.
+4. **End of the coach**: take `ui:menu-item-chair` and place it in the living room at `W(1.5; 3.0)`: log `pattern: "coach|furniture placed"`; `ecs_find_entities` `^ui:coach-` (→ 0).
+5. **Persistence**: wait 1.5 s, reload without `reset=1`: log `pattern: "coach"` (→ no coach); then with `reset=1` repeat steps 1–2 (the coach comes back).
+6. **Palm route**: with `reset=1`, close the M1 onboarding, then open the menu with the **palm up** (`hand-left` at `L_MENU`, `Q_UP`, wait 0.9 s): `coach step=grab reason=menu-opened` (step 1 is skipped); close (palm down).
+7. **Timeout**: with `reset=1`, close the M1 onboarding and **do not** touch anything for 45 s: `coach step=done reason=timeout` (20 s timeout per step); no `ui:coach-*`.
+8. **With a piece in hand it is not there**: during coach step 2, hold a piece in hand: the coach text disappears on grabbing or does not overlap the hand (no label closer than 0.50 m).
+9. **Waiting coach**: with `reset=1` and the M1 onboarding closed, open the View panel straight away (within ≈ 3 s of the start of the coach, in a single block of commands) (`ui:view-button-right`) and close it again after 25 s (the coach must still be there, in the same step); then the same with the Issues panel (`ui:issue-button-right`).
+10. Unfiltered log; cleanup.
 
-## Verifiche (tutte obbligatorie)
-1. **Passo 1**: 0 `ui:coach-*` durante l'onboarding di M1 (non si sovrappongono).
-2. **Passo 2**: `coach step=menu-button reason=start`; 1 `ui:coach-menu-button` **sotto** il pulsante, a ≤ 0,15 m da `ui:menu-button-right` (atteso 0,10 m) e a 0,50–0,80 m dalla testa, a circa 38° dal centro della vista (≤ 45°, ingresso di riserva); testo `Pinch Menu` (nessun testo italiano); `ui:menu-hint` può coesistere ma non deve sovrapporsi (distanza ≥ 0,05 m).
-3. **Passo 3**: `menu opened hand=right mode=pinned` e `coach step=grab reason=menu-opened`; 1 `ui:coach-grab`, 0 `ui:coach-menu-button`.
-4. **Passo 4**: `coach step=done reason=placed`; 0 `ui:coach-*`.
-5. **Passo 5**: dopo la ricarica `coach step=done reason=saved` (o nessuna riga `coach` e 0 entità); con `reset=1` il coach riparte da `menu-button`.
-6. **Passo 6**: `coach step=grab reason=menu-opened` (partenza da `grab` per chi ha già aperto il menu).
-7. **Passo 7**: il timeout è di 20 s **per passo**: entro 45 s dall'inizio del coach, `coach step=done reason=timeout` (se dopo il primo timeout si passa al passo `grab` invece di chiudere, riportare la sequenza esatta delle righe `coach step=…`); alla fine 0 `ui:coach-*`.
-8. **Passo 8**: nessuna sovrapposizione con la mano o con il pezzo; nessun pizzico del coach reclama la mano (il coach non è interattivo).
-9. **Passo 9 (coach in attesa)**: con il pannello View (o Issues) aperto per 25 s, il coach **aspetta**: nessuna riga `coach step=done reason=timeout` e il timeout di 20 s non scorre; chiuso il pannello, il passo `menu-button` riprende **nello stesso passo** (la entità `ui:coach-menu-button` torna visibile) e il tempo trascorso con il pannello aperto non conta; lo stesso con il pannello Issues. Con un **pezzo in mano** il coach è nascosto ma il timer **continua**: tenerlo oltre i 20 s dal primo momento visibile porta a `coach step=done reason=timeout`.
-10. **Salvato vecchio**: i tre casi di ripresa da un salvato senza `coach` (con pezzi → `done`; menu già aperto e senza pezzi → `grab`; né l'uno né l'altro → `menu-button`) sono coperti dai test unitari: il report li cita; sul runtime si prova solo il caso "nessun pezzo, menu mai aperto" con `reset=1`.
-11. **Budget**: il picco di chiamate a freddo (suggerimento + coach) ≤ 75 e con il menu aperto e il coach `grab` ≤ 75 (**dopo T5.RA**; al gate A/B, prima di T5.RA, erano 73 e 78: 78 oltre la soglia), e rientra a regime entro 3 s dopo la fine del coach (tabella di S5.9, caso K16).
-12. Nessuna voce `error`; nessun `Missing glyph`; nessun `reading 'add'`.
-13. **Solo visore** (media): la mano fantasma si capisce senza spiegazioni, i 20 s di timeout non sono né troppi né pochi.
+## Checks (all mandatory)
+1. **Step 1**: 0 `ui:coach-*` during the M1 onboarding (they do not overlap).
+2. **Step 2**: `coach step=menu-button reason=start`; 1 `ui:coach-menu-button` **below** the button, at ≤ 0.15 m from `ui:menu-button-right` (expected 0.10 m) and at 0.50–0.80 m from the head, at about 38° from the view center (≤ 45°, fallback entry); text `Pinch Menu` (no Italian text); `ui:menu-hint` may coexist but must not overlap (distance ≥ 0.05 m).
+3. **Step 3**: `menu opened hand=right mode=pinned` and `coach step=grab reason=menu-opened`; 1 `ui:coach-grab`, 0 `ui:coach-menu-button`.
+4. **Step 4**: `coach step=done reason=placed`; 0 `ui:coach-*`.
+5. **Step 5**: after the reload `coach step=done reason=saved` (or no `coach` line and 0 entities); with `reset=1` the coach restarts from `menu-button`.
+6. **Step 6**: `coach step=grab reason=menu-opened` (start from `grab` for those who have already opened the menu).
+7. **Step 7**: the timeout is 20 s **per step**: within 45 s of the start of the coach, `coach step=done reason=timeout` (if after the first timeout it moves to the `grab` step instead of closing, report the exact sequence of the `coach step=…` lines); at the end 0 `ui:coach-*`.
+8. **Step 8**: no overlap with the hand or with the piece; no coach pinch claims the hand (the coach is not interactive).
+9. **Step 9 (waiting coach)**: with the View (or Issues) panel open for 25 s, the coach **waits**: no `coach step=done reason=timeout` line and the 20 s timeout does not run; once the panel is closed, the `menu-button` step resumes **in the same step** (the entity `ui:coach-menu-button` becomes visible again) and the time spent with the panel open does not count; the same with the Issues panel. With a **piece in hand** the coach is hidden but the timer **continues**: holding it beyond 20 s from the first visible moment leads to `coach step=done reason=timeout`.
+10. **Old save**: the three cases of resuming from a save without `coach` (with pieces → `done`; menu already opened and no pieces → `grab`; neither → `menu-button`) are covered by the unit tests: the report cites them; on the runtime only the case "no pieces, menu never opened" is tried, with `reset=1`.
+11. **Budget**: the cold peak of calls (hint + coach) ≤ 75 and with the menu open and the `grab` coach ≤ 75 (**after T5.RA**; at gate A/B, before T5.RA, they were 73 and 78: 78 over the threshold), and it returns to steady state within 3 s after the end of the coach (table of S5.9, case K16).
+12. No `error` entry; no `Missing glyph`; no `reading 'add'`.
+13. **Headset only** (medium): the ghost hand is understood without explanations, the 20 s timeout is neither too long nor too short.
 
-## Esito
-PASS se le verifiche 1–12 sono soddisfatte (la 13 è solo visore) · FAIL altrimenti.
+## Outcome
+PASS if checks 1–12 are met (13 is headset only) · FAIL otherwise.
 
-## Da rimandare al visore
-Voce "Coach del pulsante Menu" di M5.
+## To defer to the headset
+Entry "Menu button coach" of M5.

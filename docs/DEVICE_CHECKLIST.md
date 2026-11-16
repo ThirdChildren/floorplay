@@ -1,143 +1,157 @@
-# Checklist del visore
+# Headset checklist
 
-Da eseguire con un Meta Quest (3 o 3S) quando è disponibile. Ogni voce: ✅ ok, ❌ problema (con
-nota), ➖ non applicabile. I risultati vanno in `qa/device/<milestone>-<data>.md`.
-Le prove rimandate mentre il visore non c'è si elencano in `qa/device/DEBT.md` (una riga per voce,
-con priorità: questa checklist è l'indice, DEBT.md il dettaglio con i numeri da confrontare).
-Guida passo passo per l'utente (Fedora, adb, certificato, debug remoto, Meta VR CLI):
-`docs/QUEST_SETUP.md`. Piano e ordine delle sessioni: `docs/plans/M6.md`.
+To be run with a Meta Quest (3 or 3S) when it is available. Each item: ✅ ok, ❌ problem (with
+a note), ➖ not applicable. Results go in `qa/device/<milestone>-<date>.md`.
+Checks deferred while the headset is not available are listed in `qa/device/DEBT.md` (one row per item,
+with priority: this checklist is the index, DEBT.md the detail with the numbers to compare against).
+Step-by-step guide for the user (Fedora, adb, certificate, remote debugging, Meta VR CLI):
+`docs/QUEST_SETUP.md`. Plan and order of the sessions: `docs/plans/M6.md`.
 
-> **Changelog 2026-11-12**: realtà mista ripresa come funzione opt-in `?mr=1` (decisione dell'utente del 2026-11-11): la voce ➖ diventa una prova da fare.
+> **Status 2026-11-16 (owner's device test)**: the owner tested the latest features on the Quest (everything after the
+> 2026-11-11 session: start screen and Enter VR, Back to home, UI-FIX/UI-POLISH, palm menu pinch fix, walk/row gesture,
+> viewpoint markers, house files) and reported that everything works. No numbers were given. A checked box `[x]` below
+> means "passed on the headset" (owner's test of 2026-11-16, or the 2026-11-11 session where noted). An unchecked box
+> marked 🟨 means "works per the owner's test 2026-11-16; measurement not recorded" (fps, draw calls, triangles,
+> cold start, network requests, console warnings, exact distances or angles): it stays open until the number is
+> written in a report in `qa/device/`. An unchecked box without a mark was not covered. Details per row:
+> `qa/device/DEBT.md`.
 
-> **Changelog 2026-11-07** (piano M6, segnalazioni di `quest-integrator`): (1) M5: le "ombre del sole" non
-> esistono più, sono **chiazze di luce** (D55 di M5); (2) M5: la **realtà mista è tagliata e fuori dal gate**
-> (`mr=1` non ha effetto), decisione esplicita D74 del piano M6; (3) M4: tastiera di sistema e microfono **non
-> implementati** (D40), voci ➖; presa a distanza di M3 ➖ (T3.15 tagliato); (4) aggiunte le voci presenti in DEBT.md e
-> mancanti: pulsanti fissi `Menu`/`Issues`/`View`/`Tabletop`, pannello View, punti informativi, Furnish/Clear,
-> `Rotate`, coach, avvio a freddo sotto 10 s, `handTracking` richiesto o opzionale; (5) `[soglia:stats]` richiede
-> `?debug=1`; (6) il server è **HTTPS autofirmato anche su `localhost`**; (7) `dev-params.local.txt` vale anche sul visore
-> se la pagina arriva dal server di sviluppo. Aggiunta la sezione "Strumenti di M6" (HUD, `[soglia:env]`, taratura). **Aggiornamento 2026-11-07 (sera, T6.A12)**: la fase A è implementata, la sezione "Strumenti di M6" descrive ciò che c'è davvero (provato solo sul PC).
+> **Changelog 2026-11-16**: status marks added after the owner's device test (see above); the whole document was translated to English and the project renamed from Soglia to Floorplay (the literal runtime strings `[soglia:...]` and `soglia:v1:*` keep their names).
 
-## Setup (una volta)
+> **Changelog 2026-11-12**: mixed reality taken up again as the opt-in feature `?mr=1` (user decision of 2026-11-11): the ➖ item becomes a check to be done.
 
-- [ ] Modalità sviluppatore attiva (app Meta Horizon sul telefono → visore → Developer mode; serve prima
-      un'organizzazione sviluppatore sul sito Meta: vedi `docs/QUEST_SETUP.md`, sezione 3).
-- [ ] `adb devices` vede il visore (su Fedora: `sudo dnf install android-tools`; se serve, regola udev per il
-      vendor USB `2833`).
-- [ ] App raggiungibile: server di sviluppo `npx @iwsdk/cli dev up --no-open` (**HTTPS autofirmato sulla porta
-      8081, anche su `localhost`**: il Quest Browser mostra un avviso del certificato la prima volta, per ogni
-      indirizzo, e va accettato). Via USB: `adb reverse tcp:8081 tcp:8081` e `https://localhost:8081/?debug=1`;
-      via Wi-Fi: `https://<ip-del-pc>:8081/?debug=1`. Leggere sempre la porta da `dev status`.
-- [ ] IWER **non** si attiva sul visore (regola per lo user agent OculusBrowser): nessun controllo
-      dell'emulatore a schermo.
-- [ ] Debug remoto: Chromium sul PC → `chrome://inspect/#devices` → console della pagina sul visore.
-- [ ] Meta VR CLI: è già una dipendenza di sviluppo (`@meta-quest/metavr`, installata da `npm ci`); si usa con
-      `npx metavr ...` e scarica il suo programma dalla CDN di Meta al primo avvio (vedi
-      `docs/QUEST_SETUP.md`, sezione 5.3). Non serve un'installazione globale.
-- [ ] **`[soglia:stats]` esiste solo con `?debug=1`** (ogni 2 s: fps, chiamate, triangoli; con `debug=1` anche
-      `[soglia:stats:groups]`). Senza `debug=1` la console non ha numeri di prestazioni.
-- [ ] **Parametri da file**: `dev-params.local.txt` (radice del progetto, una riga, senza `?`) funziona **anche sul
-      visore** se la pagina arriva dal server di sviluppo (non dalla build pubblica); un parametro nell'URL vince
-      su quello del file. Cancellarlo a fine prova.
-- [ ] Mani attive nelle impostazioni del visore (Hand tracking), controller messi via e spenti.
+> **Changelog 2026-11-07** (M6 plan, reports from `quest-integrator`): (1) M5: the "sun shadows" no longer
+> exist, they are **light patches** (D55 of M5); (2) M5: **mixed reality is cut and outside the gate**
+> (`mr=1` has no effect), explicit decision D74 of the M6 plan; (3) M4: system keyboard and microphone **not
+> implemented** (D40), ➖ items; distance grab of M3 ➖ (T3.15 cut); (4) added the items present in DEBT.md and
+> missing here: fixed buttons `Menu`/`Issues`/`View`/`Tabletop`, View panel, info points, Furnish/Clear,
+> `Rotate`, coach, cold start under 10 s, `handTracking` required or optional; (5) `[soglia:stats]` requires
+> `?debug=1`; (6) the server is **self-signed HTTPS even on `localhost`**; (7) `dev-params.local.txt` also applies on the headset
+> if the page comes from the development server. Added the section "M6 tools" (HUD, `[soglia:env]`, tuning). **Update 2026-11-07 (evening, T6.A12)**: phase A is implemented, the section "M6 tools" describes what really exists (proven only on the PC).
 
-## Sempre, a ogni milestone
+## Setup (once)
 
-- [ ] Nessun controller acceso: tutto si completa con le mani.
-- [ ] Da seduti, senza alzarsi né allungarsi oltre ~60 cm.
-- [ ] fps ≥ 60 in tutto il percorso della milestone (obiettivo 72); annotare draw call e triangoli (da
-      `[soglia:stats]`, con `debug=1`).
-- [ ] Testo leggibile senza sforzo; UI essenziale al centro della vista.
-- [ ] Nessun errore in console (debug remoto).
-- [ ] Togli il visore e rimettilo: l'app riprende dal punto lasciato.
-- [ ] Nessuna stringa italiana visibile.
-- [ ] **Mani locali**: con la rete bloccata (o `cdn.jsdelivr.net` irraggiungibile) le mani si vedono
-      (glb in `public/models/hands/`), nessun warning `[xr-input] Failed to load visual asset`.
-- [ ] **Prova con i controller**: accendi i controller e riavvia la sessione. Si vede una capsula
-      grigia locale (non il modello Meta), non parte alcuna richiesta a `cdn.jsdelivr.net` e l'app
-      non li richiede mai (resta tutta completabile a mani).
+- [x] Developer mode active (Meta Horizon app on the phone → headset → Developer mode; a developer
+      organisation on the Meta site is needed first: see `docs/QUEST_SETUP.md`, section 3). (Done: the 2026-11-11 session ran.)
+- [x] `adb devices` sees the headset (on Fedora: `sudo dnf install android-tools`; if needed, udev rule for the
+      USB vendor `2833`). (Done: the 2026-11-11 session ran.)
+- [x] App reachable: development server `npx @iwsdk/cli dev up --no-open` (**self-signed HTTPS on port
+      8081, even on `localhost`**: the Quest Browser shows a certificate warning the first time, for each
+      address, and it must be accepted). Via USB: `adb reverse tcp:8081 tcp:8081` and `https://localhost:8081/?debug=1`;
+      via Wi-Fi: `https://<pc-ip>:8081/?debug=1`. Always read the port from `dev status`. (Done: the 2026-11-11 session ran.)
+- [ ] 🟨 IWER does **not** activate on the headset (rule for the OculusBrowser user agent): no emulator
+      controls on screen. (Works per the owner's test 2026-11-16; the `iwer=no` console line was not recorded.)
+- [x] Remote debugging: Chromium on the PC → `chrome://inspect/#devices` → console of the page on the headset
+      (the 2026-11-11 session used the CDP channel of `quest:console`).
+- [ ] Meta VR CLI: it is already a development dependency (`@meta-quest/metavr`, installed by `npm ci`); it is used with
+      `npx metavr ...` and downloads its program from the Meta CDN at first launch (see
+      `docs/QUEST_SETUP.md`, section 5.3). No global installation is needed. (Not reported.)
+- [x] **`[soglia:stats]` exists only with `?debug=1`** (every 2 s: fps, calls, triangles; with `debug=1` also
+      `[soglia:stats:groups]`). Without `debug=1` the console has no performance numbers. (Seen in the 2026-11-11 log.)
+- [ ] **Parameters from file**: `dev-params.local.txt` (project root, one line, no `?`) works **also on the
+      headset** if the page comes from the development server (not from the public build); a parameter in the URL beats
+      the one in the file. Delete it at the end of the check. (Not reported.)
+- [x] Hands active in the headset settings (Hand tracking), controllers put away and switched off.
 
-## M0 · Avvio e ambiente
+## Always, at every milestone
 
-- [ ] **`handTracking: true` è richiesto o opzionale?** La sessione parte con le mani attive; senza mani (o con
-      il tracciamento spento) l'app deve restare avviabile.
-- [ ] **Avvio a freddo sotto 10 s** (dalla pressione del link a plastico visibile; bundle 6,57 MB, 1,68 MB gzip).
-- [ ] Nessuna richiesta verso `unpkg.com`, `api.dicebear.com` né `cdn.jsdelivr.net` (nemmeno con i controller
-      accesi): scheda Rete di DevTools.
-- [ ] `renderer.xr.getCamera().cameras.length` è 2 (campo `views=2` di `[soglia:stats]`).
-- [ ] `localStorage` presente e non bloccato nel Quest Browser (serve alla ripresa).
+- [x] No controller switched on: everything is completed with the hands.
+- [x] Seated, without getting up or reaching beyond ~60 cm.
+- [ ] 🟨 fps ≥ 60 along the whole path of the milestone (target 72); note draw calls and triangles (from
+      `[soglia:stats]`, with `debug=1`). (Works per the owner's test 2026-11-16; measurement not recorded. The 2026-11-11 session measured 90 fps, minimum 82 over 191 s, 20–24 calls per view.)
+- [x] Text readable without effort; essential UI at the centre of the view.
+- [ ] 🟨 No errors in the console (remote debugging). (Works per the owner's test 2026-11-16; console not recorded.)
+- [x] Take the headset off and put it back on: the app resumes from where it was left.
+- [x] No Italian string visible.
+- [ ] 🟨 **Local hands**: with the network blocked (or `cdn.jsdelivr.net` unreachable) the hands are visible
+      (glb files in `public/models/hands/`), no `[xr-input] Failed to load visual asset` warning. (Works per the owner's test 2026-11-16; network and console not recorded.)
+- [ ] 🟨 **Controller check**: switch the controllers on and restart the session. A local grey capsule
+      is seen (not the Meta model), no request to `cdn.jsdelivr.net` starts and the app
+      never requires them (it remains fully completable with the hands). (Not individually reported.)
 
-## M1 · Casa e plastico
-- [ ] Il plastico compare a un'altezza comoda da seduti; distanza e scala naturali.
-- [ ] Pizzico a due mani per ruotare/ingrandire affidabile, senza scatti.
-- [ ] Pizzico su una stanza: sceglie quella giusta; etichetta leggibile (`·` e `²` nitidi).
-- [ ] Onboarding con la mano fantasma comprensibile senza spiegazioni.
+## M0 · Startup and environment
 
-## M2 · Arredare
-- [ ] Il menu del palmo si apre solo quando serve (niente aperture accidentali), con entrambe le mani.
-- [ ] Presa e rilascio precisi; l'aggancio non "salta".
-- [ ] Rotazione col polso affidabile; collisioni evidenti.
-- [ ] Traslazione del plastico a una e a due mani senza scatti; `Recenter` raggiungibile.
+- [ ] 🟨 **Is `handTracking: true` required or optional?** The session starts with the hands active; without hands (or with
+      tracking switched off) the app must remain startable. (Works per the owner's test 2026-11-16 with hands; the no-hands case was not recorded.)
+- [ ] 🟨 **Cold start under 10 s** (from pressing the link to the tabletop model visible; bundle 6.57 MB, 1.68 MB gzip). (Seconds not recorded.)
+- [ ] 🟨 No request to `unpkg.com`, `api.dicebear.com` or `cdn.jsdelivr.net` (not even with the controllers
+      switched on): DevTools Network tab. (Not recorded.)
+- [ ] 🟨 `renderer.xr.getCamera().cameras.length` is 2 (field `views=2` of `[soglia:stats]`). (Not recorded.)
+- [x] `localStorage` present and not blocked in the Quest Browser (needed for resume).
 
-## M3 · Dentro la casa
-- [ ] **Pulsanti fissi `Menu`** (due, a ±0,45 m): raggiungibili con una mano da seduti, leggibili, senza prendere il
-      pezzo vicino; il menu `pinned` si legge nel campo visivo.
-- [ ] Dissolvenza tra plastico e stanza senza fastidio; altezza occhi corretta.
-- [ ] ➖ Presa a distanza nella stanza a grandezza reale: **tagliata** (T3.15). In scala reale si prende solo a
-      portata di braccio: annotare quanto è scomodo.
-- ~~Metro: errore ≤ 2 cm su misure note del plastico.~~ **Rimosso il 2026-11-14** (il metro non esiste più).
-- ~~Messaggio del FitCheck leggibile e chiaro.~~ **Rimosso il 2026-11-14** (il FitCheck non esiste più).
-- [ ] Giunti delle mani (`XRHand`, `fillPoses`) disponibili e punto di pizzico preciso (`[soglia:hands]`).
+## M1 · House and tabletop model
+- [x] The tabletop model appears at a comfortable height when seated; natural distance and scale.
+- [x] Two-hand pinch to rotate/zoom reliable, without jerks.
+- [x] Pinch on a room: it picks the right one; label readable (`·` and `²` sharp).
+- [x] Onboarding with the ghost hand understandable without explanations.
 
-## M4 · Segnalazioni
-- [ ] Pizzico prolungato distinto dal pizzico normale (niente segnaposto per errore).
-- [ ] **Pulsanti `Issues`** sopra `Menu` e **pulsante `Tabletop`** in scala reale: raggiungibili e leggibili con una
-      mano; pannello Issues leggibile a 0,59 m, nessuna riga scambiata con la vicina.
-- [ ] ➖ Tastiera di sistema in WebXR: **non implementata** (D40, frasi predefinite al posto della tastiera).
-- [ ] ➖ Microfono (`MediaRecorder` / `getUserMedia`): **non implementato**, nessun pulsante vocale (S4.2). Verificare
-      solo che non compaia alcun pulsante morto.
-- [ ] Ciclo rosso → arancione → verde chiaro anche a colpo d'occhio; il viola del verbale si distingue.
-- [ ] Ripresa vera con segnalazioni, ruolo, pezzi e punto di vista attivo.
+## M2 · Furnishing
+- [x] The palm menu opens only when needed (no accidental openings), with both hands.
+- [x] Grab and release precise; snapping does not "jump".
+- [x] Wrist rotation reliable; collisions evident.
+- [x] Translation of the tabletop model with one and two hands without jerks; `Recenter` reachable.
 
-## M5 · Luce, agente, accessibilità
-- [ ] **fps con le chiazze di luce del sole** (non ci sono ombre vere: il sole è un calcolo proprio con chiazze sul
-      pavimento, "Simplified light") nel caso peggiore (menu `pinned` + pezzo non valido + etichette).
-- [ ] **Pulsanti `View`** (terzo piano) e **pannello View** (Zoom, Turn, Month, Hour, Contrast, Text): raggiungibili con
-      una mano, righe da 3,3 cm senza scambi, quadrante del sole leggibile.
-- [ ] **Punti informativi** (rombi ciano, "Sample data") leggibili e pizzicabili; **Furnish / Clear** a una mano,
-      14 pezzi senza scatti, `Undo` in un passo.
-- [ ] Alto contrasto e testo grande leggibili nel campo visivo; modalità una mano completa.
-- [ ] **`Rotate`** (12 s dopo la posa) raggiungibile e non premuto per sbaglio; **coach** del pulsante `Menu`
-      comprensibile senza spiegazioni.
-- [ ] **Realtà mista `?mr=1`** (ripresa il 2026-11-11, piano `docs/plans/MR.md`; prima D74 la tagliava). Con lo
-      Space Setup fatto, in **una stanza** (decisione dell'utente del 2026-11-14: la seconda stanza non serve): la sessione parte con passthrough; `My room` mostra i contorni dei
-      mobili veri con il nome giusto; il raggio della mano li sceglie da seduti; misure entro ±5 cm da un mobile misurato
-      col metro; `Add to Mine` (il FitCheck è stato rimosso il 2026-11-14); un divano virtuale a 1:1 sul pavimento resta fermo quando
-      ci si gira e diventa rosso sopra un mobile vero; percorso a una mano (`Model`/`Menu`); fps letti sul visore (nessun tetto di 12 pezzi da provare, decisione del 2026-11-14);
-      senza `?mr=1` l'app è quella di `main`. Se una prova fallisce, il ramo non si unisce.
+## M3 · Inside the house
+- [x] **Fixed `Menu` buttons** (two, at ±0.45 m): reachable with one hand when seated, readable, without taking the
+      neighbouring piece; the `pinned` menu reads in the field of view.
+- [x] Fade between tabletop model and room without discomfort; correct eye height.
+- [ ] ➖ Distance grab in the real-size room: **cut** (T3.15). In real scale pieces are taken only at
+      arm's reach: note how uncomfortable that is. (The arm's-reach-only comfort passed per the owner's test 2026-11-16.)
+- ~~Tape measure: error ≤ 2 cm on known measurements of the tabletop model.~~ **Removed on 2026-11-14** (the tape measure no longer exists).
+- ~~FitCheck message readable and clear.~~ **Removed on 2026-11-14** (the FitCheck no longer exists).
+- [x] Hand joints (`XRHand`, `fillPoses`) available and pinch point precise (`[soglia:hands]`). (Seen in the 2026-11-11 log: `source=joints` on both hands.)
 
-## Torna alla schermata iniziale (`Back to home`, 2026-11-15; piano e scenario: `qa/scenarios/HOME-back-to-home.md`)
-- [ ] **`Back to home`** (a destra dell'intestazione del menu, accanto a `Items` e `Mine`): si preme con una mano sola, dal menu
-      sul palmo e da quello fisso, senza prendere per sbaglio una scheda vicina; l'etichetta si legge a 0,5-0,6 m.
-- [ ] La sessione finisce da sola, nel Quest Browser compare la schermata iniziale (Load house file, Furniture, Enter VR) senza
-      ricaricare; `Enter VR` riparte con casa, ruolo, pezzi, segnalazioni e punto di vista come erano.
-- [ ] Da lì si sceglie un'altra casa o si cambiano le misure dei mobili ("Apply and go back"), poi `Enter VR` apre la casa nuova.
+## M4 · Issues
+- [x] Long pinch distinct from the normal pinch (no placeholder by mistake).
+- [x] **`Issues` buttons** above `Menu` and **`Tabletop` button** in real scale: reachable and readable with one
+      hand; Issues panel readable at 0.59 m, no row mistaken for its neighbour.
+- [ ] ➖ System keyboard in WebXR: **not implemented** (D40, predefined phrases instead of the keyboard).
+- [ ] ➖ Microphone (`MediaRecorder` / `getUserMedia`): **not implemented**, no voice button (S4.2). Only check
+      that no dead button appears.
+- [x] Cycle red → orange → light green even at a glance; the violet of the move-in report is distinguishable.
+- [x] Real resume with issues, role, pieces and active viewpoint.
 
-## Strumenti di M6 (fase A implementata il 2026-11-07, **provati solo sul PC**; i dettagli in `docs/QUEST_SETUP.md`, sezione 11)
-- [ ] `?debug=1` mostra nel visore, **solo in sessione**, il pannello `ui:debug-hud` (fps con `OK`/`LOW`/`FAIL`, ms medio/p95/max,
-      chiamate e triangoli, fps minimo e frame peggiore, sorgente dei giunti, ultime righe di log; a ~0,8 m e ~36° dalla linea
-      di vista); `&hud=0` lo spegne per le misure pulite (costa ~+2 chiamate, gruppo `hud`).
-- [ ] La console contiene `[soglia:env]` (browser, `iwer=`, funzioni disponibili, `readyMs`/`startMs`; la riga `session`
-      2 s dopo l'inizio della sessione con `frameRate` e `rates`), `[soglia] env iwer clues` (tutti 0 sul Quest),
-      `[soglia:frames]` (media, p95 e massimo del tempo per frame, `hzFrom=session|est`) e `[soglia:stats:summary]`.
-- [ ] Taratura: parametri `t_<nome>=<valore>` (solo con `debug=1`; 26 manopole) e file vivo `tuning.local.txt` (con il
-      prefisso `t_`) letto ogni 2 s dal server di sviluppo; ogni cambio scrive `[soglia] tuning set ...`
-      (`npm run quest:tune -- nome=valore` lo scrive per te).
-- [ ] Script `npm run quest:*` (check, serve, reverse, open, console, perf, capture, preview, links, tune): ognuno
-      provato sul Quest vero; i punti incerti (apertura in VR, socket di debug, `metavr`) sono in `qa/device/DEBT.md` (M6).
+## M5 · Light, agent, accessibility
+- [ ] 🟨 **fps with the sun light patches** (there are no real shadows: the sun is our own calculation with patches on the
+      floor, "Simplified light") in the worst case (`pinned` menu + invalid piece + labels). (Works per the owner's test 2026-11-16; fps not recorded.)
+- [x] **`View` buttons** (third floor) and **View panel** (Zoom, Turn, Month, Hour, Contrast, Text): reachable with
+      one hand, 3.3 cm rows without mix-ups, sun dial readable.
+- [x] **Info points** (cyan diamonds, "Sample data") readable and pinchable; **Furnish / Clear** with one hand,
+      14 pieces without jerks, `Undo` in one step.
+- [x] High contrast and large text readable in the field of view; complete one-hand mode.
+- [x] **`Rotate`** (12 s after placement) reachable and not pressed by mistake; **coach** of the `Menu` button
+      understandable without explanations.
+- [x] **Mixed reality `?mr=1`** (taken up again on 2026-11-11, plan `docs/plans/MR.md`; before, D74 cut it). With
+      Space Setup done, in **one room** (user decision of 2026-11-14: the second room is not needed): the session starts with passthrough; `My room` shows the outlines of the
+      real furniture with the right name; the hand ray picks them when seated; measurements within ±5 cm of a piece of furniture measured
+      with a tape measure; `Add to Mine` (the FitCheck was removed on 2026-11-14); a virtual sofa at 1:1 on the floor stays still when
+      you turn around and turns red over a real piece of furniture; one-hand path (`Model`/`Menu`); fps read on the headset (no 12-piece cap to test, decision of 2026-11-14);
+      without `?mr=1` the app is the one on `main`. If a check fails, the branch is not merged.
+      (Owner-reported 2026-11-16: everything works. 🟨 The ±5 cm measurements and the fps were not recorded.)
 
-## Prima della consegna
-- [ ] Link pubblico (GitHub Pages) aperto dal Quest Browser, senza login, dall'inizio alla fine (la build pubblica
-      non legge `dev-params.local.txt`).
-- [ ] Demo completa dei tre atti in meno di 10 minuti da una persona che non la conosce.
-- [ ] Riprese per il video fatte dal visore (o dall'emulatore) senza persone riconoscibili né marchi.
+## Back to the start screen (`Back to home`, 2026-11-15; plan and scenario: `qa/scenarios/HOME-back-to-home.md`)
+- [x] **`Back to home`** (at the right of the menu header, next to `Items` and `Mine`): pressed with one hand, from the menu
+      on the palm and from the fixed one, without taking a neighbouring card by mistake; the label reads at 0.5-0.6 m.
+- [x] The session ends by itself, the start screen (Load house file, Furniture, Enter VR) appears in the Quest Browser without
+      reloading; `Enter VR` restarts with house, role, pieces, issues and viewpoint as they were.
+- [x] From there another house is chosen or the furniture sizes are changed ("Apply and go back"), then `Enter VR` opens the new house.
+
+## M6 tools (phase A implemented on 2026-11-07, **proven only on the PC**; details in `docs/QUEST_SETUP.md`, section 11)
+These are developer tools, not app features: the owner's 2026-11-16 report did not cover them one by one, so they stay open (🟨 in `qa/device/DEBT.md`).
+- [ ] 🟨 `?debug=1` shows in the headset, **in session only**, the `ui:debug-hud` panel (fps with `OK`/`LOW`/`FAIL`, mean/p95/max ms,
+      calls and triangles, minimum fps and worst frame, joints source, last log lines; at ~0.8 m and ~36° from the
+      line of sight); `&hud=0` switches it off for clean measurements (costs ~+2 calls, group `hud`).
+- [ ] 🟨 The console contains `[soglia:env]` (browser, `iwer=`, available features, `readyMs`/`startMs`; the `session` line
+      2 s after the session starts with `frameRate` and `rates`), `[soglia] env iwer clues` (all 0 on the Quest),
+      `[soglia:frames]` (mean, p95 and maximum frame time, `hzFrom=session|est`) and `[soglia:stats:summary]`.
+- [ ] 🟨 Tuning: parameters `t_<name>=<value>` (only with `debug=1`; 26 knobs) and live file `tuning.local.txt` (with the
+      `t_` prefix) read every 2 s by the development server; every change writes `[soglia] tuning set ...`
+      (`npm run quest:tune -- name=value` writes it for you).
+- [ ] 🟨 `npm run quest:*` scripts (check, serve, reverse, open, console, perf, capture, preview, links, tune): each
+      one proven on the real Quest; the uncertain points (opening in VR, debug socket, `metavr`) are in `qa/device/DEBT.md` (M6). (`reverse`, `open` and `console` already worked in the 2026-11-11 session.)
+
+## Before delivery
+- [ ] Public link (GitHub Pages) opened from the Quest Browser, without login, from start to finish (the public build
+      does not read `dev-params.local.txt`).
+- [ ] Complete demo of the three acts in under 10 minutes by a person who does not know it.
+- [ ] Footage for the video taken from the headset (or from the emulator) without recognisable people or brands.

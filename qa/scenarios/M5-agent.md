@@ -1,45 +1,45 @@
-# S5.3 · Agente: punti informativi e Furnish / Clear
+# S5.3 · Agent: info points and Furnish / Clear
 
-> **Changelog 2026-11-06**: scenario creato dal piano M5 (D57; T5.8–T5.10, T5.R3). La "mappa dell'interesse" (S5.2 del primo ROADMAP) è **tagliata**: nessun file.
-> **Changelog 2026-11-06 (gate A/B)**: S5.3 era PASS (verifiche 1–11). Aggiustamenti di procedura: (1) **il bersaglio del pizzico su un rombo è la testa, non la posizione dell'entità `pin:info-00N`** (che è la punta): la testa sta **0,027 m sopra** la punta (raggio di presa 0,02 m); con la mano sulla punta il pizzico è annunciato ma non apre nulla; usare la quota `y + 0,027` (per `pin:info-001`, testa a y = 1,437 mondo, `pinch-start point=-0.160,1.437,-0.390`) e la calibrazione del rombo; (2) il log di Undo dopo Clear è `undo action=stage id=clear` (dopo Furnish è `id=furnish:scandinavian`); (3) `historyLength` dopo la sequenza del passo 7 è **2** (Furnish annullato al passo 6, poi Clear, annullato, Clear): H = 2 e resta 2 dopo il Clear a casa vuota; (4) hint della `home` dell'agente: `Furnish sets up the house in one pinch. Undo brings it back.`, in B `Clear empties the house. Undo brings it back.`.
-> **Changelog 2026-11-06 (esiti di T5.8–T5.10)**: (1) il pannello **si chiude dopo l'azione** con `issues panel closed via=stage`; (2) l'annullamento è `undo action=stage id=furnish:scandinavian` e un Furnish dopo Undo dà id con i contatori **mai abbassati** (`chair#5..8`, `nightstand#3/#4`); (3) **Clear su casa vuota non scrive storico**; (4) la `home` dell'agente ha un **suggerimento dedicato** (da riportare nel report, non è un criterio); (5) rifiuti con `agent staging denied … reason=no-staging | role-not-allowed | no-catalog`; (6) **calibrazione IWER con `pinch=grip`**: il punto di pizzico è `mano + (−0,029; +0,0015; +0,045)`, quindi per colpire `T` la mano va a `T + (0,029; −0,0015; −0,045)` (circa 1 cm di scarto dalla ricetta `T − D_GRIP` di M4, che resta valida per i bersagli da 8 × 6 cm; per i rombi, raggio 2 cm, usare questa); (7) i punti informativi vengono da **una sola richiesta** condivisa col seme, e B non ne fa (nessun 404).
+> **Changelog 2026-11-06**: scenario created from the M5 plan (D57; T5.8–T5.10, T5.R3). The "interest map" (S5.2 of the first ROADMAP) is **cut**: no file.
+> **Changelog 2026-11-06 (gate A/B)**: S5.3 was PASS (checks 1–11). Procedure adjustments: (1) **the pinch target on a diamond is the head, not the position of the `pin:info-00N` entity** (which is the tip): the head sits **0.027 m above** the tip (grab radius 0.02 m); with the hand on the tip the pinch is announced but opens nothing; use the height `y + 0.027` (for `pin:info-001`, head at world y = 1.437, `pinch-start point=-0.160,1.437,-0.390`) and the diamond calibration; (2) the Undo log after Clear is `undo action=stage id=clear` (after Furnish it is `id=furnish:scandinavian`); (3) `historyLength` after the sequence of step 7 is **2** (Furnish undone at step 6, then Clear, undone, Clear): H = 2 and it stays 2 after Clear on an empty house; (4) hint of the agent `home`: `Furnish sets up the house in one pinch. Undo brings it back.`, in B `Clear empties the house. Undo brings it back.`.
+> **Changelog 2026-11-06 (outcomes of T5.8–T5.10)**: (1) the panel **closes after the action** with `issues panel closed via=stage`; (2) the undo is `undo action=stage id=furnish:scandinavian` and a Furnish after Undo gives ids with counters that are **never lowered** (`chair#5..8`, `nightstand#3/#4`); (3) **Clear on an empty house writes no history**; (4) the agent `home` has a **dedicated hint** (to be reported in the report, not a criterion); (5) refusals with `agent staging denied … reason=no-staging | role-not-allowed | no-catalog`; (6) **IWER calibration with `pinch=grip`**: the pinch point is `hand + (−0.029; +0.0015; +0.045)`, so to hit `T` the hand goes to `T + (0.029; −0.0015; −0.045)` (about 1 cm off from the M4 recipe `T − D_GRIP`, which stays valid for the 8 × 6 cm targets; for the diamonds, radius 2 cm, use this one); (7) the info points come from **a single request** shared with the seed, and B has none (no 404).
 
-**Milestone**: M5 · **Tipo**: PC (emulatore IWER via MCP `iwsdk-runtime`) · **Regole di `CLAUDE.md`**: 1, 7 ("Sample data"), 9, 10
-Prerequisiti di implementazione: T5.8–T5.10 (T5.R3 per la verifica 1). Vedi `docs/plans/M5.md`. Convenzioni: `qa/scenarios/M4-issue-create.md` (pose, ricette, pannello Issues).
+**Milestone**: M5 · **Type**: PC (IWER emulator via MCP `iwsdk-runtime`) · **`CLAUDE.md` rules**: 1, 7 ("Sample data"), 9, 10
+Implementation prerequisites: T5.8–T5.10 (T5.R3 for check 1). See `docs/plans/M5.md`. Conventions: `qa/scenarios/M4-issue-create.md` (poses, recipes, Issues panel).
 
-## Precondizioni
-- `dev-params.local.txt` = `house=apartment-a&role=visitor&reset=1&seed=1&debug=1&pinch=grip&time=2026-12-21T10:00`. Pulsante `ui:issue-button-right` a (0,4347; 1,565; −0,5665); chip e controlli del pannello si leggono con `ecs_query_entity` `["Transform"]` a ogni schermata.
-- Posizione dei punti informativi in coordinate di casa: caldaia `info-001` (2,3; 1,6→1,2; 4,8), lavatrice (0,42; 0,85; 5,05), piano cottura (0,4; 0,9; 2,2), tapparella (6,8; 2,2→1,2; 0,1), vetro di `win-living-1` (valori esatti letti dai `Transform` di `pin:info-00N`).
+## Preconditions
+- `dev-params.local.txt` = `house=apartment-a&role=visitor&reset=1&seed=1&debug=1&pinch=grip&time=2026-12-21T10:00`. Button `ui:issue-button-right` at (0.4347; 1.565; −0.5665); chips and panel controls are read with `ecs_query_entity` `["Transform"]` at each screen.
+- Position of the info points in house coordinates: boiler `info-001` (2.3; 1.6→1.2; 4.8), washing machine (0.42; 0.85; 5.05), hob (0.4; 0.9; 2.2), roller shutter (6.8; 2.2→1.2; 0.1), glass of `win-living-1` (exact values read from the `Transform`s of `pin:info-00N`).
 
-## Passi
-1. **Visitatore**: preparazione standard; log `pattern: "role|pins|issues"`; `ecs_find_entities` `^pin:` (→ solo `pin:info-001`…`-005`), `^pin:issue-` (→ 0), `^ui:agent-` (→ 0); `ecs_query_entity` su `pin:info-001` con `["Transform"]`; `browser_screenshot` → allegare (cinque rombi ciano sul plastico).
-2. **Inquilino non li vede**: aprire il pannello Issues (`ui:issue-button-right`), `ui:issue-role-tenant`, chiudere; `ecs_find_entities` `^pin:`; log `pattern: "pins layer"`. Poi `ui:issue-role-visitor` per tornare.
-3. **Il chip Agent**: aprire il pannello Issues come visitatore; `ui_inspect` (testi dei chip); `ui:issue-role-agent`; `ui_inspect` della `home` dell'agente; `ecs_find_entities` `^ui:agent-` (→ `ui:agent-furnish`, `ui:agent-clear`); log `pattern: "role|issues"`.
-4. **Un punto informativo**: chiudere il pannello (`ui:issue-close`); pizzico breve su `pin:info-001` (mano a `posizione + (0,029; −0,0015; −0,045)`, calibrazione IWER `pinch=grip`; il log `[soglia:hands] … event=pinch-start point=` dà il punto reale): log `pattern: "info|issues screen"`; `ui_inspect` (titolo `Info`, testo `Condensing boiler.`, `Sample data`, tutti i `fontSize` ≥ 2,4 cm); `ecs_find_entities` `^ui:issue-action-` (→ 0); `ui:issue-close`.
-5. **Furnish**: riaprire il pannello (agente), pizzico su `ui:agent-furnish`: log `pattern: "agent staging|furniture|state saved"`; `ecs_find_entities` `^furniture:` (→ 14); `[soglia:state]`; `browser_screenshot` → allegare (la casa arredata).
-6. **Undo di un passo**: pannello chiuso (si chiude da solo dopo l'azione), aprire il menu `pinned` con `ui:menu-button-right`, pizzico su `ui:menu-undo`: `ecs_find_entities` `^furniture:` (→ 0). Aprire il pannello, `ui:agent-furnish` di nuovo (→ 14).
-7. **Clear**: pizzico su `ui:agent-clear`: log `pattern: "agent staging|furniture"`; `^furniture:` (→ 0); Undo dal menu: `^furniture:` (→ 14); pizzico su `ui:agent-clear` di nuovo (→ 0); `[soglia:state]` (→ `historyLength` = H); riaprire il pannello e premere `ui:agent-clear` **un'altra volta a casa vuota**: `[soglia:state]` (→ `historyLength` ancora H).
-8. **Persistenza**: `ui:agent-furnish` (→ 14), attesa 1,5 s, riscrivere il file **senza** `reset=1` e **senza** `role=` (restano `time=` e `debug=1`), ricaricare: log `pattern: "role|state restored|agent"`; `^furniture:` (→ 14).
-9. **Chi non può**: ruolo `visitor` e `tenant` (chip): `ecs_find_entities` `^ui:agent-` (→ 0 in entrambi).
-10. **Casa B**: riscrivere il file con `house=apartment-b&role=agent&reset=1&…`, ricaricare: log `pattern: "issues seed|pins layer|agent"`; aprire il pannello Issues: `ecs_find_entities` `^ui:agent-` (→ solo `ui:agent-clear`), `^pin:` (→ 0).
-11. Log senza filtro (`error`, `uncaught`, `Cannot read`, `reading 'add'`, `Missing glyph`); pulizia (select 0 su entrambe, mani a riposo, `xr_end_session`, cancellare `dev-params.local.txt`).
+## Steps
+1. **Visitor**: standard setup; log `pattern: "role|pins|issues"`; `ecs_find_entities` `^pin:` (→ only `pin:info-001`…`-005`), `^pin:issue-` (→ 0), `^ui:agent-` (→ 0); `ecs_query_entity` on `pin:info-001` with `["Transform"]`; `browser_screenshot` → attach (five cyan diamonds on the model).
+2. **Tenant does not see them**: open the Issues panel (`ui:issue-button-right`), `ui:issue-role-tenant`, close; `ecs_find_entities` `^pin:`; log `pattern: "pins layer"`. Then `ui:issue-role-visitor` to go back.
+3. **The Agent chip**: open the Issues panel as visitor; `ui_inspect` (texts of the chips); `ui:issue-role-agent`; `ui_inspect` of the agent `home`; `ecs_find_entities` `^ui:agent-` (→ `ui:agent-furnish`, `ui:agent-clear`); log `pattern: "role|issues"`.
+4. **An info point**: close the panel (`ui:issue-close`); short pinch on `pin:info-001` (hand at `position + (0.029; −0.0015; −0.045)`, IWER calibration `pinch=grip`; the log `[soglia:hands] … event=pinch-start point=` gives the real point): log `pattern: "info|issues screen"`; `ui_inspect` (title `Info`, text `Condensing boiler.`, `Sample data`, all `fontSize` ≥ 2.4 cm); `ecs_find_entities` `^ui:issue-action-` (→ 0); `ui:issue-close`.
+5. **Furnish**: reopen the panel (agent), pinch on `ui:agent-furnish`: log `pattern: "agent staging|furniture|state saved"`; `ecs_find_entities` `^furniture:` (→ 14); `[soglia:state]`; `browser_screenshot` → attach (the furnished house).
+6. **Undo one step**: panel closed (it closes by itself after the action), open the `pinned` menu with `ui:menu-button-right`, pinch on `ui:menu-undo`: `ecs_find_entities` `^furniture:` (→ 0). Open the panel, `ui:agent-furnish` again (→ 14).
+7. **Clear**: pinch on `ui:agent-clear`: log `pattern: "agent staging|furniture"`; `^furniture:` (→ 0); Undo from the menu: `^furniture:` (→ 14); pinch on `ui:agent-clear` again (→ 0); `[soglia:state]` (→ `historyLength` = H); reopen the panel and press `ui:agent-clear` **one more time on an empty house**: `[soglia:state]` (→ `historyLength` still H).
+8. **Persistence**: `ui:agent-furnish` (→ 14), wait 1.5 s, rewrite the file **without** `reset=1` and **without** `role=` (`time=` and `debug=1` stay), reload: log `pattern: "role|state restored|agent"`; `^furniture:` (→ 14).
+9. **Who cannot**: role `visitor` and `tenant` (chips): `ecs_find_entities` `^ui:agent-` (→ 0 in both).
+10. **House B**: rewrite the file with `house=apartment-b&role=agent&reset=1&…`, reload: log `pattern: "issues seed|pins layer|agent"`; open the Issues panel: `ecs_find_entities` `^ui:agent-` (→ only `ui:agent-clear`), `^pin:` (→ 0).
+11. Unfiltered log (`error`, `uncaught`, `Cannot read`, `reading 'add'`, `Missing glyph`); cleanup (select 0 on both, hands at rest, `xr_end_session`, delete `dev-params.local.txt`).
 
-## Verifiche (tutte obbligatorie)
-1. **Passo 1**: `pins layer count=0 baseline=0 info=5 role=visitor`; 5 `pin:info-*` e **nessun** `pin:issue-*`; i rombi ciano non sono rossi/arancioni/verdi (forma e colore distinti, visibile dallo screenshot); `pin:info-001` a (2,3; 1,2; 4,8) ± 0,02 (quota limitata a 1,2 m).
-2. **Passo 2**: con il ruolo `tenant` `pins layer count=3 baseline=0 info=0 role=tenant` e **0** `pin:info-*`; tornando a `visitor` di nuovo 5.
-3. **Passo 3**: i chip sono quattro (`Visitor`, `Agent`, `Tenant`, `Landlord`) e **nessun** testo `coming soon`; dopo `ui:issue-role-agent`: `role changed from=visitor to=agent source=ui`; la `home` dell'agente ha il suo suggerimento (testo riportato nel report; in inglese); i controlli `ui:agent-furnish` e `ui:agent-clear` esistono; per l'agente **nessun** `pin:issue-*` e 5 `pin:info-*`.
-4. **Passo 4**: `info opened id=info-001`, `issues screen=info`; il testo contiene `Condensing boiler.` e `Sample data`; **0** controlli d'azione; tutti i testi ≥ 2,4 cm.
-5. **Passo 5**: `agent staging action=furnish style=scandinavian pieces=14`; 14 `furniture:*`; `state saved … pieces=14`; il pannello si chiude (`issues panel closed via=stage`); nessuna riga `error`.
-6. **Passo 6**: l'Undo toglie **tutti** e 14 i pezzi in un passo (`undo action=stage id=furnish:scandinavian`), `^furniture:` → 0; il nuovo Furnish riporta 14 con gli id a contatori **mai abbassati**: ogni `catalogId` riparte da un'istanza più alta di prima, per esempio `furniture:chair#5…#8` e `furniture:nightstand#3`/`#4` (nessun id riusato).
-7. **Passo 7**: `agent staging action=clear pieces=0`; `^furniture:` → 0; Undo → 14; Clear su casa vuota **non** scrive storico (`historyLength` uguale a H prima e dopo).
-8. **Passo 8**: alla ricarica 14 pezzi (`state restored pieces=14`) e ruolo `agent` (`role set agent source=saved`).
-9. **Passo 9**: per `visitor` e `tenant` 0 controlli `ui:agent-*`.
-10. **Passo 10**: `apartment-b` non ha staging: **nessun** `ui:agent-furnish` (nessun pulsante morto), `ui:agent-clear` presente; `issues seed none reason=no-demo-file`, `pins layer count=0 baseline=0 info=0 role=agent`.
-11. Nessuna voce `error`; nessun `Missing glyph`; nessun `reading 'add'`; "Sample data" è l'unico modo in cui i dati di esempio compaiono; nessun testo in italiano.
-12. **Solo visore** (alta): i rombi si leggono e si prendono a 1:20 con le dita; Furnish senza scatti (14 pezzi).
+## Checks (all mandatory)
+1. **Step 1**: `pins layer count=0 baseline=0 info=5 role=visitor`; 5 `pin:info-*` and **no** `pin:issue-*`; the cyan diamonds are not red/orange/green (distinct shape and color, visible from the screenshot); `pin:info-001` at (2.3; 1.2; 4.8) ± 0.02 (height limited to 1.2 m).
+2. **Step 2**: with the role `tenant` `pins layer count=3 baseline=0 info=0 role=tenant` and **0** `pin:info-*`; going back to `visitor` again 5.
+3. **Step 3**: the chips are four (`Visitor`, `Agent`, `Tenant`, `Landlord`) and **no** text `coming soon`; after `ui:issue-role-agent`: `role changed from=visitor to=agent source=ui`; the agent `home` has its hint (text reported in the report; in English); the controls `ui:agent-furnish` and `ui:agent-clear` exist; for the agent **no** `pin:issue-*` and 5 `pin:info-*`.
+4. **Step 4**: `info opened id=info-001`, `issues screen=info`; the text contains `Condensing boiler.` and `Sample data`; **0** action controls; all texts ≥ 2.4 cm.
+5. **Step 5**: `agent staging action=furnish style=scandinavian pieces=14`; 14 `furniture:*`; `state saved … pieces=14`; the panel closes (`issues panel closed via=stage`); no `error` line.
+6. **Step 6**: the Undo removes **all** 14 pieces in one step (`undo action=stage id=furnish:scandinavian`), `^furniture:` → 0; the new Furnish brings back 14 with ids with **never lowered** counters: each `catalogId` restarts from a higher instance than before, for example `furniture:chair#5…#8` and `furniture:nightstand#3`/`#4` (no id reused).
+7. **Step 7**: `agent staging action=clear pieces=0`; `^furniture:` → 0; Undo → 14; Clear on an empty house **does not** write history (`historyLength` equal to H before and after).
+8. **Step 8**: on reload 14 pieces (`state restored pieces=14`) and role `agent` (`role set agent source=saved`).
+9. **Step 9**: for `visitor` and `tenant` 0 `ui:agent-*` controls.
+10. **Step 10**: `apartment-b` has no staging: **no** `ui:agent-furnish` (no dead button), `ui:agent-clear` present; `issues seed none reason=no-demo-file`, `pins layer count=0 baseline=0 info=0 role=agent`.
+11. No `error` entry; no `Missing glyph`; no `reading 'add'`; "Sample data" is the only way in which sample data appear; no text in Italian.
+12. **Headset only** (high): the diamonds can be read and grabbed at 1:20 with the fingers; Furnish without stutter (14 pieces).
 
-## Esito
-PASS se le verifiche 1–11 sono soddisfatte · FAIL altrimenti.
+## Outcome
+PASS if checks 1–11 are met · FAIL otherwise.
 
-## Da rimandare al visore
-Voci "Punti informativi" e "Furnish / Clear" di M5 in `qa/device/DEBT.md`.
+## To defer to the headset
+Entries "Info points" and "Furnish / Clear" of M5 in `qa/device/DEBT.md`.

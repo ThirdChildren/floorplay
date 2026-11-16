@@ -1,53 +1,53 @@
-# S1.3 · Pizzico su una stanza: etichetta con nome e area
+# S1.3 · Pinch on a room: label with name and area
 
-**Milestone**: M1 · **Tipo**: PC (emulatore IWER via MCP `iwsdk-runtime`)
-Prerequisiti di implementazione: T1.4, T1.8, T1.9, T1.10 (vedi `docs/plans/M1.md`).
+**Milestone**: M1 · **Type**: PC (IWER emulator via MCP `iwsdk-runtime`)
+Implementation prerequisites: T1.4, T1.8, T1.9, T1.10 (see `docs/plans/M1.md`).
 
-## Precondizioni
-- Come S1.1: runtime headless, `dev-params.local.txt` = `house=apartment-a&role=visitor&reset=1&seed=1&debug=1`, `browser_reload_page`, headset a (0; 1,2; 0), `xr_accept_session`, `xr_set_input_mode` con `mode: "hand"`, attesa 2 s.
-- **O = (Ox; Oy; Oz)** dall'ultima riga `miniature placed` (atteso (0; 0,95; −0,45)). Scala 0,05 e yaw 0 (nessun gesto prima di questo scenario).
-- Centri dei pavimenti nel mondo, `C = (Ox + dx; Oy; Oz + dz)`:
+## Preconditions
+- As S1.1: headless runtime, `dev-params.local.txt` = `house=apartment-a&role=visitor&reset=1&seed=1&debug=1`, `browser_reload_page`, headset at (0; 1.2; 0), `xr_accept_session`, `xr_set_input_mode` with `mode: "hand"`, wait 2 s.
+- **O = (Ox; Oy; Oz)** from the last `miniature placed` line (expected (0; 0.95; −0.45)). Scale 0.05 and yaw 0 (no gesture before this scenario).
+- Floor centres in the world, `C = (Ox + dx; Oy; Oz + dz)`:
 
-  | Stanza | `dx` | `dz` | Etichetta attesa (esatta) | Riga di log attesa |
+  | Room | `dx` | `dz` | Expected label (exact) | Expected log line |
   |---|---|---|---|---|
-  | `living` | −0,145 | −0,065 | `Living room & kitchen · 23.9 m²` | `room selected living area=23.9` |
-  | `bedroom` | +0,065 | −0,065 | `Bedroom · 14.7 m²` | `room selected bedroom area=14.7` |
-  | `study` | +0,210 | −0,065 | `Study · 12.0 m²` | `room selected study area=12.0` |
-  | `bathroom` | −0,210 | +0,115 | `Bathroom · 6.8 m²` | `room selected bathroom area=6.8` |
-  | `hall` | +0,065 | +0,090 | `Hallway · 13.4 m²` | `room selected hall area=13.4` |
+  | `living` | −0.145 | −0.065 | `Living room & kitchen · 23.9 m²` | `room selected living area=23.9` |
+  | `bedroom` | +0.065 | −0.065 | `Bedroom · 14.7 m²` | `room selected bedroom area=14.7` |
+  | `study` | +0.210 | −0.065 | `Study · 12.0 m²` | `room selected study area=12.0` |
+  | `bathroom` | −0.210 | +0.115 | `Bathroom · 6.8 m²` | `room selected bathroom area=6.8` |
+  | `hall` | +0.065 | +0.090 | `Hallway · 13.4 m²` | `room selected hall area=13.4` |
 
-  (Forma Unicode `<name> · <area> m²` con `·` U+00B7 e `²` U+00B2, resa dal font locale `public/fonts` (T2.2). Per la casa B il soggiorno è `Living room & kitchen · 20.2 m²`. Se il font locale non si carica l'app ripiega sulla forma ASCII `<name>: <area> m2` e scrive `[soglia] font fallback reason=...`.)
+  (Unicode form `<name> · <area> m²` with `·` U+00B7 and `²` U+00B2, rendered by the local font `public/fonts` (T2.2). For house B the living room is `Living room & kitchen · 20.2 m²`. If the local font does not load the app falls back to the ASCII form `<name>: <area> m2` and writes `[soglia] font fallback reason=...`.)
 
-  (calcolo: `d = (centro_stanza − (5,5; 3,6)) × 0,05`; le aree sono 23,92 / 14,72 / 11,96 / 6,76 / 13,44 m².)
-- Mano usata: destra. Per ogni stanza: `hand-right` a **(Cx; Oy + 0,25; Cz + 0,02)** (quasi sopra il centro, il raggio scende quasi verticale e non attraversa muri), poi `xr_look_at` con `device: "hand-right"` e `target: C`.
+  (calculation: `d = (room_centre − (5.5; 3.6)) × 0.05`; the areas are 23.92 / 14.72 / 11.96 / 6.76 / 13.44 m².)
+- Hand used: right. For each room: `hand-right` at **(Cx; Oy + 0.25; Cz + 0.02)** (almost above the centre, the ray goes down almost vertically and does not cross walls), then `xr_look_at` with `device: "hand-right"` and `target: C`.
 
-## Passi
-1. Per la stanza `living`: `xr_set_transform` `hand-right` come sopra → `xr_look_at` → `xr_select` con `device: "hand-right"`, `duration: 0.3`.
-2. Attendere 1 s (`browser_interact`, passo `wait` 1000 ms). `browser_get_console_logs` con `pattern: "room|label"`.
-3. `ecs_find_entities` con `namePattern: "^ui:room-label$"`.
-4. `browser_screenshot` → allegare (etichetta del soggiorno visibile).
-5. Ripetere i passi 1–2 per `bedroom`, `study`, `bathroom`, `hall` (nell'ordine della tabella), un `xr_select` per stanza. Dopo ciascuna, controllare il log.
-6. Ripetere la selezione di `hall` (stesso punto, secondo `xr_select`). `browser_get_console_logs` con `pattern: "room"`.
-7. Prova negativa: `hand-right` a (Ox + 0,38; Oy + 0,25; Oz) sopra la base vuota, `xr_look_at` verso (Ox + 0,38; Oy; Oz), `xr_select`. `browser_get_console_logs` con `pattern: "room"`.
-8. `browser_get_console_logs` senza filtro (cercare `error`).
+## Steps
+1. For the room `living`: `xr_set_transform` `hand-right` as above → `xr_look_at` → `xr_select` with `device: "hand-right"`, `duration: 0.3`.
+2. Wait 1 s (`browser_interact`, `wait` step 1000 ms). `browser_get_console_logs` with `pattern: "room|label"`.
+3. `ecs_find_entities` with `namePattern: "^ui:room-label$"`.
+4. `browser_screenshot` → attach (living room label visible).
+5. Repeat steps 1–2 for `bedroom`, `study`, `bathroom`, `hall` (in the order of the table), one `xr_select` per room. After each one, check the log.
+6. Repeat the selection of `hall` (same point, second `xr_select`). `browser_get_console_logs` with `pattern: "room"`.
+7. Negative test: `hand-right` at (Ox + 0.38; Oy + 0.25; Oz) above the empty base, `xr_look_at` towards (Ox + 0.38; Oy; Oz), `xr_select`. `browser_get_console_logs` with `pattern: "room"`.
+8. `browser_get_console_logs` with no filter (look for `error`).
 
-## Verifiche (tutte obbligatorie)
-1. Passo 2: la riga `[soglia] room selected living area=23.9` e **dopo** di essa `[soglia] label shown "Living room & kitchen · 23.9 m²"` (testo esattamente uguale, con `·` e `²`).
-2. Passo 3: esattamente **1** entità `ui:room-label`.
-3. Passo 5: per ogni stanza la riga `room selected <id> area=<x>` e la riga `label shown "<testo>"` della tabella; al cambio di stanza l'entità `ui:room-label` resta **una sola** (il pannello è riutilizzato).
-4. Passo 6: compare `[soglia] room deselected hall` e nessuna nuova `label shown`.
-5. Passo 7: nessuna nuova riga `room selected` né `room deselected` (la base non è una stanza).
-6. L'area del soggiorno è 23,9 ± 0,1 (verifica sulla riga del passo 2); per le altre stanze il valore esatto della tabella.
-7. Con `debug=1`: dopo il passo 1 l'ultima riga `[soglia:state]` ha `selectedRoomId":"living"`; dopo il passo 6 ha `selectedRoomId":null`.
-8. Nessuna voce `error` in console. Nessuna delle selezioni ha mosso, scalato o ruotato il plastico (ultima riga `[soglia:state]`: `miniature.scale` 0,05, `yawDeg` 0).
-9. Screenshot allegato; il report descrive posizione dell'etichetta (sopra la stanza, rivolta verso la testa) e leggibilità a parole.
+## Checks (all required)
+1. Step 2: the line `[soglia] room selected living area=23.9` and **after** it `[soglia] label shown "Living room & kitchen · 23.9 m²"` (text exactly equal, with `·` and `²`).
+2. Step 3: exactly **1** `ui:room-label` entity.
+3. Step 5: for each room the line `room selected <id> area=<x>` and the line `label shown "<text>"` of the table; when changing room the `ui:room-label` entity stays **single** (the panel is reused).
+4. Step 6: `[soglia] room deselected hall` appears and no new `label shown`.
+5. Step 7: no new `room selected` or `room deselected` line (the base is not a room).
+6. The area of the living room is 23.9 ± 0.1 (check on the line of step 2); for the other rooms the exact value of the table.
+7. With `debug=1`: after step 1 the last `[soglia:state]` line has `selectedRoomId":"living"`; after step 6 it has `selectedRoomId":null`.
+8. No `error` entry in the console. None of the selections moved, scaled or rotated the miniature (last `[soglia:state]` line: `miniature.scale` 0.05, `yawDeg` 0).
+9. Screenshot attached; the report describes the position of the label (above the room, facing the head) and its readability in words.
 
-## Esito
-PASS se le verifiche 1–8 sono soddisfatte · FAIL altrimenti. Se `xr_select` non produce nessuna selezione, ripetere **una sola volta** con la mano a ≤ 0,05 m di scarto orizzontale dal centro e riportare lo scarto; poi FAIL.
+## Result
+PASS if checks 1–8 are met · FAIL otherwise. If `xr_select` produces no selection, repeat **only once** with the hand at ≤ 0.05 m of horizontal offset from the centre and report the offset; then FAIL.
 
-## Da rimandare al visore
-Dimensione e leggibilità del testo a 0,5–0,8 m, presenza dei glifi `·` e `²` nel font su schermo reale, pizzico che seleziona la stanza giusta con la mano reale e non con una vicina (voci M1 in `qa/device/DEBT.md`).
+## To defer to the headset
+Size and readability of the text at 0.5–0.8 m, presence of the glyphs `·` and `²` in the font on a real screen, pinch that selects the right room with the real hand and not a neighbouring one (M1 rows in `qa/device/DEBT.md`).
 
 ## Changelog
-- 2026-10-05: testo atteso dell'etichetta portato alla forma ASCII attuale `<name>: <area> m2` (tabella, verifica 1; aggiunta la nota per la casa B `Living room & kitchen: 20.2 m2`) — motivo: il font Inter MSDF del pannello non ha i glifi `·` (U+00B7) né `²` (U+00B2) (F1 del report `qa/reports/M1-2026-10-05.md`). Obiettivo futuro invariato: il testo Unicode `<name> · <area> m²` resta quello desiderato; un task del piano M2 verificherà quali glifi sono disponibili e come ottenerli, e a quel punto lo scenario tornerà alla forma Unicode.
-- 2026-10-05 (T2.2): testo atteso riportato alla forma Unicode `<name> · <area> m²` (tabella, nota, verifica 1) e tolta la nota ASCII — motivo: lo spike dell'opzione A di T2.1 è riuscito e T2.2 ha installato il font locale esteso (`public/fonts`); il pannello dell'etichetta è stato allargato (34 → 46) perché il testo Unicode stava su due righe con il punto mediano a fine riga. La forma ASCII resta solo come ripiego se il font non si carica.
+- 2026-10-05: expected text of the label brought to the current ASCII form `<name>: <area> m2` (table, check 1; added the note for house B `Living room & kitchen: 20.2 m2`) — reason: the Inter MSDF font of the panel does not have the glyphs `·` (U+00B7) or `²` (U+00B2) (F1 of the report `qa/reports/M1-2026-10-05.md`). Future goal unchanged: the Unicode text `<name> · <area> m²` remains the desired one; a task of the M2 plan will check which glyphs are available and how to get them, and then the scenario will return to the Unicode form.
+- 2026-10-05 (T2.2): expected text brought back to the Unicode form `<name> · <area> m²` (table, note, check 1) and the ASCII note removed — reason: the spike of option A of T2.1 succeeded and T2.2 installed the extended local font (`public/fonts`); the label panel was widened (34 → 46) because the Unicode text fit on two lines with the middle dot at the end of the line. The ASCII form remains only as a fallback if the font does not load.

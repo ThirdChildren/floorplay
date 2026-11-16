@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://soglia.local/schemas/catalog.schema.json",
-  "title": "Soglia furniture catalog",
+  "$id": "https://floorplay.local/schemas/catalog.schema.json",
+  "title": "Floorplay furniture catalog",
   "description": "Used for both public/catalog/catalog.json (model and credit present, owner absent) and public/demo/my-furniture.json (owner is 'me', model and credit absent).",
   "type": "object",
   "additionalProperties": false,

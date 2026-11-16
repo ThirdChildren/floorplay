@@ -1,6 +1,6 @@
 ---
 name: iwsdk-uikit-panels
-description: Verified recipe and traps for runtime-created UIKitML panels (PanelUI, Follower, text, fonts) in Soglia
+description: Verified recipe and traps for runtime-created UIKitML panels (PanelUI, Follower, text, fonts) in Floorplay
 metadata:
   type: project
 ---

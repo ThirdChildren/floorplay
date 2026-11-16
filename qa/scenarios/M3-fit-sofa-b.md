@@ -1,39 +1,39 @@
-# S3.4 · Lo stesso divano passa in casa B
+# S3.4 · The same sofa fits through in house B
 
 > **REMOVED 2026-11-14 (UI fixes, `qa/reports/UI-FIX-2026-11-14.md`)**: the FitCheck (door-fit label, door markers, `fit` menu tab and the `fit ...` log lines) no longer exists. This scenario is kept as history and is not run any more.
 
-**Milestone**: M3 · **Tipo**: PC (emulatore IWER via MCP `iwsdk-runtime`)
-Prerequisiti di implementazione: gli stessi di S3.3 (T3.5, T3.7, T3.8, T3.9). Vedi `docs/plans/M3.md`, D34. Convenzioni comuni (pose, `D_GRIP`, `Q_UP`, regola di gate): `qa/scenarios/M3-persistence.md`; sequenze di presa e letture: `qa/scenarios/M3-fit-sofa-a.md`.
+**Milestone**: M3 · **Type**: PC (IWER emulator via MCP `iwsdk-runtime`)
+Implementation prerequisites: the same as S3.3 (T3.5, T3.7, T3.8, T3.9). See `docs/plans/M3.md`, D34. Common conventions (poses, `D_GRIP`, `Q_UP`, gate rule): `qa/scenarios/M3-persistence.md`; grab sequences and readings: `qa/scenarios/M3-fit-sofa-a.md`.
 
-## Precondizioni
-- `dev-params.local.txt` = `house=apartment-b&role=visitor&reset=1&seed=1&debug=1&pinch=grip`; preparazione standard; testa a (0; 1,6; 0), `O` = (0; 1,35; −0,45), scala 0,05.
-- **Conversione per la casa B**: `W_B(px, pz, h)` = (Ox + (px − 4,0)·0,05; Oy + h; Oz + (pz − 3,45)·0,05), con il centro (4,0; 3,45) della pianta di B (muri da (0,0) a (8; 6,9)); **da confermare** leggendo il `Transform` locale di `house:apartment-b` (deve valere −centro, cioè (−4,0; ·; −3,45)): se differisce, il report dà il centro letto e usa quello.
-- Dati reali (D34): porte di B tutte 0,90 m (`d-entrance`, `d-living`, `d-bedroom`) tranne `d-bathroom` 0,80 m; percorso `door:d-entrance` → `door:<stanza>`; `my-sofa` lato minimo 0,85; `my-bed` 0,95.
-- Punti (y = 1,39): `P_LIV_B` = W_B(2,0; 1,5) = (−0,100; 1,39; −0,5475); `P_HALL_B` = W_B(5,3; 5,5) = (0,065; 1,39; −0,3475); `P_BEDR_B` = W_B(6,4; 2,1) = (0,120; 1,39; −0,5175); `P_BATH_B` = W_B(1,3; 5,5) = (−0,135; 1,39; −0,3475). Pose della mano `P − D_GRIP`.
+## Preconditions
+- `dev-params.local.txt` = `house=apartment-b&role=visitor&reset=1&seed=1&debug=1&pinch=grip`; standard setup; head at (0; 1.6; 0), `O` = (0; 1.35; −0.45), scale 0.05.
+- **Conversion for house B**: `W_B(px, pz, h)` = (Ox + (px − 4.0)·0.05; Oy + h; Oz + (pz − 3.45)·0.05), with the center (4.0; 3.45) of the plan of B (walls from (0,0) to (8; 6.9)); **to be confirmed** by reading the local `Transform` of `house:apartment-b` (it must equal −center, that is (−4.0; ·; −3.45)): if it differs, the report gives the center read and uses that.
+- Real data (D34): doors of B all 0.90 m (`d-entrance`, `d-living`, `d-bedroom`) except `d-bathroom` 0.80 m; route `door:d-entrance` → `door:<room>`; `my-sofa` shortest side 0.85; `my-bed` 0.95.
+- Points (y = 1.39): `P_LIV_B` = W_B(2.0; 1.5) = (−0.100; 1.39; −0.5475); `P_HALL_B` = W_B(5.3; 5.5) = (0.065; 1.39; −0.3475); `P_BEDR_B` = W_B(6.4; 2.1) = (0.120; 1.39; −0.5175); `P_BATH_B` = W_B(1.3; 5.5) = (−0.135; 1.39; −0.3475). Hand pose `P − D_GRIP`.
 
-## Passi
-1. Menu aperto, scheda "mine" (S3.3 passo 1). `ecs_find_entities` con `^ui:menu-item-`; `ecs_query_entity` su `house:apartment-b` con `["Transform"]`.
-2. **Divano nel soggiorno**: presa di `ui:menu-item-my-sofa`, trasporto a `P_LIV_B − D_GRIP`, attesa 0,6 s, senza rilasciare. Letture: log `pattern: "fit|furniture"`; `ecs_find_entities` con `^ui:fit-`; `FitMarker` di ogni marcatore; `Furniture` del pezzo; `ui_inspect` su `ui:fit-label`; `browser_screenshot` → allegare. Rilascio (`furniture placed … status=valid`).
-3. **Divano nel corridoio**: nuova presa, `P_HALL_B`, attesa 0,6 s: log `pattern: "fit"`. Rilascio fuori dalla casa (POUT1 = (0,463; 1,393; −0,487), `furniture returned`).
-4. **Divano nel bagno (porta di 80 cm)**: nuova presa, `P_BATH_B`, attesa 0,6 s: log `pattern: "fit"`, etichetta, marcatori. Rilascio fuori dalla casa.
-5. **Letto verso la camera**: presa di `my-bed`, `P_BEDR_B`, attesa 0,6 s: log, etichetta. Rilascio fuori.
-6. **Confronto A/B**: riscrivere `dev-params.local.txt` con `house=apartment-a`, stessi parametri, reload, accept, mani; ripetere solo il passo 2 con `P_LIV` di S3.3 (soggiorno di A): log `pattern: "fit"`. Il report mette le due righe `fit furniture:my-sofa#1 …` una accanto all'altra.
-7. Log senza filtro (`error`, `Missing glyph`); pulizia come S3.0.
+## Steps
+1. Menu open, "mine" tab (S3.3 step 1). `ecs_find_entities` with `^ui:menu-item-`; `ecs_query_entity` on `house:apartment-b` with `["Transform"]`.
+2. **Sofa in the living room**: grab `ui:menu-item-my-sofa`, carry to `P_LIV_B − D_GRIP`, wait 0.6 s, without releasing. Readings: log `pattern: "fit|furniture"`; `ecs_find_entities` with `^ui:fit-`; `FitMarker` of each marker; `Furniture` of the piece; `ui_inspect` on `ui:fit-label`; `browser_screenshot` → attach. Release (`furniture placed … status=valid`).
+3. **Sofa in the hallway**: new grab, `P_HALL_B`, wait 0.6 s: log `pattern: "fit"`. Release outside the house (POUT1 = (0.463; 1.393; −0.487), `furniture returned`).
+4. **Sofa in the bathroom (80 cm door)**: new grab, `P_BATH_B`, wait 0.6 s: log `pattern: "fit"`, label, markers. Release outside the house.
+5. **Bed toward the bedroom**: grab `my-bed`, `P_BEDR_B`, wait 0.6 s: log, label. Release outside.
+6. **A/B comparison**: rewrite `dev-params.local.txt` with `house=apartment-a`, same parameters, reload, accept, hands; repeat only step 2 with `P_LIV` of S3.3 (living room of A): log `pattern: "fit"`. The report puts the two `fit furniture:my-sofa#1 …` lines side by side.
+7. Unfiltered log (`error`, `Missing glyph`); cleanup as in S3.0.
 
-## Verifiche (tutte obbligatorie)
-1. **Passo 2 (S3.4 del ROADMAP)**: `[soglia] fit furniture:my-sofa#1 room=living status=fits route=door:d-entrance,door:d-living` e `fit label shown furniture:my-sofa#1 "Fits: the narrowest door on the way is 90 cm wide"`; `Furniture.fit` = `fits`, `fitDoor` vuoto; marcatori `ui:fit-marker-d-entrance` e `ui:fit-marker-d-living` **entrambi** `pass`; seconda riga `Simplified check`; testo ≥ 2,4 cm, etichetta a 0,52-0,80 m dalla testa e entro 30°. **Nessuna** riga `fit … status=blocked` per questo pezzo.
-2. **Passo 3**: `fit furniture:my-sofa#2 room=hall status=fits route=door:d-entrance`, etichetta `Fits: the narrowest door on the way is 90 cm wide`.
-3. **Passo 4**: `fit furniture:my-sofa#… room=bathroom status=blocked door=door:d-bathroom reason=door-too-narrow route=door:d-entrance,door:d-bathroom` con etichetta `Won't fit: the door is 80 cm wide, the sofa's shortest side is 85 cm`; marcatore `d-bathroom` `block`, `d-entrance` `pass`.
-4. **Passo 5**: `fit furniture:my-bed#1 room=bedroom status=disassembled door=door:d-entrance …` e `Fits when disassembled: the door is 90 cm wide, the bed's shortest side is 95 cm`.
-5. **Passo 6 (stesso pezzo, due case)**: in A la riga ha `status=blocked door=door:d-living`, in B `status=fits`: il FitCheck dipende dai dati della casa, non dal pezzo (S3.3 verifica 2 e S3.4 verifica 1).
-6. Nessuna riga `fit` contiene `blocks-door`; nessuna voce `error`; nessun `Missing glyph info`.
-7. Screenshot del passo 2 allegato e descritto a parole (marcatori verdi, etichetta leggibile).
+## Checks (all mandatory)
+1. **Step 2 (S3.4 of the ROADMAP)**: `[soglia] fit furniture:my-sofa#1 room=living status=fits route=door:d-entrance,door:d-living` and `fit label shown furniture:my-sofa#1 "Fits: the narrowest door on the way is 90 cm wide"`; `Furniture.fit` = `fits`, `fitDoor` empty; markers `ui:fit-marker-d-entrance` and `ui:fit-marker-d-living` **both** `pass`; second line `Simplified check`; text ≥ 2.4 cm, label at 0.52-0.80 m from the head and within 30°. **No** `fit … status=blocked` line for this piece.
+2. **Step 3**: `fit furniture:my-sofa#2 room=hall status=fits route=door:d-entrance`, label `Fits: the narrowest door on the way is 90 cm wide`.
+3. **Step 4**: `fit furniture:my-sofa#… room=bathroom status=blocked door=door:d-bathroom reason=door-too-narrow route=door:d-entrance,door:d-bathroom` with label `Won't fit: the door is 80 cm wide, the sofa's shortest side is 85 cm`; marker `d-bathroom` `block`, `d-entrance` `pass`.
+4. **Step 5**: `fit furniture:my-bed#1 room=bedroom status=disassembled door=door:d-entrance …` and `Fits when disassembled: the door is 90 cm wide, the bed's shortest side is 95 cm`.
+5. **Step 6 (same piece, two houses)**: in A the line has `status=blocked door=door:d-living`, in B `status=fits`: the FitCheck depends on the house data, not on the piece (S3.3 check 2 and S3.4 check 1).
+6. No `fit` line contains `blocks-door`; no `error` entries; no `Missing glyph info`.
+7. Screenshot of step 2 attached and described in words (green markers, readable label).
 
-## Esito
-PASS se le verifiche 1-7 sono soddisfatte · FAIL altrimenti.
+## Outcome
+PASS if checks 1-7 are met · FAIL otherwise.
 
-## Da rimandare al visore
-Come S3.3 (leggibilità a 0,5-0,8 m e nel campo visivo stretto).
+## To defer to the headset
+As S3.3 (readability at 0.5-0.8 m and in the narrow field of view).
 
 ## Changelog
-- 2026-10-09: scenario creato dal piano M3 (D34).
+- 2026-10-09: scenario created from the M3 plan (D34).

@@ -1,6 +1,6 @@
 # Credits
 
-Every third-party asset used in Soglia is listed here. Only CC0 / public-domain assets,
+Every third-party asset used in Floorplay is listed here. Only CC0 / public-domain assets,
 assets provided by Meta for the contest, or assets created by the author are allowed, with three
 narrow exceptions: the IWSDK framework's runtime hand models, the panel font atlases and the menu icons
 listed below (MIT, SIL OFL 1.1 and ISC/MIT, all cited), see `docs/RULES.md`.

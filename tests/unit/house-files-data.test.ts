@@ -39,25 +39,25 @@ function setup(storage: Storage | null = fakeStorage()) {
 describe('createHouseFiles: add and read', () => {
   it('stores a valid file under the keys of HF3 and reads it back', () => {
     const { files, storage } = setup();
-    const r = files.add(body('casa-uno'), undefined, NOW);
+    const r = files.add(body('house-one'), undefined, NOW);
     expect(r).toMatchObject({ ok: true, persisted: true, replaced: false });
     if (!r.ok) return;
-    expect(r.entry.id).toBe('file-casa-uno');
+    expect(r.entry.id).toBe('file-house-one');
     const map = (storage as ReturnType<typeof fakeStorage>).map;
-    expect(map.has('soglia:v1:house-file:file-casa-uno')).toBe(true);
+    expect(map.has('soglia:v1:house-file:file-house-one')).toBe(true);
     expect(JSON.parse(map.get('soglia:v1:house-files')!).entries).toHaveLength(1);
-    const read = files.read('file-casa-uno');
-    expect(read.ok && read.house.id).toBe('file-casa-uno');
+    const read = files.read('file-house-one');
+    expect(read.ok && read.house.id).toBe('file-house-one');
     expect(files.entries()).toEqual([r.entry]);
-    expect(files.memoryOnly('file-casa-uno')).toBe(false);
+    expect(files.memoryOnly('file-house-one')).toBe(false);
   });
 
   it('survives a new page: another instance over the same storage sees the house', () => {
     const storage = fakeStorage();
-    setup(storage).files.add(body('casa-uno'), undefined, NOW);
+    setup(storage).files.add(body('house-one'), undefined, NOW);
     const next = setup(storage).files;
-    expect(next.entries().map((e) => e.id)).toEqual(['file-casa-uno']);
-    expect(next.read('file-casa-uno').ok).toBe(true);
+    expect(next.entries().map((e) => e.id)).toEqual(['file-house-one']);
+    expect(next.read('file-house-one').ok).toBe(true);
   });
 
   it('an unknown id is not-found and nothing is stored', () => {
@@ -68,20 +68,20 @@ describe('createHouseFiles: add and read', () => {
 
   it('a damaged stored house is invalid with readable lines', () => {
     const { files, storage } = setup();
-    files.add(body('casa-uno'), undefined, NOW);
-    (storage as ReturnType<typeof fakeStorage>).map.set(houseFileKey('file-casa-uno'), '{"id":');
-    const r = files.read('file-casa-uno');
-    expect(r).toMatchObject({ ok: false, reason: 'invalid', id: 'file-casa-uno' });
+    files.add(body('house-one'), undefined, NOW);
+    (storage as ReturnType<typeof fakeStorage>).map.set(houseFileKey('file-house-one'), '{"id":');
+    const r = files.read('file-house-one');
+    expect(r).toMatchObject({ ok: false, reason: 'invalid', id: 'file-house-one' });
   });
 
   it('loading the same file again replaces the entry', () => {
     const { files } = setup();
-    files.add(body('casa-uno', 'First'), undefined, NOW);
-    const r = files.add(body('casa-uno', 'Second'), undefined, '2026-11-14T10:00:00.000Z');
+    files.add(body('house-one', 'First'), undefined, NOW);
+    const r = files.add(body('house-one', 'Second'), undefined, '2026-11-14T10:00:00.000Z');
     expect(r).toMatchObject({ ok: true, replaced: true });
     expect(files.entries()).toHaveLength(1);
     expect(files.entries()[0]).toMatchObject({ title: 'Second', savedAt: '2026-11-14T10:00:00.000Z' });
-    const read = files.read('file-casa-uno');
+    const read = files.read('file-house-one');
     expect(read.ok && read.house.title).toBe('Second');
   });
 });

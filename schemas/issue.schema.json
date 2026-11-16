@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://soglia.local/schemas/issue.schema.json",
-  "title": "Soglia issues file",
+  "$id": "https://floorplay.local/schemas/issue.schema.json",
+  "title": "Floorplay issues file",
   "type": "array",
   "items": {
     "type": "object",

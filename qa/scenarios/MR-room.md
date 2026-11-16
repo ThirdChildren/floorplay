@@ -1,43 +1,43 @@
-# S-MR · Realtà mista: la mia stanza
+# S-MR · Mixed reality: my room
 
 > **Note 2026-11-14 (UI fixes)**: every step or criterion of this scenario about the FitCheck (door-fit label `Fits` / `Won't fit` / `Fits when disassembled` / `No route`, `ui:fit-label`, `ui:fit-marker-*`, the `fit` menu tab, the wheelchair and stroller pieces) is REMOVED with the feature: skip it. The rest still applies.
 
 > **Note 2026-11-15 (button column)**: in the MODEL view the toggle `ui:room-button` ("My room") is the fifth, top floor of the fixed column beside the model (Menu, Issues, View, Walk inside, My room; 12 x 6 cm), not a panel in front of the head: where S-MR.2/3 say "pinch on `ui:room-button`" in the model view, press it in the column. In the ROOM view the column is away and the pair `Model` + `Menu` (`ui:room-button` + `ui:room-menu-button`, 6 cm tall) is anchored in front of the head as before: the `mr button shown` / `mr button reanchored` lines now appear only there (maxAngleDeg about 30.0).
 
-> **Changelog 2026-11-12 (dopo le correzioni della revisione)**: il pulsante `My room`/`Model` ha accanto `Menu` (`ui:room-menu-button`) e la coppia sta 0,215 m sopra gli occhi (`mr button shown distance=0.59 maxAngleDeg=25.5`); schede e coppia restano nel cono di 30° anche con la testa inclinata; le misure dei mobili veri sono "About …"; un pezzo virtuale vince sul mobile vero solo se è davanti o dentro. Aggiunto il percorso a una mano in S-MR.3.
+> **Changelog 2026-11-12 (after the review corrections)**: the `My room`/`Model` button has `Menu` (`ui:room-menu-button`) beside it and the pair sits 0.215 m above the eyes (`mr button shown distance=0.59 maxAngleDeg=25.5`); cards and pair stay inside the 30° cone even with the head tilted; the measurements of real furniture are "About …"; a virtual piece wins over real furniture only if it is in front or inside. Added the one-hand path in S-MR.3.
 
-> **Changelog 2026-11-12**: scenario creato per il gate PC della funzione MR (`docs/plans/MR.md`, MR.1–MR.5). Coordinate della stanza sintetica `office_large` dell'emulatore (piano `floor` a y = 0; divano vero centro (1,03; 0,42; −0,65), lungo z da −1,5 a −0,2, x da 0,62 a 1,44; scaffale alto (1,10; 0,73; 0,40)): vanno rilette dai log `room mesh …` all'esecuzione.
+> **Changelog 2026-11-12**: scenario created for the PC gate of the MR feature (`docs/plans/MR.md`, MR.1–MR.5). Coordinates of the synthetic room `office_large` of the emulator (`floor` plane at y = 0; real sofa center (1.03; 0.42; −0.65), long along z from −1.5 to −0.2, x from 0.62 to 1.44; tall shelf (1.10; 0.73; 0.40)): they must be reread from the `room mesh …` logs at run time.
 
-**Tipo**: PC (emulatore IWER, `dev.emulator.environment: office_large`) · **Regole di `CLAUDE.md`**: 1, 2, 3, 5, 7, 8, 9, 10
-Parametri base: `house=apartment-a&role=visitor&reset=1&seed=1&debug=1&pinch=grip&mr=1`. Pizzico = `xr_select` ≥ 0,3 s; il punto di pizzico reale si legge da `[soglia:hands] … point=`. Mira: `xr look-at` della mano verso il bersaglio.
+**Type**: PC (IWER emulator, `dev.emulator.environment: office_large`) · **`CLAUDE.md` rules**: 1, 2, 3, 5, 7, 8, 9, 10
+Base parameters: `house=apartment-a&role=visitor&reset=1&seed=1&debug=1&pinch=grip&mr=1`. Pinch = `xr_select` ≥ 0.3 s; the real pinch point is read from `[soglia:hands] … point=`. Aim: `xr look-at` of the hand toward the target.
 
-## S-MR.1 · Ingresso e regressione
-1. Senza `mr`: sessione `immersive-vr`, nessuna entità `ui:room-*`/`ui:scan-*`, nessuna riga `mr`/`room`, draw call uguali a `main` nello stesso stato.
-2. Con `mr=1`: `immersive-ar` con `plane-detection` e `mesh-detection` concessi; righe `mr world created mode=immersive-ar sceneUnderstanding=on`, `mr session scene-understanding=granted`, `room scan meshes=<n> planes=<n>`; nessun cielo; plastico come in `vr`.
-3. `debug=1&noscan=1&mr=1`: `room scan empty`; in vista stanza dopo ~10 s il pannello `No room scan found. …`; un pezzo si posa sul pavimento di ripiego.
+## S-MR.1 · Entry and regression
+1. Without `mr`: `immersive-vr` session, no `ui:room-*`/`ui:scan-*` entity, no `mr`/`room` line, draw calls equal to `main` in the same state.
+2. With `mr=1`: `immersive-ar` with `plane-detection` and `mesh-detection` granted; lines `mr world created mode=immersive-ar sceneUnderstanding=on`, `mr session scene-understanding=granted`, `room scan meshes=<n> planes=<n>`; no sky; model as in `vr`.
+3. `debug=1&noscan=1&mr=1`: `room scan empty`; in room view after ~10 s the panel `No room scan found. …`; a piece is placed on the fallback floor.
 
-## S-MR.2 · Oggetti veri
-1. Pizzico su `ui:room-button` → `mr view=room`; plastico e pulsanti del plastico nascosti; `mr objects outlined=<n>` (nessun volume grande come la stanza).
-2. Raggio della destra sul divano → `mr hover … label=couch`; pizzico → `mr object selected label=couch size=<l>x<p>x<a>`; scheda nel cono di 30° (`coneDeg` ≤ 30), testi ≥ 2,4 cm.
-3. `Add to Mine` → `mr object added id=my-scan-couch-1`, `state saved … scanned=1`; la scheda mostra `Added`; ricarica senza `reset`: "My couch" nella scheda `Mine`.
-4. In vista `Model`, "My couch" dal menu verso una porta: etichetta del FitCheck con le misure del divano.
+## S-MR.2 · Real objects
+1. Pinch on `ui:room-button` → `mr view=room`; model and model buttons hidden; `mr objects outlined=<n>` (no volume as large as the room).
+2. Right-hand ray on the sofa → `mr hover … label=couch`; pinch → `mr object selected label=couch size=<l>x<p>x<a>`; card in the 30° cone (`coneDeg` ≤ 30), texts ≥ 2.4 cm.
+3. `Add to Mine` → `mr object added id=my-scan-couch-1`, `state saved … scanned=1`; the card shows `Added`; reload without `reset`: "My couch" in the `Mine` tab.
+4. In `Model` view, "My couch" from the menu toward a door: FitCheck label with the sofa measurements.
 
-## S-MR.3 · Mobili virtuali a grandezza reale
-1. In vista stanza, menu del palmo → un pezzo (es. `Armchair`) → raggio sul pavimento libero → rilascio: `mr piece placed id=room:piece-armchair#… status=valid`; linea e cursore del raggio visibili.
-2. Trascinato sul divano vero: `status=invalid`, etichetta `Overlaps the couch`.
-3. Rotazione con il tocco dell'altra mano: `rot=90`, `rot=180`.
-4. Pizzico breve sul pezzo → scheda `Remove`/`Close`; `Remove` → `mr piece removed … reason=card`; rilascio fuori dal pavimento → `reason=off-floor`.
-5. 12 pezzi → `mr piece limit reached max=12` e `Room is full`; draw call ≤ 100 per vista; la prima posa mostra `Room layout is not saved`.
-6. `Model` nasconde i pezzi, `My room` li rimostra.
-7. **Una mano sola** (solo la destra): `My room` → `Menu` (`ui:room-menu-button`) → voce → pezzo posato col raggio → rotazione col polso (rollio della mano) → pizzico sul pezzo → `Remove`.
-8. Pezzo dentro il divano vero: si riprende; pezzo dietro il divano: il pizzico sul divano apre la scheda del divano.
+## S-MR.3 · Virtual furniture at real size
+1. In room view, palm menu → a piece (e.g. `Armchair`) → ray on the free floor → release: `mr piece placed id=room:piece-armchair#… status=valid`; ray line and cursor visible.
+2. Dragged onto the real sofa: `status=invalid`, label `Overlaps the couch`.
+3. Rotation with the touch of the other hand: `rot=90`, `rot=180`.
+4. Short pinch on the piece → card `Remove`/`Close`; `Remove` → `mr piece removed … reason=card`; release off the floor → `reason=off-floor`.
+5. 12 pieces → `mr piece limit reached max=12` and `Room is full`; draw calls ≤ 100 per view; the first placement shows `Room layout is not saved`.
+6. `Model` hides the pieces, `My room` shows them again.
+7. **One hand only** (right hand only): `My room` → `Menu` (`ui:room-menu-button`) → entry → piece placed with the ray → rotation with the wrist (hand roll) → pinch on the piece → `Remove`.
+8. Piece inside the real sofa: it is picked up again; piece behind the sofa: the pinch on the sofa opens the sofa card.
 
-## S-MR.4 · Ciclo di vita
-1. F8/F9 con un pezzo nuovo in mano: nessun pezzo duplicato o perso; scheda chiusa (`via=suspend`); la vista resta.
-2. Fine sessione (`xr exit`, poi `xr enter`): si torna a `Model`, i pezzi della stanza non ci sono più; "My couch" resta in `Mine`.
+## S-MR.4 · Life cycle
+1. F8/F9 with a new piece in hand: no piece duplicated or lost; card closed (`via=suspend`); the view stays.
+2. End of session (`xr exit`, then `xr enter`): back to `Model`, the room pieces are gone; "My couch" stays in `Mine`.
 
-## Verifiche generali
-Console senza `error` nel percorso normale (il `warn` di framework `THREE.WebGLRenderer: Can't change size while VR device is presenting.` da `xr exit` è noto); nessuna stringa italiana; nessuna richiesta di rete nuova nell'app (la stanza sintetica dell'emulatore da `www.unpkg.com` riguarda solo lo sviluppo); ≤ 100 chiamate per vista.
+## General checks
+Console without `error` in the normal path (the framework `warn` `THREE.WebGLRenderer: Can't change size while VR device is presenting.` from `xr exit` is known); no Italian string; no new network request in the app (the synthetic room of the emulator from `www.unpkg.com` concerns development only); ≤ 100 calls per view.
 
-## Da rimandare al visore
-Tutto ciò che riguarda passthrough reale, Space Setup vero, etichette reali, mira del raggio della mano da seduti, rotazione col polso, misure reali (±5 cm), fps: vedi `docs/plans/MR.md`, "Prove sul visore".
+## To defer to the headset
+Everything about real passthrough, real Space Setup, real labels, hand ray aiming when seated, wrist rotation, real measurements (±5 cm), fps: see `docs/plans/MR.md`, "Headset tests".

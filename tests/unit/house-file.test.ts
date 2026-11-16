@@ -274,7 +274,7 @@ describe('error lines', () => {
 
 describe('house ids', () => {
   it('prefixes with file- and keeps a plain id', () => {
-    expect(fileHouseId('casa-piano-sesto')).toBe('file-casa-piano-sesto');
+    expect(fileHouseId('house-sixth-floor')).toBe('file-house-sixth-floor');
   });
 
   it('normalises to the pattern ^[a-z0-9][a-z0-9-]*$', () => {

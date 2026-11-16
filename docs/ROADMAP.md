@@ -1,355 +1,378 @@
-# Roadmap di Soglia
+# Floorplay roadmap
 
-Ogni milestone ha **due gate**:
+> **Project name (2026-11-16)**: the project was renamed from Soglia to **Floorplay** on 2026-11-16 (repository
+> `ThirdChildren/floorplay`, Pages URL https://thirdchildren.github.io/floorplay/). All the documentation was
+> translated to English the same day. The literal runtime strings (`[soglia]` / `[soglia:stats]` log prefixes,
+> `soglia:v1:*` storage keys) keep their names. **M7 (submission) is in progress.**
 
-- **Gate PC** — tutto verificabile sul PC (Fedora) con test automatici e con l'emulatore IWER
-  pilotato via MCP (`iwsdk-runtime`). È il gate che decide se si passa alla milestone successiva.
-- **Gate visore** — le stesse funzioni provate su un Meta Quest vero. Finché il visore non c'è,
-  le prove si accumulano in `qa/device/DEBT.md` e si recuperano nella milestone **M6**.
-  Se il visore arriva prima, il gate visore si fa alla fine di ogni milestone.
+Every milestone has **two gates**:
 
-Legenda stato: ⬜ da fare · 🟨 in corso · ✅ PC-done · 🟩 Device-done
+- **PC gate** — everything verifiable on the PC (Fedora) with automated tests and with the IWER emulator
+  driven via MCP (`iwsdk-runtime`). It is the gate that decides whether to move on to the next milestone.
+- **Headset gate** — the same functions tried on a real Meta Quest. As long as the headset is not available,
+  the checks accumulate in `qa/device/DEBT.md` and are recovered in milestone **M6**.
+  If the headset arrives earlier, the headset gate is done at the end of each milestone.
 
-| Milestone | Periodo | Stato |
+Status legend: ⬜ to do · 🟨 in progress · ✅ PC-done · 🟩 Device-done
+
+**Device status (2026-11-16)**: the owner tested the latest features on the Quest and reported that everything works
+(no numbers). Every milestone with device debt still has at least one row that needs a measurement (fps, draw calls,
+triangles, cold start, network, console, exact distances or angles), so **no milestone is 🟩 Device-done yet**: M0–M5, M6
+and MR are marked "functionally verified on device by owner (2026-11-16), measurements pending". A milestone becomes
+🟩 only when every row of `qa/device/DEBT.md` for it is ✅ with a report in `qa/device/`.
+
+| Milestone | Period | Status |
 |---|---|---|
-| M0 Setup e strumenti | 30 set – 1 ott | ✅ PC-done (piano: `docs/plans/M0.md`) |
-| M1 Casa e plastico | 2 – 7 ott | ✅ PC-done 2026-10-05 (piano: `docs/plans/M1.md`; report: `qa/reports/M1-2026-10-05-rerun.md`; gate visore in debito) |
-| M2 Arredare con le mani | 8 – 14 ott (PC-done anticipato al 7 ott) | ✅ PC-done 2026-10-07 (piano: `docs/plans/M2.md`; report: `qa/reports/M2-2026-10-06-rerun3.md`; `contest-reviewer`: SUPERATO CON RISERVE, nessun bloccante; gate visore in debito, vedi `qa/device/DEBT.md`) |
-| M3 Dentro la casa e i miei mobili | 15 – 21 ott (PC-done atteso 12–13 ott) | ✅ PC-done 2026-11-02 (piano: `docs/plans/M3.md`; report: `qa/reports/M3-2026-10-10.md`; `contest-reviewer`: APPROVATO CON AVVISI, nessun bloccante; T3.15 tagliato; gate visore in debito, vedi `qa/device/DEBT.md`) |
-| M4 Segnalazioni e persistenza | 2 – 8 nov (PC-done atteso dom 8, limite lun 9) | ✅ PC-done 2026-11-04 (piano: `docs/plans/M4.md`; report: `qa/reports/M4-2026-11-03.md`; `contest-reviewer`: APPROVATO CON AVVISI, nessun bloccante; nota vocale, tastiera di sistema, conferma completa del punto di vista e corsivo W4 non fatti; gate visore in debito, vedi `qa/device/DEBT.md`; ramo `m4`) |
-| M5 Luce, agente, accessibilità, realtà mista (**ridotta**) | 9 – 12 nov (PC-done entro gio 12, 23:59; iniziata ven 6 nov) | ✅ PC-done 2026-11-06 (piano: `docs/plans/M5.md`; report: `qa/reports/M5-2026-11-06.md`; `contest-reviewer`: APPROVATO CON AVVISI, nessun bloccante, avvisi correggibili chiusi; T5.RA fatta; realtà mista, ombre vere, mappa e confronto tagliati; gate visore in debito, vedi `qa/device/DEBT.md`) |
-| M6 Integrazione con il visore | **fase A** (strumenti, senza visore) sab 7 – lun 9 nov; **fase B** con il Quest (arriva mar 10): sessioni 10 – 13 nov, sessione principale ven 13; ripiego: prova di fumo del link 15 – 16 nov | 🟨 **fase A PC-done 2026-11-07, fase B dal 10 nov** (gate PC della fase A SUPERATO: report `qa/reports/M6-2026-11-07.md`, zero bloccanti, avvisi A3/A4 in correzione; nessuna voce Device-done) · piano consegnato 2026-11-07 (piano: `docs/plans/M6.md`; guida utente: `docs/QUEST_SETUP.md`; scenari fase A: `qa/scenarios/M6-*.md`; realtà mista tagliata e fuori dal gate) |
-| MR Realtà mista (opt-in `?mr=1`) | 11 – 15 nov (ramo `claude/eager-mendel-skcibe`; unione dopo la prova sul visore in una stanza (la seconda non serve, decisione del 2026-11-14), entro dom 15 mattina) | ✅ PC-done 2026-11-12 (piano `docs/plans/MR.md`; report `qa/reports/MR-2026-11-12.md`; `contest-reviewer`: codice senza violazioni, avvisi in correzione; Device-done in attesa) |
-| M7 Rifinitura e consegna | 14 – 17 nov (consegna interna mar 17, 18:00; scadenza mer 18 nov, 12:00 PT = 21:00 in Italia) | ⬜ |
+| M0 Setup and tools | 30 Sep – 1 Oct | ✅ PC-done (plan: `docs/plans/M0.md`); functionally verified on device by owner 2026-11-16, measurements pending (cold start, network requests, console, `views=2`) |
+| M1 House and tabletop model | 2 – 7 Oct | ✅ PC-done 2026-10-05 (plan: `docs/plans/M1.md`; report: `qa/reports/M1-2026-10-05-rerun.md`); functionally verified on device by owner 2026-11-16, measurements pending (fps and real draw calls/triangles with A and B) |
+| M2 Furnishing with the hands | 8 – 14 Oct (PC-done brought forward to 7 Oct) | ✅ PC-done 2026-10-07 (plan: `docs/plans/M2.md`; report: `qa/reports/M2-2026-10-06-rerun3.md`; `contest-reviewer`: PASSED WITH RESERVATIONS, no blockers); functionally verified on device by owner 2026-11-16, measurements pending (worst-case fps and calls, narrow-field-of-view angles, console/network checks; see `qa/device/DEBT.md`) |
+| M3 Inside the house and my furniture | 15 – 21 Oct (PC-done expected 12–13 Oct) | ✅ PC-done 2026-11-02 (plan: `docs/plans/M3.md`; report: `qa/reports/M3-2026-10-10.md`; `contest-reviewer`: APPROVED WITH WARNINGS, no blockers; T3.15 cut); functionally verified on device by owner 2026-11-16, measurements pending (fps and real draw calls, console warnings; see `qa/device/DEBT.md`) |
+| M4 Issues and persistence | 2 – 8 Nov (PC-done expected Sun 8, limit Mon 9) | ✅ PC-done 2026-11-04 (plan: `docs/plans/M4.md`; report: `qa/reports/M4-2026-11-03.md`; `contest-reviewer`: APPROVED WITH WARNINGS, no blockers; voice note, system keyboard, full viewpoint confirmation and italic W4 not done; branch `m4`); functionally verified on device by owner 2026-11-16, measurements pending (fps and real draw calls, fade durations; see `qa/device/DEBT.md`) |
+| M5 Light, agent, accessibility, mixed reality (**reduced**) | 9 – 12 Nov (PC-done by Thu 12, 23:59; started Fri 6 Nov) | ✅ PC-done 2026-11-06 (plan: `docs/plans/M5.md`; report: `qa/reports/M5-2026-11-06.md`; `contest-reviewer`: APPROVED WITH WARNINGS, no blockers, fixable warnings closed; T5.RA done; real shadows, interest map and comparison cut); functionally verified on device by owner 2026-11-16, measurements pending (fps and real draw calls, font-startup console checks, full-demo timing, fade durations; see `qa/device/DEBT.md`) |
+| M6 Headset integration | **phase A** (tools, without headset) Sat 7 – Mon 9 Nov; **phase B** with the Quest (arrives Tue 10): sessions 10 – 13 Nov, main session Fri 13; fallback: link smoke test 15 – 16 Nov | 🟨 **phase A PC-done 2026-11-07; phase B in progress**: first headset session 2026-11-11 (log-based, palm menu defect found and fixed on the PC), then the owner's functional device test of 2026-11-16 (everything works, no numbers); developer-tooling rows and all measurements are still open (phase A PC gate PASSED: report `qa/reports/M6-2026-11-07.md`, zero blockers) · plan delivered 2026-11-07 (plan: `docs/plans/M6.md`; user guide: `docs/QUEST_SETUP.md`; phase A scenarios: `qa/scenarios/M6-*.md`) |
+| MR Mixed reality (opt-in `?mr=1`) | 11 – 15 Nov (branch `claude/eager-mendel-skcibe`; merge after the headset test in one room (the second is not needed, decision of 2026-11-14), by Sun 15 morning) | ✅ PC-done 2026-11-12 (plan `docs/plans/MR.md`; report `qa/reports/MR-2026-11-12.md`; `contest-reviewer`: code without violations, warnings being fixed); functionally verified on device by owner 2026-11-16 (owner-reported: everything works), measurements pending (±5 cm furniture measurements, fps, network) |
+| M7 Polish and delivery | 14 – 17 Nov (internal delivery Tue 17, 18:00; deadline Wed 18 Nov, 12:00 PT = 21:00 in Italy) | 🟨 in progress (as of 2026-11-16: project renamed to Floorplay, documentation translated to English; see the changelog) |
 
-### Calendario ripianificato (2026-11-02)
+### Rescheduled calendar (2026-11-02)
 
-Le date originali (M4 22–28 ott, M5 29 ott–4 nov, M6 2–10 nov, M7 9–15 nov) erano **superate**: M3 si è chiusa il
-2 novembre con ~12–13 h di lavoro attivo contro 7 stimate (fattore ≈ 1,8, tre interruzioni per limite d'uso).
-Restano 16 giorni alla consegna. L'utente ha deciso di proseguire ("slitta tutto il resto, penso che possiamo
-farcela"). Le stime di `docs/plans/M4.md` applicano il fattore 1,8: M4 ≈ **23 h reali** (intervallo 16–32 h).
+The original dates (M4 22–28 Oct, M5 29 Oct–4 Nov, M6 2–10 Nov, M7 9–15 Nov) were **out of date**: M3 closed on
+2 November with ~12–13 h of active work against 7 estimated (factor ≈ 1.8, three interruptions for usage limits).
+16 days remain until delivery. The user decided to carry on ("everything else slips, I think we can
+make it"). The estimates of `docs/plans/M4.md` apply the factor 1.8: M4 ≈ **23 real hours** (range 16–32 h).
 
-| Quando (Italia) | Cosa |
+| When (Italy) | What |
 |---|---|
-| lun 2 – dom 8 nov | **M4**: Blocco R (riporti dal gate di M3), segnalazioni, persistenza, gate PC |
-| lun 9 – gio 12 nov | **M5 ridotta**: sole, agente minimo, accessibilità base; R-A se ci sono le ombre |
-| **gio 12 nov, 23:59** | **CONGELAMENTO DELLE FUNZIONI**: nessun task nuovo dopo **mer 11 nov, 12:00**; dopo solo correzioni, tarature, documenti |
-| 10 – 13 nov (mezze giornate) | **M6** appena c'è il Quest; sessione principale ven 13 |
-| sab 14 – mar 17 nov | **M7**: README e `DATA_FORMATS.md` in inglese, video < 3 min, Devpost, istruzioni di test, `contest-reviewer`, deploy manuale, prova del link |
-| mar 17 nov, 18:00 | **consegna interna**; mer 18 mattina di riserva |
+| Mon 2 – Sun 8 Nov | **M4**: Block R (carry-overs from the M3 gate), issues, persistence, PC gate |
+| Mon 9 – Thu 12 Nov | **reduced M5**: sun, minimal agent, basic accessibility; R-A if there are shadows |
+| **Thu 12 Nov, 23:59** | **FEATURE FREEZE**: no new task after **Wed 11 Nov, 12:00**; afterwards only fixes, tuning, documents |
+| 10 – 13 Nov (half days) | **M6** as soon as the Quest is there; main session Fri 13 |
+| Sat 14 – Tue 17 Nov | **M7**: README and `DATA_FORMATS.md` in English, video < 3 min, Devpost, test instructions, `contest-reviewer`, manual deploy, link check |
+| Tue 17 Nov, 18:00 | **internal delivery**; Wed 18 morning in reserve |
 
-**Tagli, in ordine** (dettagli e criteri persi in `docs/plans/M4.md`, "Tagli"): nota vocale e tastiera di sistema (già
-tagliate di partenza) → conferma del punto di vista (T4.R6) e W4 → presa a distanza (già tagliata, T3.15) → confronto di
-due disposizioni/case → mappa dell'interesse e domande → realtà mista → ombre del sole → modalità una mano completa di M5.
-**Scenario A** (ritardo moderato): tagli fino alla mappa. **Scenario B** (M4 non PC-done lun 9 notte): M4 minima e M5
-ridotta a sole (quadrante) + Furnish/Clear + alto contrasto/testo grande.
+**Cuts, in order** (details and what is lost in `docs/plans/M4.md`, "Cuts"): voice note and system keyboard (already
+cut from the start) → viewpoint confirmation (T4.R6) and W4 → distance grab (already cut, T3.15) → comparison of
+two layouts/houses → interest map and questions → mixed reality → sun shadows → complete one-hand mode of M5.
+**Scenario A** (moderate delay): cuts down to the map. **Scenario B** (M4 not PC-done Mon 9 night): minimal M4 and M5
+reduced to sun (dial) + Furnish/Clear + high contrast/large text.
 
-Il visore va preso **il prima possibile**: ogni giorno senza Quest sposta le prove del pizzico prolungato, dei 60 fps e
-della ripresa vera in `qa/device/DEBT.md`.
+The headset must be obtained **as soon as possible**: every day without a Quest pushes the checks of the long pinch, of the 60 fps and
+of the real resume into `qa/device/DEBT.md`.
 
 ---
 
-## M0 · Setup e strumenti
+## M0 · Setup and tools
 
-**Obiettivo**: progetto pronto, agenti e test funzionanti, primo commit.
+**Goal**: project ready, agents and tests working, first commit.
 
-- Iscrizione a Meta VR Start (fatto dall'utente), account Meta con accesso sviluppatore.
-- `npm create @iwsdk@latest` (TypeScript, hand tracking attivo), poi copiare questo kit nella radice.
-- `npx @iwsdk/cli adapter sync` per registrare il server MCP `iwsdk-runtime`.
-- Aggiungere Vitest (`npm i -D vitest ajv ajv-formats`) e lo script `"test": "vitest run"`.
-- Workflow CI (`.github/workflows/ci.yml`) e Pages manuale (`pages.yml`).
-- Primo commit git.
+- Registration for Meta VR Start (done by the user), Meta account with developer access.
+- `npm create @iwsdk@latest` (TypeScript, hand tracking on), then copy this kit into the root.
+- `npx @iwsdk/cli adapter sync` to register the `iwsdk-runtime` MCP server.
+- Add Vitest (`npm i -D vitest ajv ajv-formats`) and the script `"test": "vitest run"`.
+- CI workflow (`.github/workflows/ci.yml`) and manual Pages (`pages.yml`).
+- First git commit.
 
-**Gate PC**: `npm test` gira (anche con un solo test dello schema), `npm run build` ok,
-`npx @iwsdk/cli dev up --ai-mode agent` avviato e `xr_get_session_status` risponde.
-Scenari in `qa/scenarios/M0-*.md` (S0.1 toolchain, S0.2 runtime e sessione XR, S0.3 avvio pulito).
-**Gate visore**: nessuno.
+**PC gate**: `npm test` runs (even with a single schema test), `npm run build` ok,
+`npx @iwsdk/cli dev up --ai-mode agent` started and `xr_get_session_status` answers.
+Scenarios in `qa/scenarios/M0-*.md` (S0.1 toolchain, S0.2 runtime and XR session, S0.3 clean start).
+**Headset gate**: none.
 
-## M1 · Casa e plastico
+## M1 · House and tabletop model
 
-**Obiettivo**: dal file `apartment-a.json` nasce il plastico sul tavolo, si ruota e si ingrandisce
-con due mani.
+**Goal**: from the file `apartment-a.json` the tabletop model is born on the table, it is rotated and enlarged
+with two hands.
 
-- Validazione dei JSON con `schemas/house.schema.json` (errori leggibili).
-- `HouseBuilder`: pavimenti per materiale, muri con aperture di porte e finestre, geometrie unite.
-- `Miniature`: scala 1:20, muri tagliati a 1 m, posizionato davanti all'utente seduto
-  (~0,45 m davanti, ~0,25 m sotto gli occhi), rotazione e zoom con pizzico a due mani.
-- Tocco su una stanza → etichetta "Living room & kitchen · 24 m²" (area calcolata dal poligono).
-- Onboarding: mano fantasma che mostra il pizzico, senza testo.
+- Validation of the JSON files with `schemas/house.schema.json` (readable errors).
+- `HouseBuilder`: floors by material, walls with door and window openings, merged geometries.
+- `Miniature`: 1:20 scale, walls cut at 1 m, placed in front of the seated user
+  (~0.45 m ahead, ~0.25 m below the eyes), rotation and zoom with two-hand pinch.
+- Touch on a room → label "Living room & kitchen · 24 m²" (area computed from the polygon).
+- Onboarding: ghost hand that shows the pinch, without text.
 
-| Scenario PC | Verifica |
+| PC scenario | Check |
 |---|---|
-| S1.1 Apri la casa | `?house=apartment-a&reset=1` → entità `house:apartment-a` presente, 5 stanze, 13 muri |
-| S1.2 Due mani | pizzico a due mani e allontanamento → la scala del plastico aumenta; rotazione di ~90° |
-| S1.3 Etichetta stanza | pizzico sul soggiorno → etichetta con area 23,9 m² (± 0,1) |
-| S1.4 Budget | `?debug=1` → draw call e triangoli entro il budget di `CLAUDE.md` |
-| S1.5 Casa B ed errori | `?house=apartment-b` → 4 stanze, 9 muri; `?house=nope` → pannello d'errore, nessuna richiesta di rete (aggiunto dal piano M1) |
-| S1.6 Onboarding | mano fantasma: pizzico → due mani → fine, senza testo (aggiunto dal piano M1) |
+| S1.1 Open the house | `?house=apartment-a&reset=1` → entity `house:apartment-a` present, 5 rooms, 13 walls |
+| S1.2 Two hands | two-hand pinch and moving apart → the scale of the tabletop model increases; rotation of ~90° |
+| S1.3 Room label | pinch on the living room → label with area 23.9 m² (± 0.1) |
+| S1.4 Budget | `?debug=1` → draw calls and triangles within the budget of `CLAUDE.md` |
+| S1.5 House B and errors | `?house=apartment-b` → 4 rooms, 9 walls; `?house=nope` → error panel, no network request (added by the M1 plan) |
+| S1.6 Onboarding | ghost hand: pinch → two hands → end, without text (added by the M1 plan) |
 
-Scenari in `qa/scenarios/M1-*.md`. Gli strumenti MCP non navigano a URL con parametri: la QA scrive
-`dev-params.local.txt` e fa `browser_reload_page` (vedi `docs/plans/M1.md`, decisione D1).
+Scenarios in `qa/scenarios/M1-*.md`. The MCP tools do not navigate to URLs with parameters: QA writes
+`dev-params.local.txt` and does `browser_reload_page` (see `docs/plans/M1.md`, decision D1).
 
-**Unit test**: area dei poligoni, aperture dentro la lunghezza del muro, schema valido per A e B.
-**Gate visore (rimandabile)**: altezza e distanza del plastico comode da seduti, leggibilità delle
-etichette, pizzico a due mani affidabile, fps ≥ 60.
+**Unit tests**: polygon area, openings inside the wall length, valid schema for A and B.
+**Headset gate (deferrable)**: height and distance of the tabletop model comfortable when seated, readability of the
+labels, reliable two-hand pinch, fps ≥ 60.
 
-## M2 · Arredare con le mani
+## M2 · Furnishing with the hands
 
-**Obiettivo**: catalogo sul palmo, mobili presi, agganciati, ruotati e controllati.
+**Goal**: catalogue on the palm, furniture grabbed, snapped, rotated and checked.
 
-- Menu del palmo (palmo verso l'alto, entrambe le mani) con le voci della modalità attiva.
-- Catalogo da `public/catalog/catalog.json`; modelli CC0 dall'`asset-curator`.
-- Presa (IWSDK), aggancio al pavimento e alle pareti, rotazione a scatti di 90° col polso,
-  contorno rosso se collide o blocca una porta, verde se valido.
-- Annulla dal menu; un mobile lasciato fuori dal plastico torna nel catalogo. Un pezzo non valido **resta nel plastico** con la cornice rossa e un'etichetta breve (in inglese) che ne spiega il motivo (T2.9b).
-- **T2.0b (spike, 30 min)**: modelli dei controller sostituiti da una forma locale col metodo `AnimatedHand`, senza toccare `node_modules`; se non fattibile, voce in `qa/device/DEBT.md`.
-- **T2.1 (primo task di interfaccia)**: verifica dei glifi del font dei pannelli (`² · × ° − ± → ≈`; controllo statico: solo `°` c'è) e spike di 45 min sull'**opzione A** (atlante MSDF esteso da Inter OFL: l'ok dell'utente e la seconda eccezione di licenza in `docs/RULES.md` sono già dati); se lo spike non riesce, **opzione D** (ASCII definitivo) senza altre domande. Dopo T2.2 (opzione A) l'etichetta della stanza (S1.3) torna a `<name> · <area> m²`.
-- **T2.17a/b (obbligatorio, decisione dell'utente)**: spostare il plastico con le **due mani** (punto medio come perno) e con **una mano** (pizzico sulla base libera, mai su una stanza o un pezzo), limite 0,30 m dall'ancora, quota bloccata, "Recenter" (`ui:menu-recenter`) nel menu; priorità dei pizzichi menu > mobile > due mani > traslazione > stanza. Oggi il plastico non si sposta mai.
-- **T2.16 (suggerimento, non onboarding)**: un piccolo indizio ("Palm up for the menu") resta visibile finché il menu del palmo non è stato aperto la prima volta; l'**onboarding completo del menu passa a M5**; l'onboarding di M1 (S1.6) non cambia.
-- Icone `@pmndrs/uikit-lucide` ammesse come libreria nel bundle, sempre con etichetta di testo, citate in `CREDITS.md` (Libraries).
-- Il catalogo di M2 mostra solo i 14 `furniture` (tetto `MAX_PIECES = 40`); i `mobility` (sedia a rotelle, passeggino) entrano in M3.
-- Correzione dello staging di `apartment-a.json` approvata (libreria x 10,8 → 10,69; divano z 3,42 → 3,10): il test del preset deve fallire se un pezzo esce dalla stanza, entra in un muro o occupa il vano di una porta.
+- Palm menu (palm facing up, both hands) with the entries of the active mode.
+- Catalogue from `public/catalog/catalog.json`; CC0 models from the `asset-curator`.
+- Grab (IWSDK), snapping to the floor and walls, 90° step rotation with the wrist,
+  red outline if it collides or blocks a door, green if valid.
+- Undo from the menu; a piece left outside the tabletop model returns to the catalogue. An invalid piece **stays in the model** with the red frame and a short label (in English) that explains the reason (T2.9b).
+- **T2.0b (spike, 30 min)**: controller models replaced by a local shape with the `AnimatedHand` method, without touching `node_modules`; if not feasible, a row in `qa/device/DEBT.md`.
+- **T2.1 (first interface task)**: check of the glyphs of the panel font (`² · × ° − ± → ≈`; static check: only `°` is there) and a 45-minute spike on **option A** (MSDF atlas extended from Inter OFL: the user's ok and the second licence exception in `docs/RULES.md` are already given); if the spike fails, **option D** (final ASCII) without further questions. After T2.2 (option A) the room label (S1.3) returns to `<name> · <area> m²`.
+- **T2.17a/b (mandatory, user decision)**: move the tabletop model with **two hands** (midpoint as pivot) and with **one hand** (pinch on the free base, never on a room or a piece), 0.30 m limit from the anchor, locked height, "Recenter" (`ui:menu-recenter`) in the menu; pinch priority menu > furniture > two hands > translation > room. Today the tabletop model never moves.
+- **T2.16 (hint, not onboarding)**: a small cue ("Palm up for the menu") stays visible until the palm menu has been opened for the first time; the **complete menu onboarding moves to M5**; the M1 onboarding (S1.6) does not change.
+- `@pmndrs/uikit-lucide` icons allowed as a library in the bundle, always with a text label, cited in `CREDITS.md` (Libraries).
+- The M2 catalogue shows only the 14 `furniture` pieces (cap `MAX_PIECES = 40`); the `mobility` ones (wheelchair, pushchair) come in M3.
+- Correction of the staging of `apartment-a.json` approved (bookcase x 10.8 → 10.69; sofa z 3.42 → 3.10): the preset test must fail if a piece leaves the room, enters a wall or occupies a door opening.
 
-| Scenario PC | Verifica |
+| PC scenario | Check |
 |---|---|
-| S2.0 Glifi del font | `glyphs=1` → audit a schermo dei caratteri (parte A); dopo T2.2 nessun `Missing glyph info` e l'etichetta `Living room & kitchen · 23.9 m²` (parte B) (aggiunto dal piano M2) |
-| S2.1 Menu del palmo | mano sinistra con palmo in su → `ui:palm-menu` visibile; stesso con la destra; 6 voci per pagina, 3 pagine |
-| S2.2 Posa il letto | pizzico su `bed-double`, trascina in camera, rilascia → entità dentro `bedroom`, appoggiata a una parete |
-| S2.3 Collisione | spingi il letto contro l'armadio → stato `invalid`, contorno rosso **e etichetta "Overlaps the wardrobe"**; spostalo → `valid`, etichetta sparita |
-| S2.4 Annulla | "Undo" → l'ultima azione sparisce dallo store |
-| S2.5 Rotazione a scatti | polso o tocco con l'altra mano → 0 → 90 → 180 → 270, impronta e aggancio ricalcolati (aggiunto dal piano M2) |
-| S2.6 Porta bloccata | poltrona davanti a `door:d-bedroom` → `invalid` con motivo `blocks-door`, valida accanto alla porta (aggiunto dal piano M2) |
-| S2.7 Rientro nel catalogo | rilascio fuori dalla casa → `furniture returned`, nessuna entità; annulla ripristina lo stesso id (aggiunto dal piano M2) |
-| S2.8 Budget con arredi | `furnish=scandinavian&debug=1` → 14 pezzi, `callsPerView` ≤ 100, triangoli ≤ 150.000, texture dell'app ≤ 4 (aggiunto dal piano M2) |
-| S2.9 Sposta il plastico | **obbligatorio (T2.17a/b)**: traslazione a due mani **e a una mano** (pizzico sulla base), limite 0,30 m, quota invariata, "Recenter", nessun conflitto con presa dei pezzi e selezione delle stanze (aggiunto dal piano M2) |
+| S2.0 Font glyphs | `glyphs=1` → on-screen audit of the characters (part A); after T2.2 no `Missing glyph info` and the label `Living room & kitchen · 23.9 m²` (part B) (added by the M2 plan) |
+| S2.1 Palm menu | left hand with palm up → `ui:palm-menu` visible; same with the right; 6 entries per page, 3 pages |
+| S2.2 Place the bed | pinch on `bed-double`, drag into the bedroom, release → entity inside `bedroom`, resting against a wall |
+| S2.3 Collision | push the bed against the wardrobe → state `invalid`, red outline **and label "Overlaps the wardrobe"**; move it → `valid`, label gone |
+| S2.4 Undo | "Undo" → the last action disappears from the store |
+| S2.5 Step rotation | wrist or touch with the other hand → 0 → 90 → 180 → 270, footprint and snapping recomputed (added by the M2 plan) |
+| S2.6 Blocked door | armchair in front of `door:d-bedroom` → `invalid` with reason `blocks-door`, valid next to the door (added by the M2 plan) |
+| S2.7 Return to the catalogue | release outside the house → `furniture returned`, no entity; undo restores the same id (added by the M2 plan) |
+| S2.8 Budget with furniture | `furnish=scandinavian&debug=1` → 14 pieces, `callsPerView` ≤ 100, triangles ≤ 150,000, app textures ≤ 4 (added by the M2 plan) |
+| S2.9 Move the tabletop model | **mandatory (T2.17a/b)**: translation with two hands **and with one hand** (pinch on the base), 0.30 m limit, height unchanged, "Recenter", no conflict with the grab of pieces and the selection of rooms (added by the M2 plan) |
 
-**Unit test**: snap alle pareti, collisioni tra rettangoli ruotati, porta bloccata, rotazione a scatti, store con annulla, catalogo, arbitraggio dei pizzichi, rilevamento del palmo, guardia dei glifi, traslazione del plastico (clamp, zone di pizzico disgiunte), preset di arredo valido, etichette dei motivi.
-**Calendario**: PC-done previsto entro l'**11 ottobre 2026** (cuscinetto 12–14 ott); **raggiunto il 7 ottobre 2026** (report `qa/reports/M2-2026-10-06-rerun3.md`, verdetto SUPERATO CON RISERVE, nessun bloccante; riserve e avvisi nel report). Ordine di esecuzione e stime in `docs/plans/M2.md`.
-**Gate visore (in debito, non ancora fatto)**: presa naturale, niente tremolii, rotazione col polso affidabile, palmo in su affidabile; voci M2 in `qa/device/DEBT.md`. Il budget di IWER (66 chiamate per vista a scala 0,05 e 53 a 0,12 nel caso peggiore, 30,7k triangoli) è un numero del PC, non del visore. Persistenza assente in M2 (regola 4): i mobili si perdono ricaricando; la prima fetta (salvataggio in `localStorage`) arriva con i primi task di M3.
+**Unit tests**: snapping to walls, collisions between rotated rectangles, blocked door, step rotation, store with undo, catalogue, pinch arbitration, palm detection, glyph guard, tabletop model translation (clamp, disjoint pinch zones), valid furnishing preset, reason labels.
+**Calendar**: PC-done expected by **11 October 2026** (buffer 12–14 Oct); **reached on 7 October 2026** (report `qa/reports/M2-2026-10-06-rerun3.md`, verdict PASSED WITH RESERVATIONS, no blockers; reservations and warnings in the report). Order of execution and estimates in `docs/plans/M2.md`.
+**Headset gate (functionally verified by the owner on 2026-11-16, measurements pending)**: natural grab, no jitter, reliable wrist rotation, reliable palm-up; M2 rows in `qa/device/DEBT.md`. The IWER budget (66 calls per view at scale 0.05 and 53 at 0.12 in the worst case, 30.7k triangles) is a PC number, not a headset one. Persistence absent in M2 (rule 4): furniture is lost on reload; the first slice (saving to `localStorage`) arrives with the first tasks of M3.
 
-## M3 · Dentro la casa e i miei mobili
+## M3 · Inside the house and my furniture
 
-**Obiettivo**: punti di vista, metro, i propri mobili e il controllo delle porte; in più la ripresa
-dopo una pausa (prima fetta della persistenza), il menu a una mano e la previsione dei draw call.
-Piano e decisioni D29–D38 in `docs/plans/M3.md`.
+**Goal**: viewpoints, tape measure, own furniture and door checking; in addition the resume
+after a pause (first slice of persistence), the one-hand menu and the draw call forecast.
+Plan and decisions D29–D38 in `docs/plans/M3.md`.
 
-**I primi quattro task, in quest'ordine e prima di ogni altro lavoro** (richiesta dell'utente):
+**The first four tasks, in this order and before any other work** (user request):
 
-1. **Salvataggio minimo + ciclo di vita** (T3.1a/b): la disposizione dei mobili si salva in
-   `localStorage` (chiave `soglia:v1:state:<casa>`, `serialize/deserialize` di `src/logic/state.ts`,
-   cancellata da `reset=1`); è la **prima fetta di `Persistence` di M4**, non un sistema a parte (M4
-   riusa `storage.ts`, `persistence.ts` e il ciclo di vita e aggiunge solo i campi: ruolo,
-   segnalazioni). Sessione nascosta/ripresa con un pezzo in mano: la presa si chiude pulita, nessun
-   pezzo perso né duplicato.
-2. **Palmo in su e punto di pizzico dalle articolazioni** (T3.2a/b, spike di 45 min con ripiego
-   dichiarato): giunti `XRHand` via `fillPoses`, `gripSpace` solo come riserva.
-3. **Pulsante "Menu" fisso** sul bordo del plastico, apribile con un pizzico di UNA mano, con
-   menu `pinned` (Undo e Recenter inclusi) (T3.3a/b); chiude anche l'avviso F-A di M2.
-4. **Previsione dei draw call fino a M5** con tracciamento a ogni gate (T3.4).
+1. **Minimal saving + lifecycle** (T3.1a/b): the furniture layout is saved to
+   `localStorage` (key `soglia:v1:state:<house>`, `serialize/deserialize` of `src/logic/state.ts`,
+   cleared by `reset=1`); it is the **first slice of M4's `Persistence`**, not a separate system (M4
+   reuses `storage.ts`, `persistence.ts` and the lifecycle and only adds the fields: role,
+   issues). Session hidden/resumed with a piece in hand: the grab closes cleanly, no
+   piece lost or duplicated.
+2. **Palm up and pinch point from the joints** (T3.2a/b, 45-minute spike with declared
+   fallback): `XRHand` joints via `fillPoses`, `gripSpace` only as a reserve.
+3. **Fixed "Menu" button** on the edge of the tabletop model, openable with a pinch of ONE hand, with
+   `pinned` menu (Undo and Recenter included) (T3.3a/b); it also closes warning F-A of M2.
+4. **Draw call forecast up to M5** with tracking at every gate (T3.4).
 
-Poi: menu v2 (testi ≥ 2,4 cm, schede), etichetta della stanza nel cono, FitCheck, i propri mobili,
-punti di vista, metro (T3.5–T3.17).
+Then: menu v2 (texts ≥ 2.4 cm, tabs), room label in the cone, FitCheck, own furniture,
+viewpoints, tape measure (T3.5–T3.17).
 
-- `Viewpoint`: pizzico su V1/V2/V3 → dissolvenza → scala reale ad altezza occhi da seduti (1,2 m);
-  "Tabletop" dal menu per tornare. Presa a distanza nella stanza (T3.15, **tagliabile**: se salta,
-  in scala reale si prende solo a portata di braccio e lo si dichiara).
-- ~~`Measure`~~ **RIMOSSO il 2026-11-14** (correzioni dell'interfaccia, `qa/reports/UI-FIX-2026-11-14.md`): pizzico su due punti, aggancio a pareti e spigoli, misura in cm.
-- ~~`FitCheck`~~ **RIMOSSO il 2026-11-14** (correzioni dell'interfaccia, `qa/reports/UI-FIX-2026-11-14.md`): percorso dalla porta d'ingresso alla stanza (grafo delle porte), verifica di ogni
-  porta; lo stesso per sedia a rotelle e passeggino. Messaggio in inglese che spiega il motivo.
+- `Viewpoint`: pinch on V1/V2/V3 → fade → real scale at seated eye height (1.2 m);
+  "Tabletop" from the menu to go back. Distance grab in the room (T3.15, **cuttable**: if it is dropped,
+  in real scale pieces are taken only at arm's reach and this is declared).
+- ~~`Measure`~~ **REMOVED on 2026-11-14** (interface fixes, `qa/reports/UI-FIX-2026-11-14.md`): pinch on two points, snapping to walls and corners, measurement in cm.
+- ~~`FitCheck`~~ **REMOVED on 2026-11-14** (interface fixes, `qa/reports/UI-FIX-2026-11-14.md`): path from the entrance door to the room (door graph), check of every
+  door; the same for wheelchair and pushchair. Message in English that explains the reason.
 
-| Scenario PC | Verifica |
+| PC scenario | Check |
 |---|---|
-| S3.1 Punto di vista | pizzico su `viewpoint:V1` → camera a scala reale nel soggiorno; "Tabletop" → ritorno |
-| S3.2 Metro (**rimosso 2026-11-14**) | misura la finestra dello studio → 140 cm (± 1) |
-| S3.3 Divano in A (**rimosso 2026-11-14**) | "My sofa 230 × 95 × 85" verso il soggiorno → blocco su `door:d-living`, messaggio "Won't fit: the door is 80 cm wide, the sofa's shortest side is 85 cm" |
-| S3.4 Divano in B (**rimosso 2026-11-14**) | stessa prova in `apartment-b` → passa |
-| S3.5 Sedia a rotelle (**rimosso 2026-11-14**) | verso il bagno di A → blocco su `door:d-bathroom` (75 cm); il passeggino (60 cm) passa |
-| S3.0 Persistenza e pausa/ripresa (aggiunto dal piano M3) | `qa/scenarios/M3-persistence.md`: salva, ricarica (stessi pezzi, stessi id), `reset=1` cancella, una chiave per casa, sessione nascosta con un pezzo in mano (nessun duplicato, presa chiusa, stesso id alla ripresa) |
-| S3.6 Palmo e pizzico dalle articolazioni (aggiunto) | `qa/scenarios/M3-joints.md`: sorgente `joints`/`grip`, palmo in su dai giunti, punto di pizzico, `pinch=grip` come riserva |
-| S3.7 Pulsante Menu a una mano e F-A (aggiunto) | `qa/scenarios/M3-menu-button.md`: apertura, pagina, presa, Undo e Recenter con la sola destra; il pizzico in aria della mano del menu non seleziona la stanza |
-| S3.8 Menu v2 e etichette nel cono (aggiunto) | `qa/scenarios/M3-menu-v2.md`: testi ≥ 2,4 cm, schede, pannello ≤ 0,38 m e ≤ 30°, etichetta della stanza nel cono |
-| S3.9 Budget: previsione contro misura (aggiunto) | `qa/scenarios/M3-budget.md`: otto casi K1–K8; > 100 per vista blocca, caso peggiore ≥ 85 apre R-A in M4 |
-| S3.10 Presa a distanza (aggiunto, solo se T3.15) | `qa/scenarios/M3-distance-grab.md`: raggio dalla mano in scala reale; non applicabile se il task è tagliato |
+| S3.1 Viewpoint | pinch on `viewpoint:V1` → camera at real scale in the living room; "Tabletop" → return |
+| S3.2 Tape measure (**removed 2026-11-14**) | measure the window of the study → 140 cm (± 1) |
+| S3.3 Sofa in A (**removed 2026-11-14**) | "My sofa 230 × 95 × 85" towards the living room → block on `door:d-living`, message "Won't fit: the door is 80 cm wide, the sofa's shortest side is 85 cm" |
+| S3.4 Sofa in B (**removed 2026-11-14**) | same test in `apartment-b` → it passes |
+| S3.5 Wheelchair (**removed 2026-11-14**) | towards the bathroom of A → block on `door:d-bathroom` (75 cm); the pushchair (60 cm) passes |
+| S3.0 Persistence and pause/resume (added by the M3 plan) | `qa/scenarios/M3-persistence.md`: save, reload (same pieces, same ids), `reset=1` clears, one key per house, session hidden with a piece in hand (no duplicate, grab closed, same id on resume) |
+| S3.6 Palm and pinch from the joints (added) | `qa/scenarios/M3-joints.md`: `joints`/`grip` source, palm up from the joints, pinch point, `pinch=grip` as a reserve |
+| S3.7 One-hand Menu button and F-A (added) | `qa/scenarios/M3-menu-button.md`: opening, page, grab, Undo and Recenter with the right hand only; the in-air pinch of the menu hand does not select the room |
+| S3.8 Menu v2 and labels in the cone (added) | `qa/scenarios/M3-menu-v2.md`: texts ≥ 2.4 cm, tabs, panel ≤ 0.38 m and ≤ 30°, room label in the cone |
+| S3.9 Budget: forecast against measurement (added) | `qa/scenarios/M3-budget.md`: eight cases K1–K8; > 100 per view blocks, worst case ≥ 85 opens R-A in M4 |
+| S3.10 Distance grab (added, only if T3.15) | `qa/scenarios/M3-distance-grab.md`: ray from the hand at real scale; not applicable if the task is cut |
 
-Il FitCheck non riusa `blocks-door` (zona libera davanti alla porta, M2): i codici sono
-`door-too-narrow`, `door-too-low`, `fits-disassembled`, `no-route`. Corridoi non verificati
-("Simplified check"). `sofa-3seat` del catalogo non passa da `d-living` di A (coerente: il preset non
-mostra mai l'etichetta finché il pezzo non è in mano); il caso demo resta `my-sofa` 230 × 95 × 85.
+The FitCheck does not reuse `blocks-door` (free zone in front of the door, M2): the codes are
+`door-too-narrow`, `door-too-low`, `fits-disassembled`, `no-route`. Corridors not verified
+("Simplified check"). `sofa-3seat` from the catalogue does not pass through `d-living` of A (consistent: the preset never
+shows the label until the piece is in hand); the demo case remains `my-sofa` 230 × 95 × 85.
 
-**Unit test**: grafo delle porte, percorso, regole di passaggio (vedi `docs/DATA_FORMATS.md`),
-persistenza (chiavi, lista bianca, `localStorage` mancante/bloccato/pieno), ciclo di vita, giunti
-della mano, menu e pulsante, previsione dei gruppi di draw call, posa in scala reale, dissolvenza,
-aggancio del metro.
-**Calendario**: PC-done atteso **12–13 ottobre 2026** (cuscinetto fino al 15; finestra ufficiale
-15–21 ott come margine). Stima onesta in `docs/plans/M3.md` (≈ 7 h di orologio; ottimista 4,5 h,
-pessimista 11 h).
-**Gate visore**: dissolvenza senza nausea, scala reale credibile, metro preciso a mano libera;
-in più (voci in `qa/device/DEBT.md` a gate superato): ripresa dopo aver tolto il visore, `localStorage`
-nel Quest Browser, giunti reali, raggiungibilità dei pulsanti Menu, draw call e fps reali con il caso
-peggiore.
+**Unit tests**: door graph, path, passage rules (see `docs/DATA_FORMATS.md`),
+persistence (keys, whitelist, `localStorage` missing/blocked/full), lifecycle, hand joints,
+menu and button, forecast of draw call groups, real-scale pose, fade,
+tape measure snapping.
+**Calendar**: PC-done expected **12–13 October 2026** (buffer up to 15; official window
+15–21 Oct as margin). Honest estimate in `docs/plans/M3.md` (≈ 7 h of clock time; optimistic 4.5 h,
+pessimistic 11 h).
+**Headset gate**: fade without nausea, credible real scale, precise freehand tape measure;
+in addition (rows in `qa/device/DEBT.md` once the gate is passed): resume after taking the headset off, `localStorage`
+in the Quest Browser, real joints, reachability of the Menu buttons, real draw calls and fps with the worst
+case. **Status 2026-11-16**: functionally verified on device by the owner, measurements pending (fps and real draw calls; the tape measure was removed).
 
-**Esito del gate PC (2026-11-02)**: **superato**, report in `qa/reports/M3-2026-10-10.md` (indice) con
-A, B, rerun di S3.5, C1 (regressioni M2) e C2 (regressioni M1). `npm test` 4465 test in 75 file,
-typecheck e build ok, CI verde. Un bloccante trovato e corretto durante il gate (F-S3.5-1, errore
-`PanelUISystem ... (reading 'add')` con le etichette del FitCheck e del motivo, commit `9d52d0e`).
-Draw call: caso peggiore K4 = 71 per vista (< 85: **R-A non diventa il primo task di M4**), proiezione
-M5 ≈ 86. **T3.15 (presa e misura a distanza) tagliato**: in scala reale si prende solo a portata di
-braccio, il metro lavora solo sul plastico, S3.10 non applicabile, il task passa a M5/M7. Voci di
-debito del visore in `qa/device/DEBT.md` (righe M3). Tempo reale di esecuzione ≈ 12–13 h di lavoro
-attivo contro 7 h stimate, con tre interruzioni per limite d'uso dell'account.
+**Result of the PC gate (2026-11-02)**: **passed**, report in `qa/reports/M3-2026-10-10.md` (index) with
+A, B, rerun of S3.5, C1 (M2 regressions) and C2 (M1 regressions). `npm test` 4465 tests in 75 files,
+typecheck and build ok, CI green. One blocker found and fixed during the gate (F-S3.5-1, error
+`PanelUISystem ... (reading 'add')` with the FitCheck and reason labels, commit `9d52d0e`).
+Draw calls: worst case K4 = 71 per view (< 85: **R-A does not become the first task of M4**), M5 projection
+≈ 86. **T3.15 (distance grab and measure) cut**: in real scale pieces are taken only at arm's
+reach, the tape measure works only on the tabletop model, S3.10 not applicable, the task moves to M5/M7. Headset
+debt rows in `qa/device/DEBT.md` (M3 rows). Real execution time ≈ 12–13 h of active work
+against 7 h estimated, with three interruptions for account usage limits.
 
-## M4 · Segnalazioni e persistenza
+## M4 · Issues and persistence
 
-**Obiettivo**: il ciclo completo della segnalazione e la ripresa dopo una pausa.
-**Piano e decisioni D39–D52 in `docs/plans/M4.md` (consegnato il 2026-11-02, 🟨)**: prima il Blocco R (riporti dal
-gate di M3, T4.R1–T4.R7), poi segnalazioni e persistenza (T4.1–T4.12), gate PC (T4.13) e revisione (T4.14). Stima:
-≈ 23 h reali (centrale × 1,8); PC-done atteso dom 8 nov, limite lun 9.
+**Goal**: the complete issue cycle and the resume after a pause.
+**Plan and decisions D39–D52 in `docs/plans/M4.md` (delivered on 2026-11-02, 🟨)**: first Block R (carry-overs from the
+M3 gate, T4.R1–T4.R7), then issues and persistence (T4.1–T4.12), PC gate (T4.13) and review (T4.14). Estimate:
+≈ 23 real hours (central × 1.8); PC-done expected Sun 8 Nov, limit Mon 9.
 
-- `Roles`: visitatore, agente (M5), inquilino, proprietario; **il cambio avviene dal nuovo pannello "Issues"**
-  (due pulsanti specchiati sopra i pulsanti "Menu", raggiungibili con una mano; il menu del palmo è al limite del
-  cono di 30°), non dal menu del palmo; il ruolo si salva, un `role=` nell'URL vince (D41).
-- `Issues`: pizzico prolungato (0,8 s) su un punto o su un fixture → segnaposto; categoria (proposta dal
-  fixture), urgenza, **testo scelto tra frasi predefinite per categoria** (nessuna tastiera: D40; la tastiera di
-  sistema e la nota vocale con MediaRecorder sono extra opzionali, feature-detected, tagliati di partenza);
-  stati open → in_progress → resolved → archived; conferma dell'inquilino; verbale d'ingresso (blu, "Sample data").
-- `Persistence`: salvataggio automatico (localStorage/IndexedDB con try/catch), ripresa su reload
-  e su `visibilitychange`. **La prima fetta è consegnata in M3** (T3.1a/b: chiave
-  `soglia:v1:state:<casa>`, lista bianca dei campi ripristinati, `reset=1`, ciclo di vita con presa
-  chiusa pulita); M4 riusa `src/data/storage.ts`, `src/logic/persistence.ts` e il ciclo di vita e
-  aggiunge solo `role` e le segnalazioni alla lista bianca, l'eventuale bump di versione e
-  IndexedDB se la quota lo richiede. Il caso peggiore dei draw call di M3 ha misurato **71** (< 85):
-  R-A (unire muri e soglie in due mesh, −16 chiamate per vista, ~2,5 h; vedi `docs/plans/M3.md`, D33)
-  **non** è il primo task di M4, ma resta pronto se il Quest misura di più.
-- **Riporti dal gate di M3 → Blocco R di `docs/plans/M4.md` (da eseguire PRIMA del lavoro nuovo; prerequisiti: (1), (2), (5), (9) = T4.R1–T4.R4; rimandabili: (3)+(6) T4.R5, (4) T4.R6, W4 T4.R7; (7) scenari già corretti il 2026-11-02, con riga di changelog; (8) in M7)** (avvisi del `contest-reviewer` e di `emulator-qa`), in
-  ordine di importanza: (1) **scala reale senza menu per chi usa una mano sola**: mostrare almeno un
-  pulsante di ritorno al plastico anche in scala reale (regola 9); (2) **menu `pinned` nel cono di 30°
-  solo con lo sguardo livellato**: ancora che tiene conto del beccheggio (`fitPanelToCone`); (3)
-  pilastro `viewpoint:V2` che copre una cifra dell'etichetta del corridoio (`Hallway · 13_ m²`,
-  `qa/reports/M3-gate-C2-S1.3-label-hall.png`): spostare l'etichetta o fare passare i marcatori sotto
-  le etichette; (4) pizzico vicino a un marcatore di punto di vista che sostituisce lo zoom: zona morta
-  o conferma; (5) perdita dei pezzi propri se `my-furniture.json` non si carica (non riscrivere il
-  salvato con pezzi scartati); (6) `placeRoomLabel` sotto il piano con stanze a meno di 0,52 m dalla
-  testa; (7) correggere gli scenari con punti non liberi (S3.0, S3.2 passo 10, S3.3 passi 5-6, S2.9
-  passo 10, S2.6 passo 6) e il corsivo W4; (8) `README.md` ancora a "M0" e `docs/DATA_FORMATS.md` in
-  italiano (prima della consegna, M7); (9) spostare `flushPanelDisposals()` fuori da `PalmMenuSystem`.
+- `Roles`: visitor, agent (M5), tenant, owner; **the change happens from the new "Issues" panel**
+  (two mirrored buttons above the "Menu" buttons, reachable with one hand; the palm menu is at the limit of the
+  30° cone), not from the palm menu; the role is saved, a `role=` in the URL wins (D41).
+- `Issues`: long pinch (0.8 s) on a point or on a fixture → placeholder; category (proposed by the
+  fixture), urgency, **text chosen among predefined phrases per category** (no keyboard: D40; the system
+  keyboard and the voice note with MediaRecorder are optional extras, feature-detected, cut from the start);
+  states open → in_progress → resolved → archived; tenant confirmation; move-in report (blue, "Sample data").
+- `Persistence`: automatic saving (localStorage/IndexedDB with try/catch), resume on reload
+  and on `visibilitychange`. **The first slice is delivered in M3** (T3.1a/b: key
+  `soglia:v1:state:<house>`, whitelist of restored fields, `reset=1`, lifecycle with a clean
+  closed grab); M4 reuses `src/data/storage.ts`, `src/logic/persistence.ts` and the lifecycle and
+  only adds `role` and the issues to the whitelist, the possible version bump and
+  IndexedDB if the quota requires it. The M3 worst case of draw calls measured **71** (< 85):
+  R-A (merging walls and thresholds into two meshes, −16 calls per view, ~2.5 h; see `docs/plans/M3.md`, D33)
+  is **not** the first task of M4, but remains ready if the Quest measures more.
+- **Carry-overs from the M3 gate → Block R of `docs/plans/M4.md` (to be executed BEFORE the new work; prerequisites: (1), (2), (5), (9) = T4.R1–T4.R4; deferrable: (3)+(6) T4.R5, (4) T4.R6, W4 T4.R7; (7) scenarios already corrected on 2026-11-02, with a changelog row; (8) in M7)** (warnings from the `contest-reviewer` and `emulator-qa`), in
+  order of importance: (1) **real scale without a menu for one-handed users**: show at least one
+  button to return to the tabletop model even in real scale (rule 9); (2) **`pinned` menu in the 30° cone
+  only with a level gaze**: anchor that accounts for pitch (`fitPanelToCone`); (3)
+  pillar `viewpoint:V2` that covers a digit of the hallway label (`Hallway · 13_ m²`,
+  `qa/reports/M3-gate-C2-S1.3-label-hall.png`): move the label or make the markers pass under
+  the labels; (4) pinch near a viewpoint marker that replaces the zoom: dead zone
+  or confirmation; (5) loss of own pieces if `my-furniture.json` does not load (do not rewrite the
+  saved state with discarded pieces); (6) `placeRoomLabel` below the plane with rooms less than 0.52 m from the
+  head; (7) correct the scenarios with non-free points (S3.0, S3.2 step 10, S3.3 steps 5-6, S2.9
+  step 10, S2.6 step 6) and the italic W4; (8) `README.md` still at "M0" and `docs/DATA_FORMATS.md` in
+  Italian (before delivery, M7); (9) move `flushPanelDisposals()` out of `PalmMenuSystem`.
 
-| Scenario PC | Verifica |
+| PC scenario | Check |
 |---|---|
-| S4.1 Segnalazione | `qa/scenarios/M4-issue-create.md`: ruolo tenant, pizzico prolungato su `fixture:washer` → categoria `appliances`, frase "Leaks" → testo `The washing machine leaks.` (frasi predefinite al posto della tastiera, D40), urgenza medium → `pin:issue-014` rosso; punto libero con scelta della categoria; ruoli non autorizzati |
-| S4.2 Voce (opzionale) | `qa/scenarios/M4-voice-note.md`: sempre: nessun pulsante vocale senza API (nessun pulsante morto); se T4.15: nota registrata e collegata |
-| S4.3 Proprietario | `qa/scenarios/M4-landlord-flow.md`: ruolo landlord → elenco per urgenza (`014, 013, 012, 010`); "Take on" → arancione; "Resolved" → verde; conferma tenant → storico (archiviata); "Reopen" |
-| S4.4 Ripresa | `qa/scenarios/M4-persistence-resume.md`: ricarica → stesse segnalazioni, stesso ruolo (un `role=` esplicito vince), pezzi propri non persi (`failmy=1`), sospensione con la bozza aperta |
-| S4.5 Verbale | `qa/scenarios/M4-move-in-report.md`: "Move-in report" → segnaposto blu da `issues-apartment-a.json`, "Sample data" |
-| S4.6 Scala reale a una mano (aggiunto) | `qa/scenarios/M4-one-hand-real-scale.md`: pulsante `ui:tabletop-button` in scala reale, ritorno con una sola mano (riporto 1 di M3) |
-| S4.7 Menu `pinned` inclinato (aggiunto) | `qa/scenarios/M4-pinned-menu-pitch.md`: cono ≤ 30° con beccheggio da +10° a −14° (riporto 2) |
-| S4.8 Etichetta, pilastro, zona morta (aggiunto) | `qa/scenarios/M4-labels-and-markers.md`: etichetta del corridoio leggibile, quota minima, conferma del punto di vista (riporti 3, 4, 6) |
-| S4.9 Regressione rapida (aggiunto) | `qa/scenarios/M4-regression.md`: S1.2, S1.3, S1.6, S2.1–S2.9, S3.0–S3.9 con `pinch=grip` e i punti corretti |
-| S4.10 Budget (aggiunto) | `qa/scenarios/M4-budget.md`: K1–K13, caso peggiore di M4 K11 (previsione 74); ≥ 85 apre R-A in M5 |
+| S4.1 Issue | `qa/scenarios/M4-issue-create.md`: role tenant, long pinch on `fixture:washer` → category `appliances`, phrase "Leaks" → text `The washing machine leaks.` (predefined phrases instead of the keyboard, D40), urgency medium → red `pin:issue-014`; free point with category choice; unauthorised roles |
+| S4.2 Voice (optional) | `qa/scenarios/M4-voice-note.md`: always: no voice button without the API (no dead button); if T4.15: note recorded and linked |
+| S4.3 Owner | `qa/scenarios/M4-landlord-flow.md`: role landlord → list by urgency (`014, 013, 012, 010`); "Take on" → orange; "Resolved" → green; tenant confirmation → history (archived); "Reopen" |
+| S4.4 Resume | `qa/scenarios/M4-persistence-resume.md`: reload → same issues, same role (an explicit `role=` wins), own pieces not lost (`failmy=1`), suspension with the draft open |
+| S4.5 Move-in report | `qa/scenarios/M4-move-in-report.md`: "Move-in report" → blue placeholder from `issues-apartment-a.json`, "Sample data" |
+| S4.6 One-hand real scale (added) | `qa/scenarios/M4-one-hand-real-scale.md`: button `ui:tabletop-button` in real scale, return with one hand only (carry-over 1 from M3) |
+| S4.7 Tilted `pinned` menu (added) | `qa/scenarios/M4-pinned-menu-pitch.md`: cone ≤ 30° with pitch from +10° to −14° (carry-over 2) |
+| S4.8 Label, pillar, dead zone (added) | `qa/scenarios/M4-labels-and-markers.md`: hallway label readable, minimum height, viewpoint confirmation (carry-overs 3, 4, 6) |
+| S4.9 Quick regression (added) | `qa/scenarios/M4-regression.md`: S1.2, S1.3, S1.6, S2.1–S2.9, S3.0–S3.9 with `pinch=grip` and the corrected points |
+| S4.10 Budget (added) | `qa/scenarios/M4-budget.md`: K1–K13, M4 worst case K11 (forecast 74); ≥ 85 opens R-A in M5 |
 
-**Unit test**: macchina a stati (transizioni valide e vietate), serializzazione/deserializzazione,
-permessi per ruolo.
-**Gate visore**: pizzico prolungato distinto dal pizzico normale, pulsanti "Issues" e pannello leggibili e
-raggiungibili con una mano, scala reale a una mano ("Tabletop"), ripresa dopo aver tolto il visore; tastiera di
-sistema in WebXR e microfono nel Quest Browser solo se gli extra opzionali (T4.15, T4.16) sono stati fatti.
-Voci previste in `docs/plans/M4.md`, "Debito per `qa/device/DEBT.md`" (le aggiunge l'utente al gate).
+**Unit tests**: state machine (valid and forbidden transitions), serialization/deserialization,
+permissions per role.
+**Headset gate**: long pinch distinct from the normal pinch, "Issues" buttons and panel readable and
+reachable with one hand, one-hand real scale ("Tabletop"), resume after taking the headset off; system
+keyboard in WebXR and microphone in the Quest Browser only if the optional extras (T4.15, T4.16) were done.
+Rows planned in `docs/plans/M4.md`, "Debt for `qa/device/DEBT.md`" (added by the user at the gate).
+**Status 2026-11-16**: functionally verified on device by the owner, measurements pending (fps and real draw calls, fade durations).
 
-## M5 · Luce, agente, accessibilità, realtà mista
+## M5 · Light, agent, accessibility, mixed reality
 
-**Piano e decisioni D53–D64 in `docs/plans/M5.md` (consegnato il 2026-11-06, 🟨)**: prima il Blocco R (riporti 1–5 del gate di M4 più log e pulizia, T5.R1–T5.R6), poi sole (algoritmo proprio, **chiazze di luce al posto delle ombre**, pannello "View" con mese/ora, zoom e rotazione a pulsanti = T1.15 ridotto), agente (punti informativi, Furnish / Clear annullabile), accessibilità (alto contrasto, testo grande, "Rotate", coach del pulsante "Menu"), gate PC (T5.17) e revisione (T5.18). Stima: ≈ 30 h reali (centrale × 1,8); capacità fino a gio 12 ≈ 44 h. **Tagliati in partenza**: confronto di due disposizioni/case, mappa dell'interesse e domande (S5.2), realtà mista `?mr=1`, ombre con shadow map, trascinamento a una mano; **sotto la linea**: menu v2 a testo grande (T5.16). R-A (T5.RA) è condizionale al punto di controllo T5.7 (caso peggiore ≥ 85).
+**Plan and decisions D53–D64 in `docs/plans/M5.md` (delivered on 2026-11-06, 🟨)**: first Block R (carry-overs 1–5 from the M4 gate plus logs and cleanup, T5.R1–T5.R6), then sun (own algorithm, **light patches instead of shadows**, "View" panel with month/hour, button zoom and rotation = reduced T1.15), agent (info points, undoable Furnish / Clear), accessibility (high contrast, large text, "Rotate", coach of the "Menu" button), PC gate (T5.17) and review (T5.18). Estimate: ≈ 30 real hours (central × 1.8); capacity up to Thu 12 ≈ 44 h. **Cut from the start**: comparison of two layouts/houses, interest map and questions (S5.2), mixed reality `?mr=1`, shadows with shadow map, one-hand drag; **below the line**: large-text menu v2 (T5.16). R-A (T5.RA) is conditional on checkpoint T5.7 (worst case ≥ 85).
 
-**Riporti dal gate di M4 (avvisi del `contest-reviewer` e di `emulator-qa`, 2026-11-04), in ordine di importanza**: (1) **`transitionIssue` deve usare `state.role`** (il reducer oggi si fida del ruolo passato dal chiamante: oggi l'unico chiamante passa `state.role`, quindi nessun aggiramento reale, ma M5 aggiunge chiamanti); (2) **persistenza anche se `catalog.json` non si carica** (`src/index.ts` ripristina e salva solo con il catalogo: ruolo e segnalazioni andrebbero persi); (3) **chip "Agent"**: oggi è un ruolo senza funzioni con il suggerimento "Info points for agents are coming soon.": M5 consegna i punti informativi oppure si nasconde il chip prima di M7; (4) **accessibilità dell'elenco**: stato in parole o forma oltre al pallino colorato (D46), testo delle righe troncato a circa 16 caratteri, `Medium` a bordo pannello nel dettaglio, blu del verbale vicino al blu dei pilastri; (5) **apertura del dettaglio con due pressioni** (scopribilità): un'indicazione o un solo pizzico; (6) **scenari da allineare** (decisione dell'utente, non toccati): S3.0 verifica 4 (`state restored pieces=0` al posto di `state none` con il seme), S4.3 passo 4 (due pressioni), S4.5 passi 2 e 5 (interruttore spento di default), punti non liberi di S3.0 fase 2 e S3.5 passo 3; (7) il `warn` di framework `THREE.WebGLRenderer: Can't change size while VR device is presenting.` (solo `xr_end_session`) nel contratto dei log; (8) `console.error` di `src/index.ts` fuori dal prefisso, `strings.issues.comingSoon` quasi morto, `?glyphs=1` senza `debug=1`; (9) tetto di 40 pezzi che non conta i parcheggiati (rarissimo); (10) conferma completa di 0,30 s sul punto di vista (T4.R6) e corsivo W4 (T4.R7) se il visore le chiede.
+**Carry-overs from the M4 gate (warnings from the `contest-reviewer` and `emulator-qa`, 2026-11-04), in order of importance**: (1) **`transitionIssue` must use `state.role`** (the reducer today trusts the role passed by the caller: today the only caller passes `state.role`, so there is no real bypass, but M5 adds callers); (2) **persistence even if `catalog.json` does not load** (`src/index.ts` restores and saves only with the catalogue: role and issues would be lost); (3) **"Agent" chip**: today it is a role without functions with the hint "Info points for agents are coming soon.": M5 delivers the info points or the chip is hidden before M7; (4) **list accessibility**: status in words or shape besides the coloured dot (D46), row text truncated at about 16 characters, `Medium` at the panel edge in the detail, blue of the move-in report close to the blue of the pillars; (5) **opening the detail with two presses** (discoverability): an indication or a single pinch; (6) **scenarios to align** (user decision, not touched): S3.0 check 4 (`state restored pieces=0` instead of `state none` with the seed), S4.3 step 4 (two presses), S4.5 steps 2 and 5 (switch off by default), non-free points of S3.0 phase 2 and S3.5 step 3; (7) the framework `warn` `THREE.WebGLRenderer: Can't change size while VR device is presenting.` (only `xr_end_session`) in the log contract; (8) `console.error` of `src/index.ts` outside the prefix, `strings.issues.comingSoon` almost dead, `?glyphs=1` without `debug=1`; (9) cap of 40 pieces that does not count the parked ones (very rare); (10) full 0.30 s confirmation on the viewpoint (T4.R6) and italic W4 (T4.R7) if the headset asks for them.
 
-**Obiettivo**: tutte le funzioni della demo presenti. **Ripianificata il 2026-11-02 (9 – 12 nov, PC-done entro gio 12
-23:59 = congelamento delle funzioni)** e **ridotta al minimo che regge i tre atti**: restano sole, Furnish/Clear e
-punti informativi, alto contrasto e testo grande, "Rotate", onboarding del menu; sono tagliabili, in quest'ordine,
-confronto di due disposizioni/case, mappa dell'interesse e domande, realtà mista (`?mr=1`, fuori dalla demo salvo prova
-sul visore in due stanze), ombre (si evita R-A), modalità una mano completa. Il caso peggiore del ruolo agent arriva a
-~95 chiamate con le ombre: R-A (−16) è il primo task di M5 se ci sono le ombre (vedi `docs/plans/M4.md`).
+**Goal**: all the demo functions present. **Rescheduled on 2026-11-02 (9 – 12 Nov, PC-done by Thu 12
+23:59 = feature freeze)** and **reduced to the minimum that holds the three acts**: sun, Furnish/Clear and
+info points, high contrast and large text, "Rotate", menu onboarding remain; the following can be cut, in this order:
+comparison of two layouts/houses, interest map and questions, mixed reality (`?mr=1`, outside the demo unless tested
+on the headset in two rooms), shadows (R-A is avoided), complete one-hand mode. The worst case of the agent role reaches
+~95 calls with shadows: R-A (−16) is the first task of M5 if there are shadows (see `docs/plans/M4.md`).
 
-- `Sun` con SunCalc, manopola mese/ora, ombre solo nella stanza attiva.
-- Agente: punti informativi, "Furnish / Clear" (preset `staging`), mappa dell'interesse con
-  etichetta "Sample data", domande ricevute.
-- Confronto di due disposizioni e di due case.
-- Accessibilità: modalità una mano, alto contrasto, testo grande.
-- **Onboarding completo del menu del palmo** (rimandato da M2/T2.16, dove resta solo un suggerimento): insegnare il palmo in su, il pulsante "Menu" e la presa dal catalogo, con testo minimo in inglese.
-- **Menu e Recenter usabili con una mano sola** (voce esplicita, decisione del gate M2 del 2026-10-06; regola 9 di `CLAUDE.md`) — **CONSEGNATA IN M3 (2026-10-09, T3.3a/b, S3.7)**: il pulsante "Menu" fisso sul bordo del plastico (`ui:menu-button-left`/`-right`) apre con un pizzico di UNA mano il menu `pinned` (0,55 m davanti, 0,20 m sotto gli occhi, nel cono di 30°), che resta aperto senza tenere il palmo in su e contiene **Undo e Recenter**; non dipende dal gesto del palmo. **Cosa resta a M5**: (a) l'onboarding del pulsante; (b) il pulsante **"Rotate"** per ruotare un pezzo con una mano sola (oggi il tocco dell'altra mano, il polso funziona con una mano); (c) alto contrasto e testo grande anche per il menu `pinned`; (d) la scelta di aprire il menu `pinned` di default in modalità una mano; (e) S5.4 esteso a tutte le azioni di S2–S4 con la sola mano destra, partendo dal pulsante (la parte "Recenter e Undo a una mano" è già in S3.7); (f) la prova di raggiungibilità sul visore (i pulsanti stanno a ~0,65 m e ~46°, fuori dal cono di 30°: avviso dichiarato, voce in `qa/device/DEBT.md`).
-- **T1.15 · Zoom e rotazione del plastico con una mano** (alternativa ai gesti a due mani di M1,
-  che oggi sono l'unico modo per ruotare e ingrandire; regola 9). Proposta del piano M1: pizzico
-  trascinato con una mano sul plastico = rotazione attorno a Y; due pulsanti piccoli sul bordo
-  della base per zoom ± (pannello a 0,5–0,8 m); soglia tra "tocco" (etichetta stanza) e
-  "trascinamento" 1,5 cm. Lo scenario S5.4 va esteso a S1.2 (oltre a S2–S4) quando si pianifica M5.
-  In M1 l'onboarding si sblocca già con una mano (selezione di una stanza o timeout).
-  **Nota (decisione M2 del 2026-10-05)**: la *traslazione* a una mano esiste già dall'M2 e usa il
-  pizzico sulla **base libera** del plastico; la rotazione e lo zoom a una mano non devono usare
-  quella zona (usare i pulsanti sul bordo e/o il pizzico trascinato su una stanza, con
-  l'arbitraggio dei pizzichi dell'M2).
-- **Realtà mista (dietro flag `?mr=1`)**: misura dei mobili veri con il pizzico sugli spigoli e
-  plastico appoggiato su una superficie rilevata. Sul PC si prova con l'ambiente sintetico
-  dell'emulatore; entra nella demo solo se supera il gate visore in **due stanze diverse**.
+- `Sun` with SunCalc, month/hour knob, shadows only in the active room.
+- Agent: info points, "Furnish / Clear" (preset `staging`), interest map with
+  label "Sample data", questions received.
+- Comparison of two layouts and two houses.
+- Accessibility: one-hand mode, high contrast, large text.
+- **Complete palm menu onboarding** (postponed from M2/T2.16, where only a hint remains): teach palm up, the "Menu" button and the grab from the catalogue, with minimal text in English.
+- **Menu and Recenter usable with one hand only** (explicit item, decision of the M2 gate of 2026-10-06; rule 9 of `CLAUDE.md`) — **DELIVERED IN M3 (2026-10-09, T3.3a/b, S3.7)**: the fixed "Menu" button on the edge of the tabletop model (`ui:menu-button-left`/`-right`) opens with a pinch of ONE hand the `pinned` menu (0.55 m ahead, 0.20 m below the eyes, in the 30° cone), which stays open without holding the palm up and contains **Undo and Recenter**; it does not depend on the palm gesture. **What remains for M5**: (a) the button onboarding; (b) the **"Rotate"** button to rotate a piece with one hand only (today the touch of the other hand, the wrist works with one hand); (c) high contrast and large text also for the `pinned` menu; (d) the choice of opening the `pinned` menu by default in one-hand mode; (e) S5.4 extended to all the actions of S2–S4 with the right hand only, starting from the button (the "Recenter and Undo with one hand" part is already in S3.7); (f) the reachability check on the headset (the buttons sit at ~0.65 m and ~46°, outside the 30° cone: declared warning, row in `qa/device/DEBT.md`).
+- **T1.15 · Zoom and rotation of the tabletop model with one hand** (alternative to the two-hand gestures of M1,
+  which today are the only way to rotate and enlarge; rule 9). Proposal of the M1 plan: dragged
+  one-hand pinch on the tabletop model = rotation around Y; two small buttons on the edge
+  of the base for zoom ± (panel at 0.5–0.8 m); threshold between "touch" (room label) and
+  "drag" 1.5 cm. Scenario S5.4 must be extended to S1.2 (besides S2–S4) when M5 is planned.
+  In M1 the onboarding is already unlocked with one hand (selection of a room or timeout).
+  **Note (M2 decision of 2026-10-05)**: the one-hand *translation* already exists since M2 and uses the
+  pinch on the **free base** of the tabletop model; one-hand rotation and zoom must not use
+  that zone (use the buttons on the edge and/or the dragged pinch on a room, with the
+  pinch arbitration of M2).
+- **Mixed reality (behind flag `?mr=1`)**: measuring real furniture with the pinch on the edges and
+  tabletop model resting on a detected surface. On the PC it is tried with the synthetic environment
+  of the emulator; it enters the demo only if it passes the headset gate in **two different rooms**.
 
-| Scenario PC | Verifica |
+| PC scenario | Check |
 |---|---|
-| S5.1 Sole | `qa/scenarios/M5-sun.md`: `time=2026-12-21T10:00` → chiazze di sole nel soggiorno; `T15:00` → soggiorno in ombra e studio al sole; ora legale a giugno; notte; precedenza `time=` > salvato (aggiornato dal piano M5) |
-| S5.2 Mappa | **TAGLIATA** dal piano M5 (nessun file): la mappa dell'interesse e le domande non entrano |
-| S5.3 Agente: punti informativi e Furnish / Clear | `qa/scenarios/M5-agent.md`: ruolo visitor/agent → 5 punti informativi con "Sample data"; "Furnish" → 14 pezzi; Undo o "Clear" → casa vuota; nessun pulsante in `apartment-b` (aggiornato dal piano M5) |
-| S5.4 Una mano | `qa/scenarios/M5-one-hand.md`: zoom, rotazione, pezzo, "Rotate", segnalazione, ritorno con la sola mano destra; nessun evento della sinistra (aggiornato dal piano M5) |
-| S5.5 Demo completa | `qa/scenarios/M5-full-demo.md`: percorso dei tre atti, zero errori in console; il tempo di 10 minuti vale sul visore, sul PC si conta (aggiornato dal piano M5) |
-| S5.6 Accessibilità (aggiunto) | `qa/scenarios/M5-accessibility.md`: alto contrasto (≥ 7:1 da test) e testo grande ≥ 3,0 cm, persistenza e parametri |
-| S5.7 Onboarding del pulsante Menu (aggiunto) | `qa/scenarios/M5-menu-onboarding.md`: coach a due passi, ripresa, timeout |
-| S5.8 Riporti dal gate di M4 (aggiunto) | `qa/scenarios/M5-carryovers.md`: R1–R6 |
-| S5.9 Budget (aggiunto) | `qa/scenarios/M5-budget.md`: K1–K18, caso peggiore previsto ~82; ≥ 85 apre T5.RA |
-| S5.10 Regressione rapida (aggiunto) | `qa/scenarios/M5-regression.md`: S1.2, S1.3, S1.6, S2.1–S2.9, S3.0–S3.9, S4.1, S4.3–S4.8 con `pinch=grip` |
+| S5.1 Sun | `qa/scenarios/M5-sun.md`: `time=2026-12-21T10:00` → sun patches in the living room; `T15:00` → living room in shade and study in the sun; daylight saving time in June; night; precedence `time=` > saved (updated by the M5 plan) |
+| S5.2 Map | **CUT** by the M5 plan (no file): the interest map and the questions do not enter |
+| S5.3 Agent: info points and Furnish / Clear | `qa/scenarios/M5-agent.md`: role visitor/agent → 5 info points with "Sample data"; "Furnish" → 14 pieces; Undo or "Clear" → empty house; no button in `apartment-b` (updated by the M5 plan) |
+| S5.4 One hand | `qa/scenarios/M5-one-hand.md`: zoom, rotation, piece, "Rotate", issue, return with the right hand only; no event from the left (updated by the M5 plan) |
+| S5.5 Full demo | `qa/scenarios/M5-full-demo.md`: path of the three acts, zero console errors; the 10-minute time holds on the headset, on the PC it is counted (updated by the M5 plan) |
+| S5.6 Accessibility (added) | `qa/scenarios/M5-accessibility.md`: high contrast (≥ 7:1 from tests) and large text ≥ 3.0 cm, persistence and parameters |
+| S5.7 Menu button onboarding (added) | `qa/scenarios/M5-menu-onboarding.md`: two-step coach, resume, timeout |
+| S5.8 Carry-overs from the M4 gate (added) | `qa/scenarios/M5-carryovers.md`: R1–R6 |
+| S5.9 Budget (added) | `qa/scenarios/M5-budget.md`: K1–K18, forecast worst case ~82; ≥ 85 opens T5.RA |
+| S5.10 Quick regression (added) | `qa/scenarios/M5-regression.md`: S1.2, S1.3, S1.6, S2.1–S2.9, S3.0–S3.9, S4.1, S4.3–S4.8 with `pinch=grip` |
 
-**Gate visore**: realtà mista in due stanze mai provate prima: **ripresa il 2026-11-11 come funzione opt-in `?mr=1`** sul ramo `claude/eager-mendel-skcibe` (piano `docs/plans/MR.md`, gate PC superato `qa/reports/MR-2026-11-12.md`; Device-done in attesa; entra in `main` solo dopo la prova in due stanze entro domenica 15 mattina) (prima: tagliata, D74 del piano M6),
-fps con le chiazze di luce del sole (non ci sono ombre vere), contrasto leggibile, sessione completa di 10 minuti
-senza fastidio. (Riallineato il 2026-11-07 con `docs/DEVICE_CHECKLIST.md`.)
+**Headset gate**: mixed reality in two rooms never tried before: **taken up again on 2026-11-11 as the opt-in feature `?mr=1`** on branch `claude/eager-mendel-skcibe` (plan `docs/plans/MR.md`, PC gate passed `qa/reports/MR-2026-11-12.md`; it enters `main` only after the test in two rooms by Sunday 15 morning) (before: cut, D74 of the M6 plan),
+fps with the sun light patches (there are no real shadows), readable contrast, complete 10-minute session
+without discomfort. (Realigned on 2026-11-07 with `docs/DEVICE_CHECKLIST.md`.)
+**Status 2026-11-16**: functionally verified on device by the owner (contrast, large text, agent, Rotate, coach, sun, one-hand mode, resume; mixed reality owner-reported), measurements pending (fps and real draw calls, the 10-minute full-demo timing, font-startup console checks).
 
-## M6 · Integrazione con il visore
+## M6 · Headset integration
 
-**Obiettivo**: saldare tutto il debito in `qa/device/DEBT.md` e raggiungere Device-done per M1–M5.
-**Piano e decisioni D65–D79 in `docs/plans/M6.md` (consegnato il 2026-11-07, 🟨)**; guida per l'utente (Fedora, adb,
-certificato, debug remoto, Meta VR CLI e "Strumenti di M6"): `docs/QUEST_SETUP.md`. Due fasi.
+**Goal**: settle all the debt in `qa/device/DEBT.md` and reach Device-done for M1–M5.
+**Plan and decisions D65–D79 in `docs/plans/M6.md` (delivered on 2026-11-07, 🟨)**; user guide (Fedora, adb,
+certificate, remote debugging, Meta VR CLI and "M6 tools"): `docs/QUEST_SETUP.md`. Two phases.
 
-- **Fase A · prima del visore (sab 7 – lun 9 nov)**, solo strumenti dietro `debug=1` o fuori dall'app, **default
-  invariati** e nessuna funzione nuova (T6.A1–T6.A13): manopole di taratura `t_<nome>` (URL, `dev-params.local.txt`,
-  file vivo `tuning.local.txt` riletto ogni 2 s, `foveation`), pannello di statistiche nel visore `ui:debug-hud`
-  (`hud=0` lo spegne), righe `[soglia:frames]`, `[soglia:stats:summary]` e `[soglia:env]` (sonda delle funzioni del
-  browser), script `npm run quest:*` per `adb` e `metavr`, maschera del campo visivo stretto (opzionale), pagina di
-  avvio (opzionale). Stima: nucleo ≈ 18 h reali, tutto ≈ 22 h (centrale × 1,8). Scenari PC: S6.1 taratura, S6.2
-  frame e pannello, S6.3 sonda, S6.4 script, S6.5 regressione ridotta e budget (`qa/scenarios/M6-*.md`).
-- **Fase B · con il visore (da mar 10 nov)**: sessioni S0 fumo e ambiente (mar sera), S1 mani (mer mattina),
-  S2 viaggi e dati (mer pomeriggio), S3 luce, agente, accessibilità e prestazioni (gio mattina), decisione dei
-  default (gio sera, entro il congelamento), S4 riverifica e gate (ven 13); ripiego L1–L3 se il visore tarda.
-  Esecuzione di `docs/DEVICE_CHECKLIST.md` (riallineata il 2026-11-07) e di `qa/device/DEBT.md` per priorità; taratura
-  con protocolli a soglie numeriche; budget grafico reale con criterio D71 (nessuna finestra di 2 s sotto 60 fps).
-- **Realtà mista: ripresa il 2026-11-11 (decisione dell'utente, versione completa)** come funzione opt-in `?mr=1`: mobili veri dalla scansione Space Setup (contorni, misure, `Add to Mine` verso il FitCheck) e mobili virtuali a grandezza reale sul pavimento. Piano `docs/plans/MR.md`, gate PC superato (`qa/reports/MR-2026-11-12.md`), Device-done in attesa: si prova in due stanze ed entra nella demo solo se supera la prova entro domenica 15 mattina. (Prima: tagliata, D74.)
+- **Phase A · before the headset (Sat 7 – Mon 9 Nov)**, only tools behind `debug=1` or outside the app, **defaults
+  unchanged** and no new function (T6.A1–T6.A13): tuning knobs `t_<name>` (URL, `dev-params.local.txt`,
+  live file `tuning.local.txt` re-read every 2 s, `foveation`), in-headset statistics panel `ui:debug-hud`
+  (`hud=0` switches it off), lines `[soglia:frames]`, `[soglia:stats:summary]` and `[soglia:env]` (probe of the browser
+  features), `npm run quest:*` scripts for `adb` and `metavr`, narrow field of view mask (optional), start
+  page (optional). Estimate: core ≈ 18 real hours, everything ≈ 22 h (central × 1.8). PC scenarios: S6.1 tuning, S6.2
+  frames and panel, S6.3 probe, S6.4 scripts, S6.5 reduced regression and budget (`qa/scenarios/M6-*.md`).
+- **Phase B · with the headset (from Tue 10 Nov)**: sessions S0 smoke and environment (Tue evening), S1 hands (Wed morning),
+  S2 trips and data (Wed afternoon), S3 light, agent, accessibility and performance (Thu morning), decision on the
+  defaults (Thu evening, by the freeze), S4 re-verification and gate (Fri 13); fallback L1–L3 if the headset is late.
+  Execution of `docs/DEVICE_CHECKLIST.md` (realigned on 2026-11-07) and of `qa/device/DEBT.md` by priority; tuning
+  with protocols with numeric thresholds; real graphics budget with criterion D71 (no 2 s window under 60 fps).
+  **Progress**: first headset session 2026-11-11 (see `qa/device/DEBT.md`), owner's functional device test 2026-11-16 (everything works, no numbers); the tuning protocols, the developer-tooling rows and all measurements are still open.
+- **Mixed reality: taken up again on 2026-11-11 (user decision, full version)** as the opt-in feature `?mr=1`: real furniture from the Space Setup scan (outlines, measurements, `Add to Mine` towards the FitCheck) and virtual furniture at real size on the floor. Plan `docs/plans/MR.md`, PC gate passed (`qa/reports/MR-2026-11-12.md`); owner-reported functional test on the headset on 2026-11-16 (measurements pending). (Before: cut, D74.)
 
-**Gate**: tutte le voci della checklist superate o motivate (le righe `alta` di DEBT.md per milestone, D77); fps ≥ 60
-in tutta la demo (D71); nessuna dichiarazione "funziona sul visore" senza il report in `qa/device/`.
+**Gate**: all the checklist items passed or justified (the `high` rows of DEBT.md per milestone, D77); fps ≥ 60
+across the whole demo (D71); no statement "works on the headset" without the report in `qa/device/`.
 
-## M7 · Rifinitura e consegna
+## M7 · Polish and delivery
 
-- `submission-writer`: descrizione Devpost (inglese), tagline ≤ 140 caratteri, istruzioni di test,
-  copione e sottotitoli del video.
-- Video < 3 minuti con riprese reali (visore o emulatore), niente video generati con AI.
-- `contest-reviewer`: revisione finale su `docs/RULES.md`.
-- **`README.md`** (ancora a "M0", con "solo CC0" che contraddice le tre eccezioni di `docs/RULES.md`) e
-  **`docs/DATA_FORMATS.md` in inglese** (oggi in italiano): riporto (8) del gate di M3, da fare prima della consegna.
-- Deploy manuale su GitHub Pages, prova del link (dal visore se c'è), **consegna interna martedì 17 novembre, 18:00**
-  (scadenza ufficiale mercoledì 18 novembre, 12:00 PT = 21:00 in Italia; mercoledì mattina di riserva).
-- **Congelamento delle funzioni giovedì 12 novembre 2026, 23:59** (nessun task nuovo dopo mer 11 nov, 12:00); poi
-  **congelamento del sito** dalla consegna fino all'annuncio dei vincitori (nessun deploy).
+**Status 2026-11-16**: in progress. The project was renamed to Floorplay and all documentation translated to English on this date (see the changelog).
+
+- `submission-writer`: Devpost description (English), tagline ≤ 140 characters, test instructions,
+  script and subtitles of the video.
+- Video < 3 minutes with real footage (headset or emulator), no AI-generated videos.
+- `contest-reviewer`: final review against `docs/RULES.md`.
+- **`README.md`** (still at "M0", with "CC0 only" that contradicts the three exceptions of `docs/RULES.md`) and
+  **`docs/DATA_FORMATS.md` in English**: carry-over (8) from the M3 gate, done on 2026-11-16. (Documentation translated to English on 2026-11-16.)
+- Manual deploy to GitHub Pages (https://thirdchildren.github.io/floorplay/), link check (from the headset if available), **internal delivery Tuesday 17 November, 18:00**
+  (official deadline Wednesday 18 November, 12:00 PT = 21:00 in Italy; Wednesday morning in reserve).
+- **Feature freeze Thursday 12 November 2026, 23:59** (no new task after Wed 11 Nov, 12:00); then
+  **site freeze** from delivery until the winners are announced (no deploy).
+
 
 ## Changelog
 
-- 2026-11-07 (notte): **M6 fase A PC-done (gate PC T6.A13 SUPERATO)**: report `qa/reports/M6-2026-11-07.md` (`emulator-qa`, HEAD `96f874f`): S6.1–S6.5 PASS, zero bloccanti, console pulita, **144 file e 6905 test verdi** (M5: 131 e 6434), typecheck e build ok, `hud=0` uguale a M5 rimisurato nello stesso stato (K2 50, K3 58, K12 26, K18 68; HUD +2 chiamate, limite +3), pacchetto **+9,3 kB gzip** (limite +20). Avvisi documentali corretti nei documenti: A1 (la crescita è +9,3 e non +3,5 kB), A2 (i numeri K di `qa/scenarios/M5-budget.md` non si riproducono nemmeno su M5: nota aggiunta; il confronto D65 si fa su M5 rimisurato nello stesso stato, regola fissata in S6.2 e S6.5), A5 (criterio sui test esistenti riformulato), A6 (S6.2 passo 4 senza `time=` nel `BASE`), A7 (`F8` non emette `visibilitychange`). **A3 (maschera con una chiamata non attribuita al gruppo `hud`) e A4 (HUD coperto dalla colonna dei pulsanti di sinistra dalla testa di default) sono in correzione da `xr-engineer`** (solo `debug=1`). **Fase B dal 10 nov** con l'arrivo del visore; nessuna voce è Device-done.
-- 2026-11-07 (sera): **M6 fase A implementata (T6.A1–T6.A11) e T6.A12 fatta** (documenti riallineati al codice, nessun codice toccato dal pianificatore): `docs/plans/M6.md` ("Esiti" compilata con ciò che c'è davvero: 26 manopole `t_*` tutte cablate con default di M5, strati live > url > file, 11 script `quest:*` con 12 preset, HUD `ui:debug-hud` +2 chiamate, maschera `debug:fov-mask`, `quest.html`, build +9,3 kB gzip dopo il gate, la prima stima era +3,5), `docs/QUEST_SETUP.md` (sezione 4.2 con il quoting giusto di `adb shell`, sezione 11 con lo stato reale e il procedimento di martedì), `docs/DEVICE_CHECKLIST.md`, `qa/device/DEBT.md` (13 righe M6), scenari S6.1–S6.5 allineati e ordine del gate in `qa/scenarios/M6-regression.md`. **Resta il gate PC T6.A13** (`emulator-qa`); nulla è provato sul visore.
-- 2026-11-07: **piano M6 consegnato (M6 ⬜ → 🟨)**: `docs/plans/M6.md` (decisioni D65–D79, fase A T6.A1–T6.A13, fase B sessioni S0–S4 con protocolli di taratura a soglie numeriche, ripiego L1–L3 se il visore tarda, rischi R57–R73, debito per `DEBT.md`, stima onesta: fase A nucleo ≈ 18 h reali / tutto ≈ 22 h, fase B ≈ 12,5 h di sessioni sul visore + ≈ 16 h di lavoro dell'agente) e scenari `qa/scenarios/M6-*.md` (S6.1–S6.5). Fase A = solo strumenti dietro `debug=1` o fuori dall'app, default invariati, nessuna dipendenza nuova. **Realtà mista tagliata e fuori dal gate** (D74, conferma di M5). `docs/DEVICE_CHECKLIST.md` riallineata (sette segnalazioni di `quest-integrator`: chiazze di luce al posto delle ombre, realtà mista tagliata, tastiera/microfono/presa a distanza non applicabili, voci mancanti di DEBT.md aggiunte, `debug=1` per `[soglia:stats]`, HTTPS autofirmato anche su `localhost`, `dev-params.local.txt` sul visore) e sezione 11 di `docs/QUEST_SETUP.md` completata con lo stato "da implementare". Stato di M5 invariato (✅ PC-done); nulla è provato sul visore.
-- 2026-11-06: **M5 🟨 → ✅ PC-done** (report unificato `qa/reports/M5-2026-11-06.md`, con i parziali AB, rerun e C2D; scenari S5.1, S5.3–S5.10 e regressioni S1.x, S2.x, S3.x, S4.x superati). Consegnati: Blocco R (riporti 1–8 di M4), sole in logica pura con chiazze di luce e dicitura "Simplified light", pannello "View" (sole, zoom, rotazione, contrasto, testo), punti informativi e Furnish/Clear del ruolo agent, alto contrasto (≥ 7:1), testo grande (pannelli scalati ×1,25, finestra di beccheggio ±8° dichiarata), "Rotate" a una mano, coach del pulsante Menu, T5.RA (muri e soglie uniti, −16 chiamate). Caso peggiore 70 chiamate per vista, 32.766 triangoli. Corretti dopo il gate: F1, W1, W2, F-D-1, F-D-2 e gli avvisi 3–9 del `contest-reviewer`. Aperti: rilettura del regolamento ufficiale (sito Devpost non raggiungibile dalla sessione), N2/N3 da rimisurare sul visore. Nulla è provato sul visore: voci M5 in `qa/device/DEBT.md`. M3 e M4 uniti in `main` con squash (PR #1 e #2).
-- 2026-11-06: **piano M5 consegnato (M5 ⬜ → 🟨)**: `docs/plans/M5.md` (decisioni D53–D64, Blocco R T5.R1–T5.R6, task T5.1–T5.18 con T5.16 sotto la linea e T5.RA condizionale, previsione dei draw call con caso peggiore ~82, rischi, debito, stima ≈ 30 h reali, ordine dei tagli) e scenari `qa/scenarios/M5-*.md` (S5.1, S5.3–S5.10). **Tagliati in partenza**: confronto di due disposizioni/case, mappa dell'interesse e domande (S5.2), realtà mista, ombre con shadow map (sostituite da chiazze di luce), trascinamento a una mano (T1.15 ridotto a pulsanti nel pannello "View"). Correzioni agli scenari esistenti (riporto 6) **applicate il 2026-11-06 su decisione dell'utente** (S3.0, S3.5, S4.3, S4.5, ciascuno con riga di changelog); confermate anche le chiazze di sole al posto delle shadow map, il pannello "View" unico e lo staging solo per apartment-a. Stato di M4 invariato (✅ PC-done).
-- 2026-11-02: **piano M4 consegnato (M4 ⬜ → 🟨)**: `docs/plans/M4.md` (decisioni D39–D52, Blocco R dei riporti di M3, task T4.R1–T4.R7 e T4.1–T4.14, previsione dei draw call, rischi, debito, stima onesta con fattore 1,8) e scenari `qa/scenarios/M4-*.md` (S4.1–S4.10). **Calendario M4–M7 ripianificato** (le date precedenti erano superate): M4 PC-done atteso dom 8 nov (limite lun 9), M5 ridotta 9–12 nov, **congelamento delle funzioni gio 12 nov 23:59**, M6 appena c'è il Quest (sessione principale ven 13), M7 14–17 nov con consegna interna mar 17, 18:00; tagli in ordine e scenari A/B in `docs/plans/M4.md`. Testo con le sole mani: frasi predefinite (D40), tastiera di sistema e nota vocale opzionali e tagliate di partenza. Cambio ruolo dal nuovo pannello "Issues" (D41). Scenari corretti nei punti di partenza (non nei criteri), con riga di changelog in testa: S1.2, S2.6, S2.9, S3.0, S3.2, S3.3 e nota condizionale su S3.1. `README.md` e `docs/DATA_FORMATS.md` in inglese passano a M7. Stato di M3 invariato (✅ PC-done).
-- 2026-11-04: **M4 🟨 → ✅ PC-done** (report `qa/reports/M4-2026-11-03.md`; scenari S4.1–S4.8, S4.10 e regressioni S1.x, S2.x, S3.x superati; `contest-reviewer`: APPROVATO CON AVVISI, nessun bloccante). Caso peggiore di draw call 75 per vista (< 85: R-A non è il primo task di M5). Chiuso con 5 giorni di anticipo sul piano rivisto (previsto dom 8–lun 9 nov). Voci M4 aggiunte a `qa/device/DEBT.md`. Una differenza di criterio da decidere: S3.0 verifica 4. Riporti a M5 nella sezione M5.
-- 2026-11-02: **M3 🟨 → ✅ PC-done** (report `qa/reports/M3-2026-10-10.md`; scenari S3.0–S3.9 e regressioni S1.1–S1.6, S2.0–S2.9 superati; `contest-reviewer`: APPROVATO CON AVVISI, nessun bloccante). T3.15 tagliato (presa e misura a distanza passano a M5/M7). Chiarimento della regola 8 in `docs/RULES.md` (ingressi di riserva fino a 45°: due pulsanti Menu laterali a ±0,45 m). Voci M3 aggiunte a `qa/device/DEBT.md`. **Calendario non aggiornato**: M3 si chiude il 2 novembre invece del 12–13 ottobre e restano 16 giorni alla consegna del 18 novembre per M4–M7: da ripianificare con l'utente (tagli possibili: presa a distanza, voce, agente).
-- 2026-10-09: piano M3 consegnato (`docs/plans/M3.md`, scenari `qa/scenarios/M3-*.md`): **M3 ⬜ → 🟨**. Richiesta dell'utente: i primi quattro task sono salvataggio minimo in `localStorage` + ciclo di vita, palmo e pizzico dai giunti, pulsante "Menu" a una mano, previsione dei draw call fino a M5. Righe scenari aggiunte (S3.0, S3.6–S3.10). **M4**: `Persistence` ha già la prima fetta (nota). **M5**: la voce "menu e Recenter usabili con una mano sola" è riscritta come consegnata in M3, con l'elenco di ciò che resta a M5 (onboarding del pulsante, "Rotate", alto contrasto, default una mano, S5.4, prova sul visore). Nessun altro stato di milestone è cambiato.
-- 2026-10-07: M2 PC-done (report `qa/reports/M2-2026-10-06-rerun3.md`; `contest-reviewer`: SUPERATO CON RISERVE, nessun bloccante). Gate visore di M2 in debito: voci aggiunte o allineate in `qa/device/DEBT.md`. Stato di M3+ invariato (lo aggiorna il piano M3).
-- 2026-10-06: M5 ha ora la voce esplicita "menu e Recenter usabili con una mano sola" (menu `pinned`, Undo e Recenter inclusi) — decisione dell'utente sul gate di M2 (finding del report `qa/reports/M2-2026-10-06.md`). Nessuno stato di milestone è cambiato.
+- 2026-11-16: **project renamed Soglia → Floorplay** (app title, page title, package, schemas, README; repository
+  to be renamed `ThirdChildren/floorplay`, Pages URL https://thirdchildren.github.io/floorplay/). Source code released
+  under the MIT License. **All documentation translated to English** (CLAUDE.md, `docs/`, plans, QA scenarios and
+  reports, subagent definitions). **Device status**: the owner tested the latest features on the Quest and reported
+  that everything works; `qa/device/DEBT.md` records functional rows as passed (owner's test) and measurement rows as
+  pending (no numbers reported). Official rules reread from the full page (see `docs/RULES.md`). M7 (submission) in progress.
+- 2026-11-07 (night): **M6 phase A PC-done (PC gate T6.A13 PASSED)**: report `qa/reports/M6-2026-11-07.md` (`emulator-qa`, HEAD `96f874f`): S6.1–S6.5 PASS, zero blockers, clean console, **144 files and 6905 tests green** (M5: 131 and 6434), typecheck and build ok, `hud=0` equal to M5 remeasured in the same state (K2 50, K3 58, K12 26, K18 68; HUD +2 calls, limit +3), bundle **+9.3 kB gzip** (limit +20). Documentation warnings fixed in the documents: A1 (the growth is +9.3 and not +3.5 kB), A2 (the K numbers of `qa/scenarios/M5-budget.md` do not reproduce even on M5: note added; the D65 comparison is made on M5 remeasured in the same state, rule fixed in S6.2 and S6.5), A5 (criterion on existing tests reworded), A6 (S6.2 step 4 without `time=` in the `BASE`), A7 (`F8` does not emit `visibilitychange`). **A3 (mask with one call not attributed to the `hud` group) and A4 (HUD covered by the left button column from the default head) are being fixed by `xr-engineer`** (only `debug=1`). **Phase B from 10 Nov** with the arrival of the headset; no item is Device-done.
+- 2026-11-07 (evening): **M6 phase A implemented (T6.A1–T6.A11) and T6.A12 done** (documents realigned with the code, no code touched by the planner): `docs/plans/M6.md` ("Outcomes" filled in with what really exists: 26 `t_*` knobs all wired with M5 defaults, live > url > file layers, 11 `quest:*` scripts with 12 presets, HUD `ui:debug-hud` +2 calls, `debug:fov-mask` mask, `quest.html`, build +9.3 kB gzip after the gate, the first estimate was +3.5), `docs/QUEST_SETUP.md` (section 4.2 with the correct `adb shell` quoting, section 11 with the real state and Tuesday's procedure), `docs/DEVICE_CHECKLIST.md`, `qa/device/DEBT.md` (13 M6 rows), scenarios S6.1–S6.5 aligned and gate order in `qa/scenarios/M6-regression.md`. **The PC gate T6.A13 remains** (`emulator-qa`); nothing is proven on the headset.
+- 2026-11-07: **M6 plan delivered (M6 ⬜ → 🟨)**: `docs/plans/M6.md` (decisions D65–D79, phase A T6.A1–T6.A13, phase B sessions S0–S4 with tuning protocols based on numeric thresholds, fallback L1–L3 if the headset is late, risks R57–R73, debt for `DEBT.md`, honest estimate: phase A core ≈ 18 real hours / everything ≈ 22 h, phase B ≈ 12.5 h of headset sessions + ≈ 16 h of agent work) and scenarios `qa/scenarios/M6-*.md` (S6.1–S6.5). Phase A = only tools behind `debug=1` or outside the app, defaults unchanged, no new dependency. **Mixed reality cut and outside the gate** (D74, confirmation of M5). `docs/DEVICE_CHECKLIST.md` realigned (seven reports from `quest-integrator`: light patches instead of shadows, mixed reality cut, keyboard/microphone/distance grab not applicable, missing DEBT.md items added, `debug=1` for `[soglia:stats]`, self-signed HTTPS also on `localhost`, `dev-params.local.txt` on the headset) and section 11 of `docs/QUEST_SETUP.md` completed with the status "to be implemented". M5 status unchanged (✅ PC-done); nothing is proven on the headset.
+- 2026-11-06: **M5 🟨 → ✅ PC-done** (unified report `qa/reports/M5-2026-11-06.md`, with the partial reports AB, rerun and C2D; scenarios S5.1, S5.3–S5.10 and regressions S1.x, S2.x, S3.x, S4.x passed). Delivered: Block R (carry-overs 1–8 from M4), sun in pure logic with light patches and the "Simplified light" label, "View" panel (sun, zoom, rotation, contrast, text), info points and Furnish/Clear for the agent role, high contrast (≥ 7:1), large text (panels scaled ×1.25, declared pitch window ±8°), one-handed "Rotate", Menu button coach, T5.RA (walls and thresholds merged, −16 calls). Worst case 70 calls per view, 32,766 triangles. Fixed after the gate: F1, W1, W2, F-D-1, F-D-2 and warnings 3–9 from `contest-reviewer`. Open: rereading of the official rules (Devpost site not reachable from the session), N2/N3 to remeasure on the headset. Nothing is proven on the headset: M5 items in `qa/device/DEBT.md`. M3 and M4 merged into `main` with squash (PR #1 and #2).
+- 2026-11-06: **M5 plan delivered (M5 ⬜ → 🟨)**: `docs/plans/M5.md` (decisions D53–D64, Block R T5.R1–T5.R6, tasks T5.1–T5.18 with T5.16 below the line and conditional T5.RA, draw call forecast with worst case ~82, risks, debt, estimate ≈ 30 real hours, order of cuts) and scenarios `qa/scenarios/M5-*.md` (S5.1, S5.3–S5.10). **Cut from the start**: comparison of two layouts/houses, interest map and questions (S5.2), mixed reality, shadow-map shadows (replaced by light patches), one-handed dragging (T1.15 reduced to buttons in the "View" panel). Corrections to the existing scenarios (carry-over 6) **applied on 2026-11-06 by decision of the user** (S3.0, S3.5, S4.3, S4.5, each with a changelog line); also confirmed: sun patches instead of shadow maps, the single "View" panel and staging only for apartment-a. M4 status unchanged (✅ PC-done).
+- 2026-11-02: **M4 plan delivered (M4 ⬜ → 🟨)**: `docs/plans/M4.md` (decisions D39–D52, Block R of the M3 carry-overs, tasks T4.R1–T4.R7 and T4.1–T4.14, draw call forecast, risks, debt, honest estimate with factor 1.8) and scenarios `qa/scenarios/M4-*.md` (S4.1–S4.10). **M4–M7 calendar rescheduled** (the previous dates were out of date): M4 PC-done expected Sun 8 Nov (limit Mon 9), M5 reduced 9–12 Nov, **feature freeze Thu 12 Nov 23:59**, M6 as soon as the Quest is available (main session Fri 13), M7 14–17 Nov with internal delivery Tue 17, 18:00; cuts in order and A/B scenarios in `docs/plans/M4.md`. Text with hands only: predefined phrases (D40), system keyboard and voice note optional and cut from the start. Role change from the new "Issues" panel (D41). Scenarios corrected in their starting points (not in the criteria), with a changelog line at the top: S1.2, S2.6, S2.9, S3.0, S3.2, S3.3 and a conditional note on S3.1. `README.md` and `docs/DATA_FORMATS.md` in English move to M7. M3 status unchanged (✅ PC-done).
+- 2026-11-04: **M4 🟨 → ✅ PC-done** (report `qa/reports/M4-2026-11-03.md`; scenarios S4.1–S4.8, S4.10 and regressions S1.x, S2.x, S3.x passed; `contest-reviewer`: APPROVED WITH WARNINGS, no blockers). Worst case 75 draw calls per view (< 85: R-A is not the first task of M5). Closed 5 days ahead of the revised plan (expected Sun 8–Mon 9 Nov). M4 items added to `qa/device/DEBT.md`. One criterion difference to decide: S3.0 check 4. Carry-overs to M5 in the M5 section.
+- 2026-11-02: **M3 🟨 → ✅ PC-done** (report `qa/reports/M3-2026-10-10.md`; scenarios S3.0–S3.9 and regressions S1.1–S1.6, S2.0–S2.9 passed; `contest-reviewer`: APPROVED WITH WARNINGS, no blockers). T3.15 cut (distance grab and distance measurement move to M5/M7). Clarification of rule 8 in `docs/RULES.md` (fallback entry points up to 45°: two side Menu buttons at ±0.45 m). M3 items added to `qa/device/DEBT.md`. **Calendar not updated**: M3 closes on 2 November instead of 12–13 October, and 16 days remain until the 18 November delivery for M4–M7: to be rescheduled with the user (possible cuts: distance grab, voice, agent).
+- 2026-10-09: M3 plan delivered (`docs/plans/M3.md`, scenarios `qa/scenarios/M3-*.md`): **M3 ⬜ → 🟨**. User request: the first four tasks are minimal saving in `localStorage` + lifecycle, palm and pinch from the joints, one-handed "Menu" button, draw call forecast up to M5. Scenario rows added (S3.0, S3.6–S3.10). **M4**: `Persistence` already has its first slice (note). **M5**: the item "menu and Recenter usable with one hand" is rewritten as delivered in M3, with the list of what remains for M5 (button onboarding, "Rotate", high contrast, one-hand default, S5.4, headset test). No other milestone status changed.
+- 2026-10-07: M2 PC-done (report `qa/reports/M2-2026-10-06-rerun3.md`; `contest-reviewer`: PASSED WITH RESERVATIONS, no blockers). M2 headset gate in debt: items added or aligned in `qa/device/DEBT.md`. M3+ status unchanged (updated by the M3 plan).
+- 2026-10-06: M5 now has the explicit item "menu and Recenter usable with one hand" (menu `pinned`, Undo and Recenter included) — user decision on the M2 gate (finding of the report `qa/reports/M2-2026-10-06.md`). No milestone status changed.

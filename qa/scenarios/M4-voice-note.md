@@ -1,30 +1,30 @@
-# S4.2 · Nota vocale (opzionale) e assenza di pulsanti morti
+# S4.2 · Voice note (optional) and no dead buttons
 
-> **Changelog 2026-11-02**: scenario creato dal piano M4 (D40, T4.15). Vale la parte A **sempre**; la parte B solo se T4.15 è stato eseguito.
+> **Changelog 2026-11-02**: scenario created from the M4 plan (D40, T4.15). Part A applies **always**; part B only if T4.15 was done.
 
-**Milestone**: M4 · **Tipo**: PC (emulatore IWER via MCP) · **Regole di `CLAUDE.md`**: 5 (feature detection con alternativa), 1, 10
-Prerequisiti di implementazione: T4.7 (parte A); T4.15 (parte B). Vedi `docs/plans/M4.md`, D40, "Il problema del testo con le sole mani". Convenzioni: `qa/scenarios/M4-issue-create.md`.
+**Milestone**: M4 · **Type**: PC (IWER emulator via MCP) · **`CLAUDE.md` rules**: 5 (feature detection with fallback), 1, 10
+Implementation prerequisites: T4.7 (part A); T4.15 (part B). See `docs/plans/M4.md`, D40, "The problem of text with hands only". Conventions: `qa/scenarios/M4-issue-create.md`.
 
-## Precondizioni
-- `dev-params.local.txt` = `house=apartment-a&role=tenant&reset=1&seed=1&debug=1&pinch=grip&time=2026-11-04T10:00`; preparazione standard. Chrome desktop espone `MediaRecorder` e `navigator.mediaDevices.getUserMedia`, ma **senza microfono** nell'ambiente headless `getUserMedia` fallisce (`NotFoundError`); il Quest Browser può non averli: l'app deve funzionare in entrambi i casi.
+## Preconditions
+- `dev-params.local.txt` = `house=apartment-a&role=tenant&reset=1&seed=1&debug=1&pinch=grip&time=2026-11-04T10:00`; standard setup. Desktop Chrome exposes `MediaRecorder` and `navigator.mediaDevices.getUserMedia`, but **without a microphone** in the headless environment `getUserMedia` fails (`NotFoundError`); the Quest Browser may not have them: the app must work in both cases.
 
-## Parte A · senza T4.15 (obbligatoria)
-1. Aprire una bozza dalla lavatrice (S4.1 passo 2) e `ui_inspect` sul pannello; `ecs_find_entities` con `^ui:issue-(voice|record|note)` (→ 0).
-2. Completare la segnalazione con una frase e `ui:issue-report` (S4.1 passi 3–4).
-3. Log `pattern: "voice|audio|microphone|keyboard|feature"` e log senza filtro.
+## Part A · without T4.15 (mandatory)
+1. Open a draft from the washer (S4.1 step 2) and `ui_inspect` on the panel; `ecs_find_entities` with `^ui:issue-(voice|record|note)` (→ 0).
+2. Complete the issue with a phrase and `ui:issue-report` (S4.1 steps 3–4).
+3. Log `pattern: "voice|audio|microphone|keyboard|feature"` and unfiltered log.
 
-**Verifiche A**: nessuna entità `ui:issue-voice*`, `ui:issue-record*`, `ui:issue-note*`; nessun testo `Record`/`Voice`/`Note` nel pannello; la segnalazione si completa con le sole frasi; nessuna richiesta di permesso al microfono; nessuna riga `error`. È un PASS pieno: la voce non è una funzione promessa.
+**Checks A**: no `ui:issue-voice*`, `ui:issue-record*`, `ui:issue-note*` entity; no `Record`/`Voice`/`Note` text in the panel; the issue is completed with the phrases only; no microphone permission request; no `error` line. It is a full PASS: voice is not a promised feature.
 
-## Parte B · con T4.15 (solo se eseguito)
-1. **Con le API presenti** (Chrome): la bozza mostra `ui:issue-voice` (testo `Record`, ≥ 2,4 cm). Pizzico → log `voice permission requested`; senza microfono: `voice unavailable reason=NotFoundError` e **il pulsante sparisce** dalla bozza (nessun errore, la segnalazione si completa con la frase).
-2. **Con un microfono virtuale** (`--use-fake-device-for-media-stream`, se l'ambiente lo consente): `voice recording start`, attesa 2 s, `voice recording stop bytes=<n>`; la segnalazione creata ha `audio` (percorso logico `idb:issue-014`), nel dettaglio compare `ui:issue-voice-play`; la nota si salva in IndexedDB (riga `voice saved key=issue-014`), non in `localStorage`.
-3. **Senza le API** (non riproducibile in Chrome): coperto da un test unitario di `hasVoiceSupport(globalThis)` con un oggetto finto.
-4. `reset=1` cancella anche la nota (`state cleared reason=reset keys=<n> idb=<m>`).
+## Part B · with T4.15 (only if done)
+1. **With the APIs present** (Chrome): the draft shows `ui:issue-voice` (text `Record`, ≥ 2.4 cm). Pinch → log `voice permission requested`; without a microphone: `voice unavailable reason=NotFoundError` and **the button disappears** from the draft (no error, the issue is completed with the phrase).
+2. **With a virtual microphone** (`--use-fake-device-for-media-stream`, if the environment allows it): `voice recording start`, wait 2 s, `voice recording stop bytes=<n>`; the issue created has `audio` (logical path `idb:issue-014`), in the detail `ui:issue-voice-play` appears; the note is saved in IndexedDB (line `voice saved key=issue-014`), not in `localStorage`.
+3. **Without the APIs** (not reproducible in Chrome): covered by a unit test of `hasVoiceSupport(globalThis)` with a fake object.
+4. `reset=1` also deletes the note (`state cleared reason=reset keys=<n> idb=<m>`).
 
-**Verifiche B**: i passi 1–4 con le righe indicate; nessuna registrazione parte senza un pizzico esplicito; nessun `error`; la privacy: nessun dato lascia il browser (nessuna richiesta di rete).
+**Checks B**: steps 1–4 with the lines indicated; no recording starts without an explicit pinch; no `error`; privacy: no data leaves the browser (no network request).
 
-## Esito
-Parte A PASS sempre; parte B PASS solo se T4.15 è fatto e i passi 1, 3 e 4 sono soddisfatti (il passo 2 solo se l'ambiente ha un microfono virtuale, altrimenti "non provabile" e voce in `DEBT.md`).
+## Outcome
+Part A PASS always; part B PASS only if T4.15 is done and steps 1, 3 and 4 are met (step 2 only if the environment has a virtual microphone, otherwise "not testable" and an entry in `DEBT.md`).
 
-## Da rimandare al visore
-Microfono e `MediaRecorder` nel Quest Browser (consenso, qualità, comodità); voce in `qa/device/DEBT.md` (bassa).
+## To defer to the headset
+Microphone and `MediaRecorder` in the Quest Browser (consent, quality, comfort); entry in `qa/device/DEBT.md` (low).

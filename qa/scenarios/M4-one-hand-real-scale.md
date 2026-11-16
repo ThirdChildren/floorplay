@@ -1,39 +1,39 @@
-# S4.6 · Scala reale con una mano sola: il pulsante "Tabletop"
+# S4.6 · Real scale with one hand only: the "Tabletop" button
 
-> **Changelog 2026-11-02**: scenario creato dal piano M4 (D49 R1, T4.R1; riporto 1 del gate di M3, avviso del `contest-reviewer` sulla regola 9).
-> **Changelog 2026-11-02 (dopo T4.R1, prima di ogni esecuzione)**: l'entità `ui:tabletop-button` esiste sempre e si nasconde fuori dalla scala reale (come `ui:menu-button-*`): al plastico si verifica "1 entità non visibile" (`Visibility.isVisible` falso), non "0 entità"; angolo massimo atteso 24,7° (pulsante 0,13 × 0,05 m). Nessun criterio cambia nel significato.
+> **Changelog 2026-11-02**: scenario created from the M4 plan (D49 R1, T4.R1; carry-over 1 of the M3 gate, `contest-reviewer` warning on rule 9).
+> **Changelog 2026-11-02 (after T4.R1, before any run)**: the entity `ui:tabletop-button` always exists and is hidden outside real scale (like `ui:menu-button-*`): at the miniature "1 non-visible entity" is checked (`Visibility.isVisible` false), not "0 entities"; expected maximum angle 24.7° (button 0.13 × 0.05 m). No criterion changes in meaning.
 
-> **Changelog 2026-11-06 (gate di M5, F-C2-3)**: la durata d'ingresso/uscita in IWER arriva a 747 ms (717 ms in B): tolleranza IWER **250 ≤ n < 1000 ms = PASS** (700 < n < 1000 "avviso noto IWER"), n ≥ 1000 FAIL; la verifica nominale 250–700 ms è **solo visore** (vedi `qa/scenarios/M3-viewpoint.md`, stessa data). Nessun altro criterio cambia.
+> **Changelog 2026-11-06 (M5 gate, F-C2-3)**: the entry/exit duration in IWER reaches 747 ms (717 ms in B): IWER tolerance **250 ≤ n < 1000 ms = PASS** (700 < n < 1000 "known IWER warning"), n ≥ 1000 FAIL; the nominal 250–700 ms check is **headset only** (see `qa/scenarios/M3-viewpoint.md`, same date). No other criterion changes.
 
-**Milestone**: M4 · **Tipo**: PC (emulatore IWER via MCP `iwsdk-runtime`) · **Regole di `CLAUDE.md`**: 2 (ci si sposta solo tra punti di vista con dissolvenza), 8 (campo visivo), 9 (una mano sola)
-Prerequisiti di implementazione: T4.R1 (T3.12 già c'è). Vedi `docs/plans/M4.md`, D49. Convenzioni: `qa/scenarios/M4-issue-create.md`.
+**Milestone**: M4 · **Type**: PC (IWER emulator via MCP `iwsdk-runtime`) · **`CLAUDE.md` rules**: 2 (you move only between viewpoints with a fade), 8 (field of view), 9 (one hand only)
+Implementation prerequisites: T4.R1 (T3.12 already exists). See `docs/plans/M4.md`, D49. Conventions: `qa/scenarios/M4-issue-create.md`.
 
-## Precondizioni
-- `dev-params.local.txt` = `house=apartment-a&role=visitor&reset=1&seed=1&debug=1&pinch=grip`; preparazione standard (testa (0; 1,6; 0), `O` = (0; 1,35; −0,45), scala 0,05).
-- **Una mano sola**: in tutti i passi tranne il 5 si muove **solo `hand-right`**; la sinistra resta a riposo `(−0,30; 1,10; 0,10)`, select 0.
-- Marcatore `viewpoint:V1` a (−0,130; 1,4375; −0,465) → mano destra a (−0,092; 1,4405; −0,502). Pulsante "Tabletop" atteso a (0; 1,38; −0,55) → mano a (0,038; 1,383; −0,587). In scala reale (V1) il plastico sta in (2,60; 0,40; 0,30) con scala 1 (S3.1).
+## Preconditions
+- `dev-params.local.txt` = `house=apartment-a&role=visitor&reset=1&seed=1&debug=1&pinch=grip`; standard setup (head (0; 1.6; 0), `O` = (0; 1.35; −0.45), scale 0.05).
+- **One hand only**: in all steps except 5 **only `hand-right`** moves; the left stays at rest `(−0.30; 1.10; 0.10)`, select 0.
+- Marker `viewpoint:V1` at (−0.130; 1.4375; −0.465) → right hand at (−0.092; 1.4405; −0.502). "Tabletop" button expected at (0; 1.38; −0.55) → hand at (0.038; 1.383; −0.587). At real scale (V1) the miniature sits at (2.60; 0.40; 0.30) with scale 1 (S3.1).
 
-## Passi
-1. **Entrare** in `viewpoint:V1` con la sola destra: `ecs_query_entity` su `viewpoint:V1` e `miniature:root` con `["Transform"]` (→ `M1`, `R0`); `hand-right` a `M1 − D_GRIP`; `xr_set_select_value` a 1, attesa **0,8 s**, a 0 (il pizzico tenuto basta sia con la conferma di T4.R6 sia senza); attesa 2,5 s. Log `pattern: "viewpoint|tabletop|menu button|walls"`; `xr_get_transform` `headset` (→ `H1`).
-2. **Il pulsante c'è, i pulsanti di prima no**: `ecs_find_entities` `^ui:tabletop-button$` (→ 1), `^ui:menu-button-` e `^ui:issue-button-` (assenti oppure non visibili: se l'entità c'è, `ecs_query_entity` non deve darle una posizione utile o la riga `menu button view` non compare nella sessione corrente), `^ui:palm-menu$` (→ 0); `ecs_query_entity` su `ui:tabletop-button` con `["Transform"]`; `ui_inspect` (testo `Tabletop`, `fontSize`); `browser_screenshot` → allegare (la vista dal punto di vista con il pulsante nella parte bassa, a ~22° sotto lo sguardo).
-3. **Tornare con la sola destra**: `hand-right` a (0,038; 1,383; −0,587) (o alla posa letta dal `Transform` meno `D_GRIP`), `xr_select {device: "hand-right", duration: 0.3}`, attesa 2,5 s. Letture: log `pattern: "tabletop|viewpoint|walls|miniature|pinch left"`; `miniature:root` (→ `R2`); `xr_get_transform` `headset`; `ecs_find_entities` `^ui:tabletop-button$` (→ 1, con `Visibility.isVisible` falso), `^viewpoint:` (→ 3), `^table:plinth`, `^ui:menu-button-` (di nuovo presenti e visibili).
-4. **Con un pezzo in mano il pulsante non reagisce**: rientrare in V1 (passo 1); la sinistra a `L_MENU` con `Q_UP` (attesa 0,9 s), la destra prende `ui:menu-item-chair` dal menu e **tiene**; la sinistra (palmo in giù) pizzica il pulsante "Tabletop" (`hand-left` a (0,038; 1,383; −0,587), `xr_select {device: "hand-left", duration: 0.3}`): log `pattern: "tabletop|viewpoint|furniture"`; poi rilascio del pezzo nella stanza (`furniture placed`) e il pizzico di nuovo (con la destra): ritorno. (Questo è l'unico passo che usa la sinistra.)
-5. **Riancoraggio**: rientrare in V1; `xr_set_transform` `headset` a (0; 1,6; 0) con orientamento `(0, 0.5, 0, 0.8660)` (rotazione di +60° attorno a Y: lo sguardo punta a −x); attesa 2 s; `ecs_query_entity` su `ui:tabletop-button` con `["Transform"]`; log `pattern: "tabletop"`. Riportare la testa a identità `(0, 0, 0, 1)`, attesa 2 s, ancora il `Transform`. Ritorno con il pulsante.
-6. **Sospensione e ripresa**: rientrare in V1; `press` `F8` (`debug=1`), attesa 1 s, `press` `F9`, attesa 1 s: `ecs_find_entities` `^ui:tabletop-button$` (→ 1); pizzico: ritorno.
-7. Log senza filtro (`error`, `Cannot read`, `reading 'add'`, `Missing glyph`); pulizia.
+## Steps
+1. **Enter** `viewpoint:V1` with the right hand only: `ecs_query_entity` on `viewpoint:V1` and `miniature:root` with `["Transform"]` (→ `M1`, `R0`); `hand-right` at `M1 − D_GRIP`; `xr_set_select_value` to 1, wait **0.8 s**, to 0 (the held pinch is enough both with the confirmation of T4.R6 and without); wait 2.5 s. Log `pattern: "viewpoint|tabletop|menu button|walls"`; `xr_get_transform` `headset` (→ `H1`).
+2. **The button is there, the previous buttons are not**: `ecs_find_entities` `^ui:tabletop-button$` (→ 1), `^ui:menu-button-` and `^ui:issue-button-` (absent or not visible: if the entity is there, `ecs_query_entity` must not give it a useful position or the line `menu button view` does not appear in the current session), `^ui:palm-menu$` (→ 0); `ecs_query_entity` on `ui:tabletop-button` with `["Transform"]`; `ui_inspect` (text `Tabletop`, `fontSize`); `browser_screenshot` → attach (the view from the viewpoint with the button in the lower part, ~22° below the gaze).
+3. **Return with the right hand only**: `hand-right` at (0.038; 1.383; −0.587) (or at the pose read from the `Transform` minus `D_GRIP`), `xr_select {device: "hand-right", duration: 0.3}`, wait 2.5 s. Readings: log `pattern: "tabletop|viewpoint|walls|miniature|pinch left"`; `miniature:root` (→ `R2`); `xr_get_transform` `headset`; `ecs_find_entities` `^ui:tabletop-button$` (→ 1, with `Visibility.isVisible` false), `^viewpoint:` (→ 3), `^table:plinth`, `^ui:menu-button-` (present and visible again).
+4. **With a piece in hand the button does not react**: re-enter V1 (step 1); the left at `L_MENU` with `Q_UP` (wait 0.9 s), the right takes `ui:menu-item-chair` from the menu and **holds**; the left (palm down) pinches the "Tabletop" button (`hand-left` at (0.038; 1.383; −0.587), `xr_select {device: "hand-left", duration: 0.3}`): log `pattern: "tabletop|viewpoint|furniture"`; then release the piece in the room (`furniture placed`) and pinch again (with the right): return. (This is the only step that uses the left.)
+5. **Re-anchoring**: re-enter V1; `xr_set_transform` `headset` at (0; 1.6; 0) with orientation `(0, 0.5, 0, 0.8660)` (rotation of +60° around Y: the gaze points to −x); wait 2 s; `ecs_query_entity` on `ui:tabletop-button` with `["Transform"]`; log `pattern: "tabletop"`. Bring the head back to identity `(0, 0, 0, 1)`, wait 2 s, the `Transform` again. Return with the button.
+6. **Suspension and resume**: re-enter V1; `press` `F8` (`debug=1`), wait 1 s, `press` `F9`, wait 1 s: `ecs_find_entities` `^ui:tabletop-button$` (→ 1); pinch: return.
+7. Unfiltered log (`error`, `Cannot read`, `reading 'add'`, `Missing glyph`); cleanup.
 
-## Verifiche (tutte obbligatorie)
-1. **Passo 1**: `viewpoint entered id=V1 …` (la durata è un avviso se > 700 ms: frame rate di IWER, vedi S3.1); `miniature:root` a (2,60; 0,40; 0,30) ± 0,01; nessuna riga `pinch left`.
-2. **Passo 2**: **1** `ui:tabletop-button`; la riga `[soglia] tabletop button shown distance=<d> maxAngleDeg=<a>` con `d` tra **0,50 e 0,80** (atteso 0,59) e `a` **≤ 30,0** (atteso 24,7: **dentro il cono**, non un ingresso di riserva); `Transform` a (0; 1,38; −0,55) ± 0,03 con rotazione solo attorno a Y (x e z ≈ 0); il testo è `Tabletop` e `fontSize` ≥ 2,4 cm; i pulsanti "Menu" e "Issues" non sono visibili; nessun menu del palmo.
-3. **Passo 3**: righe `tabletop button pressed hand=right` e `viewpoint exited id=V1 durationMs=<n>` (250 ≤ n ≤ 700 con 72 fps; **avviso** fino a 1000 per il frame rate di IWER, come S3.1), `walls rebuilt cut=1.00`; `R2` = `R0` ± 0,001 (il plastico torna identico); `H2` = `H1`; 1 `ui:tabletop-button` non visibile; 3 `viewpoint:*`; i pulsanti "Menu" e "Issues" di nuovo presenti (2 + 2); **nessuna** riga `pinch left` né `menu opened hand=left`: tutto fatto con una mano.
-4. **Passo 4**: `tabletop button ignored reason=piece-held` (o nessuna uscita) con il pezzo in mano; il pizzico dell'altra mano ruota il pezzo (`furniture rotated furniture:chair#1 …`); dopo la posa, il pulsante funziona.
-5. **Passo 5**: dopo la rotazione della testa di 60° il pulsante si riancora entro 2 s davanti allo sguardo: nuova posizione a (−0,476; 1,38; −0,275) ± 0,05 (0,55 m davanti, 0,22 sotto gli occhi) e la riga `tabletop button reanchored`; con la testa di nuovo a identità si riancora a (0; 1,38; −0,55) ± 0,05; mai più lontano di 0,8 m né oltre 30° dall'asse a riposo.
-6. **Passo 6**: dopo `F8`/`F9` il pulsante c'è ancora e funziona; il punto di vista non cambia per la sospensione (D35).
-7. Nessuna voce `error`; nessun `Missing glyph`; nessun `reading 'add'`.
-8. **Solo visore** (alta): il pulsante si raggiunge e si legge da seduti con una mano; non si preme per sbaglio mentre si prende un pezzo; il riancoraggio non disorienta.
+## Checks (all mandatory)
+1. **Step 1**: `viewpoint entered id=V1 …` (the duration is a warning if > 700 ms: IWER frame rate, see S3.1); `miniature:root` at (2.60; 0.40; 0.30) ± 0.01; no `pinch left` line.
+2. **Step 2**: **1** `ui:tabletop-button`; the line `[soglia] tabletop button shown distance=<d> maxAngleDeg=<a>` with `d` between **0.50 and 0.80** (expected 0.59) and `a` **≤ 30.0** (expected 24.7: **inside the cone**, not a fallback entry); `Transform` at (0; 1.38; −0.55) ± 0.03 with rotation around Y only (x and z ≈ 0); the text is `Tabletop` and `fontSize` ≥ 2.4 cm; the "Menu" and "Issues" buttons are not visible; no palm menu.
+3. **Step 3**: lines `tabletop button pressed hand=right` and `viewpoint exited id=V1 durationMs=<n>` (250 ≤ n ≤ 700 at 72 fps; **warning** up to 1000 for the IWER frame rate, as S3.1), `walls rebuilt cut=1.00`; `R2` = `R0` ± 0.001 (the miniature comes back identical); `H2` = `H1`; 1 non-visible `ui:tabletop-button`; 3 `viewpoint:*`; the "Menu" and "Issues" buttons present again (2 + 2); **no** `pinch left` or `menu opened hand=left` line: all done with one hand.
+4. **Step 4**: `tabletop button ignored reason=piece-held` (or no exit) with the piece in hand; the pinch of the other hand rotates the piece (`furniture rotated furniture:chair#1 …`); after placement, the button works.
+5. **Step 5**: after rotating the head by 60° the button re-anchors within 2 s in front of the gaze: new position at (−0.476; 1.38; −0.275) ± 0.05 (0.55 m in front, 0.22 below the eyes) and the line `tabletop button reanchored`; with the head back at identity it re-anchors at (0; 1.38; −0.55) ± 0.05; never farther than 0.8 m or beyond 30° from the resting axis.
+6. **Step 6**: after `F8`/`F9` the button is still there and works; the viewpoint does not change because of the suspension (D35).
+7. No `error` entries; no `Missing glyph`; no `reading 'add'`.
+8. **Headset only** (high): the button can be reached and read when seated with one hand; it is not pressed by mistake while taking a piece; the re-anchoring does not disorient.
 
-## Esito
-PASS se le verifiche 1–7 sono soddisfatte · FAIL altrimenti. Prima di M4 questo scenario falliva alla verifica 2 (nessun pulsante di ritorno a una mano in scala reale; avviso del gate di M3).
+## Outcome
+PASS if checks 1–7 are met · FAIL otherwise. Before M4 this scenario failed at check 2 (no one-hand return button at real scale; M3 gate warning).
 
-## Da rimandare al visore
-Voce "Scala reale a una mano" di M3/M4 in `qa/device/DEBT.md`.
+## To defer to the headset
+"One-hand real scale" entry of M3/M4 in `qa/device/DEBT.md`.
