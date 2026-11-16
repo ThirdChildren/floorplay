@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://soglia.local/schemas/house.schema.json",
-  "title": "Soglia house",
+  "$id": "https://floorplay.local/schemas/house.schema.json",
+  "title": "Floorplay house",
   "type": "object",
   "additionalProperties": false,
   "required": [

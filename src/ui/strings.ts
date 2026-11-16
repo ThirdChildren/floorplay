@@ -10,7 +10,7 @@ import { formatRoomLabel } from '../logic/room-label';
  * part of `strings` (the glyph checks of the panel font do not apply to it).
  */
 export const introStrings = {
-  title: 'Soglia',
+  title: 'Floorplay',
   tagline: 'Furnish and look after a home, with your hands.',
   selectedLabel: 'Selected house',
   noHouse: 'No house is selected.',
@@ -36,9 +36,9 @@ export const introStrings = {
     'house-missing': 'The selected house could not be opened, so VR cannot start. Choose another house.',
     'start-failed': 'Something went wrong while starting. Reload the page to try again.',
     'sizes-unsaved': 'Some furniture sizes could not be saved, so VR uses the catalog sizes.',
-    unsupported: 'This browser cannot start VR. Open this page in the Meta Quest Browser.',
-    'no-api': 'This browser has no WebXR, so VR cannot start. Open this page in the Meta Quest Browser.',
-    error: 'VR could not be checked in this browser. Reload the page or open it in the Meta Quest Browser.',
+    unsupported: 'This browser cannot start VR. Open this page in the browser of a VR headset.',
+    'no-api': 'This browser has no WebXR, so VR cannot start. Open this page in the browser of a VR headset.',
+    error: 'VR could not be checked in this browser. Reload the page or open it in the browser of a VR headset.',
   },
   sizes: {
     title: 'Furniture sizes',
@@ -203,7 +203,7 @@ export const strings = {
     /** The first button of the card of a virtual piece (it takes the place of `Add to Mine`). */
     remove: 'Remove',
     /** Notices of the room view (public/ui/room-notice.uikitml): short, plain English. */
-    scanEmpty: 'No room scan found. Set up your space in the headset settings (Space Setup), then reopen Soglia.',
+    scanEmpty: 'No room scan found. Set up your space in the headset settings (Space Setup), then reopen Floorplay.',
     notSaved: 'Room layout is not saved',
     roomFull: 'Room is full',
     /** "210 × 90 × 85 cm": width, depth and height in whole centimetres (plain x when the local panel font is missing). */
