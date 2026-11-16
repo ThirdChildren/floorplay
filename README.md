@@ -17,7 +17,8 @@ The home from a listing appears on your table as a small model (scale 1:20). One
 3. **Live** (tenant and landlord). Report a problem at the exact spot, such as a leaking washer. The report
    moves from red to orange to green. Keep a history and a move-in report.
 
-Three demo apartments are included. You can also load your own home from a JSON file on the start screen
+Three demo apartments are included. The one that opens by default, `apartment-c` (three bedrooms, 126 m²), was
+converted by hand from a real floor plan into the JSON format; it has the full demo (furnishing, info points, sample issues). You can also load your own home from a JSON file on the start screen
 (format in [`docs/DATA_FORMATS.md`](docs/DATA_FORMATS.md)).
 
 ## Try it
@@ -30,7 +31,7 @@ Useful URL parameters (add them after the address, for example `?house=apartment
 
 | Parameter | Values | Effect |
 |---|---|---|
-| `house` | `apartment-a`, `apartment-b`, `apartment-c` | Open a demo home. |
+| `house` | `apartment-c` (default), `apartment-a`, `apartment-b` | Open a demo home. |
 | `role` | `visitor`, `agent`, `tenant`, `landlord` | Start in a role. You can also switch in the Issues panel. |
 | `reset` | `1` | Ignore the saved state of the home. |
 | `time` | `2026-12-21T10:00` | Set the date and time of the sun. |

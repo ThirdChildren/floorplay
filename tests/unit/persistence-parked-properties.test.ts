@@ -18,7 +18,7 @@ import {
   type AppState,
 } from '../../src/logic/state';
 
-const initial = (): AppState => createInitialState({ ...DEFAULT_PARAMS, house: 'apartment-a' });
+const initial = (): AppState => createInitialState({ ...DEFAULT_PARAMS, house: 'apartment-c' });
 const run = (state: AppState, ...actions: Action[]): AppState => actions.reduce(reduce, state);
 const withFurniture = (furniture: readonly PlacedPiece[]): AppState => ({ ...initial(), furniture });
 
@@ -37,7 +37,7 @@ const KNOWN = ['chair', 'bed', 'lamp'] as const;
 const OWN = ['my-sofa', 'my-desk', 'my-shelf'] as const;
 const ROOMS = ['living', 'bedroom'];
 const ctx = (catalogIds: readonly string[] = KNOWN, extra: Partial<RestoreContext> = {}): RestoreContext => ({
-  houseId: 'apartment-a',
+  houseId: 'apartment-c',
   catalogIds: new Set(catalogIds),
   roomIds: new Set(ROOMS),
   ...extra,
@@ -642,14 +642,14 @@ describe('failmy parameter and the log line', () => {
 
     it('is the known line, without failmy, by default', () => {
       expect(formatParamsLine('default', params({}))).toBe(
-        'params source=default house=apartment-a role=visitor reset=false seed=1 debug=false time=-',
+        'params source=default house=apartment-c role=visitor reset=false seed=1 debug=false time=-',
       );
     });
 
     it('adds failmy=true only when it is on', () => {
       expect(formatParamsLine('url', params({ failmy: false }))).not.toContain('failmy');
       expect(formatParamsLine('url', params({ failmy: true, debug: true }))).toBe(
-        'params source=url house=apartment-a role=visitor reset=false seed=1 debug=true time=- failmy=true',
+        'params source=url house=apartment-c role=visitor reset=false seed=1 debug=true time=- failmy=true',
       );
     });
 

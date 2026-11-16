@@ -15,7 +15,7 @@ export function houseUrl(id: string): string {
 }
 
 /** Houses that come with a demo file of issues (`public/demo/issues-<id>.json`). Others never request one: no 404. */
-export const DEMO_ISSUE_HOUSES: readonly string[] = ['apartment-a'];
+export const DEMO_ISSUE_HOUSES: readonly string[] = ['apartment-a', 'apartment-c'];
 
 export function hasDemoIssues(id: string): boolean {
   return DEMO_ISSUE_HOUSES.includes(id);

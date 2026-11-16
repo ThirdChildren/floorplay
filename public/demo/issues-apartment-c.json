@@ -1,0 +1,209 @@
+[
+  {
+    "id": "issue-012",
+    "houseId": "apartment-c",
+    "kind": "issue",
+    "position": [
+      1.5,
+      0.9,
+      7.85
+    ],
+    "fixtureId": "kitchen-unit",
+    "category": "floors_walls",
+    "urgency": "low",
+    "text": "A tile came loose near the hob.",
+    "status": "open",
+    "history": [
+      {
+        "at": "2026-10-30T19:02:00+01:00",
+        "by": "tenant",
+        "event": "created"
+      }
+    ]
+  },
+  {
+    "id": "issue-013",
+    "houseId": "apartment-c",
+    "kind": "issue",
+    "position": [
+      15.85,
+      2.2,
+      3.15
+    ],
+    "fixtureId": "bedroom-shutter",
+    "category": "windows_doors",
+    "urgency": "medium",
+    "text": "The roller shutter gets stuck halfway.",
+    "status": "in_progress",
+    "history": [
+      {
+        "at": "2026-10-27T08:40:00+01:00",
+        "by": "tenant",
+        "event": "created"
+      },
+      {
+        "at": "2026-10-28T12:15:00+01:00",
+        "by": "landlord",
+        "event": "in_progress",
+        "note": "Technician on Thursday."
+      }
+    ]
+  },
+  {
+    "id": "issue-010",
+    "houseId": "apartment-c",
+    "kind": "issue",
+    "position": [
+      11.95,
+      1.5,
+      9.0
+    ],
+    "category": "furniture",
+    "urgency": "low",
+    "text": "The living room shelf is loose.",
+    "status": "resolved",
+    "history": [
+      {
+        "at": "2026-10-12T18:00:00+02:00",
+        "by": "tenant",
+        "event": "created"
+      },
+      {
+        "at": "2026-10-13T09:00:00+02:00",
+        "by": "landlord",
+        "event": "in_progress"
+      },
+      {
+        "at": "2026-10-16T17:30:00+02:00",
+        "by": "landlord",
+        "event": "resolved",
+        "note": "Fixed back in place."
+      }
+    ]
+  },
+  {
+    "id": "baseline-001",
+    "houseId": "apartment-c",
+    "kind": "baseline",
+    "position": [
+      13.0,
+      0.0,
+      6.0
+    ],
+    "category": "floors_walls",
+    "urgency": "low",
+    "text": "Scratch on the parquet, present at move-in.",
+    "history": [
+      {
+        "at": "2026-10-01T10:00:00+02:00",
+        "by": "tenant",
+        "event": "created",
+        "note": "Agreed with the landlord."
+      }
+    ]
+  },
+  {
+    "id": "info-001",
+    "houseId": "apartment-c",
+    "kind": "info",
+    "position": [
+      5.25,
+      1.6,
+      9.95
+    ],
+    "fixtureId": "boiler",
+    "category": "plumbing",
+    "urgency": "low",
+    "text": "Condensing boiler.",
+    "history": [
+      {
+        "at": "2026-09-30T10:00:00+02:00",
+        "by": "agent",
+        "event": "created"
+      }
+    ]
+  },
+  {
+    "id": "info-002",
+    "houseId": "apartment-c",
+    "kind": "info",
+    "position": [
+      9.35,
+      0.85,
+      2.9
+    ],
+    "fixtureId": "washer",
+    "category": "appliances",
+    "urgency": "low",
+    "text": "Washing machine included, with water inlet and drain behind it.",
+    "history": [
+      {
+        "at": "2026-09-30T10:00:00+02:00",
+        "by": "agent",
+        "event": "created"
+      }
+    ]
+  },
+  {
+    "id": "info-003",
+    "houseId": "apartment-c",
+    "kind": "info",
+    "position": [
+      1.5,
+      0.9,
+      7.85
+    ],
+    "fixtureId": "kitchen-unit",
+    "category": "appliances",
+    "urgency": "low",
+    "text": "Induction hob with four zones, included in the rent.",
+    "history": [
+      {
+        "at": "2026-09-30T10:00:00+02:00",
+        "by": "agent",
+        "event": "created"
+      }
+    ]
+  },
+  {
+    "id": "info-004",
+    "houseId": "apartment-c",
+    "kind": "info",
+    "position": [
+      15.85,
+      2.2,
+      3.15
+    ],
+    "fixtureId": "bedroom-shutter",
+    "category": "windows_doors",
+    "urgency": "low",
+    "text": "Electric roller shutter with a switch by the window.",
+    "history": [
+      {
+        "at": "2026-09-30T10:00:00+02:00",
+        "by": "agent",
+        "event": "created"
+      }
+    ]
+  },
+  {
+    "id": "info-005",
+    "houseId": "apartment-c",
+    "kind": "info",
+    "position": [
+      15.95,
+      1.65,
+      5.85
+    ],
+    "category": "windows_doors",
+    "urgency": "low",
+    "text": "Double glazing with two panes and a low-emissivity coating.",
+    "history": [
+      {
+        "at": "2026-09-30T10:00:00+02:00",
+        "by": "agent",
+        "event": "created"
+      }
+    ]
+  }
+]

@@ -28,7 +28,7 @@ describe('parseParams defaults', () => {
 
   it('has the documented default values', () => {
     expect(DEFAULT_PARAMS).toEqual({
-      house: 'apartment-a',
+      house: 'apartment-c',
       role: 'visitor',
       reset: false,
       seed: 1,
@@ -52,9 +52,9 @@ describe('parseParams defaults', () => {
   it('returns a fresh params object on every call', () => {
     const a = parseParams('house=apartment-b');
     const b = parseParams('');
-    expect(b.params.house).toBe('apartment-a');
+    expect(b.params.house).toBe('apartment-c');
     expect(a.params).not.toBe(b.params);
-    expect(DEFAULT_PARAMS.house).toBe('apartment-a');
+    expect(DEFAULT_PARAMS.house).toBe('apartment-c');
   });
 });
 
@@ -79,8 +79,8 @@ describe('parseParams house', () => {
   it.each([
     ['a parent directory segment', '../secret'],
     ['a nested parent directory', 'a/../b'],
-    ['a leading slash', '/apartment-a'],
-    ['an inner slash', 'dir/apartment-a'],
+    ['a leading slash', '/apartment-c'],
+    ['an inner slash', 'dir/apartment-c'],
     ['a dot', 'apartment.json'],
     ['a backslash', 'a%5Cb'],
     ['a space', 'two%20words'],
@@ -290,7 +290,7 @@ describe('parseParams multiple keys', () => {
   });
 
   it('lets the first occurrence of a duplicated key win', () => {
-    expect(parseParams('house=apartment-b&house=apartment-a').params.house).toBe('apartment-b');
+    expect(parseParams('house=apartment-b&house=apartment-c').params.house).toBe('apartment-b');
   });
 
   it('lets an invalid first occurrence of a duplicated key win over a valid one', () => {
@@ -394,8 +394,8 @@ describe('mergeParams', () => {
   });
 
   it('prefers the URL over the dev file for the same key', () => {
-    const m = mergeParams(parseParams('house=apartment-a'), parseParams('house=apartment-b'));
-    expect(m.params.house).toBe('apartment-a');
+    const m = mergeParams(parseParams('house=apartment-c'), parseParams('house=apartment-b'));
+    expect(m.params.house).toBe('apartment-c');
     expect(m.source).toBe('url');
   });
 
@@ -452,7 +452,7 @@ describe('mergeParams', () => {
     expect(url).toEqual(urlCopy);
     expect(file).toEqual(fileCopy);
     expect(m.params).not.toBe(DEFAULT_PARAMS);
-    expect(DEFAULT_PARAMS.house).toBe('apartment-a');
+    expect(DEFAULT_PARAMS.house).toBe('apartment-c');
   });
 
   it.each<[ParamKey, string]>([
@@ -534,14 +534,14 @@ describe('formatParamsLine', () => {
 
   it('formats the defaults with source "default"', () => {
     expect(formatParamsLine('default', { ...DEFAULT_PARAMS })).toBe(
-      'params source=default house=apartment-a role=visitor reset=false seed=1 debug=false time=-',
+      'params source=default house=apartment-c role=visitor reset=false seed=1 debug=false time=-',
     );
   });
 
   it('prints the time value when set', () => {
     const line = formatParamsLine('url', { ...DEFAULT_PARAMS, time: '2026-12-21T10:00', role: 'tenant', reset: true });
     expect(line).toBe(
-      'params source=url house=apartment-a role=tenant reset=true seed=1 debug=false time=2026-12-21T10:00',
+      'params source=url house=apartment-c role=tenant reset=true seed=1 debug=false time=2026-12-21T10:00',
     );
   });
 
@@ -598,7 +598,7 @@ describe('loadDevParams outside development', () => {
 
 describe('hasInvalidHouse', () => {
   it('is true when the house value was discarded', () => {
-    expect(hasInvalidHouse(parseParams('house=../apartment-a').warnings)).toBe(true);
+    expect(hasInvalidHouse(parseParams('house=../apartment-c').warnings)).toBe(true);
     expect(hasInvalidHouse(parseParams('house=<b>').warnings)).toBe(true);
   });
 
@@ -670,7 +670,7 @@ describe('failmodels parameter (development aid, needs debug=1)', () => {
   it('is not part of the log line unless it is on, so the known line does not change', () => {
     expect(formatParamsLine('default', { ...DEFAULT_PARAMS })).not.toContain('failmodels');
     expect(formatParamsLine('url', { ...DEFAULT_PARAMS, debug: true, failmodels: true })).toBe(
-      'params source=url house=apartment-a role=visitor reset=false seed=1 debug=true time=- failmodels=true',
+      'params source=url house=apartment-c role=visitor reset=false seed=1 debug=true time=- failmodels=true',
     );
   });
 });
@@ -725,10 +725,10 @@ describe('pinch parameter (development aid, D31)', () => {
   it('is part of the log line only when it is not auto, so the known line does not change', () => {
     expect(formatParamsLine('default', { ...DEFAULT_PARAMS })).not.toContain('pinch');
     expect(formatParamsLine('dev-file', { ...DEFAULT_PARAMS, pinch: 'grip' })).toBe(
-      'params source=dev-file house=apartment-a role=visitor reset=false seed=1 debug=false time=- pinch=grip',
+      'params source=dev-file house=apartment-c role=visitor reset=false seed=1 debug=false time=- pinch=grip',
     );
     expect(formatParamsLine('url', { ...DEFAULT_PARAMS, debug: true, failmodels: true, pinch: 'joints' })).toBe(
-      'params source=url house=apartment-a role=visitor reset=false seed=1 debug=true time=- failmodels=true pinch=joints',
+      'params source=url house=apartment-c role=visitor reset=false seed=1 debug=true time=- failmodels=true pinch=joints',
     );
   });
 });
@@ -852,7 +852,7 @@ describe('pinch parameter: more cases (D31)', () => {
   it('accepts a dev file with only a pinch line as a query string', () => {
     expect(isQueryString('pinch=grip')).toBe(true);
     expect(isQueryString('?pinch=joints\n')).toBe(true);
-    expect(isQueryString('house=apartment-a&pinch=auto')).toBe(true);
+    expect(isQueryString('house=apartment-c&pinch=auto')).toBe(true);
     expect(isQueryString('pinch=<html>')).toBe(false);
   });
 
@@ -961,7 +961,7 @@ describe('intro (start screen)', () => {
   });
 
   it('is named in the log line only when it is off', () => {
-    const on = formatParamsLine('url', parseParams('house=apartment-a').params);
+    const on = formatParamsLine('url', parseParams('house=apartment-c').params);
     expect(on).not.toContain('intro');
     const off = formatParamsLine('url', parseParams('intro=0').params);
     expect(off.endsWith(' intro=0')).toBe(true);

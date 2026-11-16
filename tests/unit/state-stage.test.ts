@@ -105,7 +105,7 @@ describe('a stage step in the saved state', () => {
   });
 
   const ctx = (extra: Partial<RestoreContext> = {}): RestoreContext => ({
-    houseId: 'apartment-a',
+    houseId: 'apartment-c',
     catalogIds: new Set(['sofa-3seat', 'coffee-table', 'table-dining', 'chair', 'bed-double', 'wardrobe', 'desk', 'bookshelf', 'tv-unit']),
     roomIds: new Set(houseA.rooms.map((r) => r.id)),
     ...extra,

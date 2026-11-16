@@ -51,7 +51,8 @@ Everything saves itself. Take the headset off, put it back on, or reload: you ar
 
 Floorplay is a WebXR app built with the Immersive Web SDK on its entity-component system, in TypeScript. The
 homes are JSON files (walls, openings, doors, windows, fixtures) that the app builds into geometry at runtime,
-so anyone can load their own plan from the start screen. All rules that matter (snapping, 2D collisions, door
+so anyone can load their own plan from the start screen. The demo home was converted from a real floor plan of
+a three-bedroom, 126 m² apartment. All rules that matter (snapping, 2D collisions, door
 clearance, sun position, issue states, role permissions, saving) are pure logic with about 6,900 unit tests.
 We tested every scenario in the IWER browser emulator and then on a Meta Quest.
 
@@ -87,7 +88,8 @@ operating software.
 Time needed: about 5 minutes. Seated, hands only (put the controllers down).
 
 1. On a Meta Quest, open **https://thirdchildren.github.io/floorplay/** in the headset browser.
-2. On the start screen, pinch **Enter VR**. The two-bedroom apartment appears on the table in front of you.
+2. On the start screen, pinch **Enter VR**. A three-bedroom apartment, converted from a real floor plan, appears on
+   the table in front of you.
 3. **Furnish:** follow the short hint ("Pinch Menu"): pinch the **Menu** button beside the model, pinch a piece,
    drop it in a room. Try placing it over a door to see the red frame and the reason. Pinch **Rotate** above the
    piece to turn it. You can also turn your palm up to open the menu on your hand.
@@ -99,7 +101,7 @@ Time needed: about 5 minutes. Seated, hands only (put the controllers down).
    report a problem. Switch to **Landlord** to move it from red to orange to green.
 8. **Resume:** take the headset off and put it back on, or reload the page: the home is as you left it.
 
-Useful links (add to the address): `?house=apartment-b` or `?house=apartment-c` for other homes, `?role=agent`
+Useful links (add to the address): `?house=apartment-a` or `?house=apartment-b` for other homes, `?role=agent`
 for the agent tools, `?reset=1` to start clean, `?text=large&contrast=1` for the accessibility options.
 Content marked **Sample data** in the app (issue history, move-in report, info points) is made up for the demo.
 

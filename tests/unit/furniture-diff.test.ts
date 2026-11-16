@@ -230,3 +230,15 @@ describe('who is marked when pieces collide after a move (M2 gate: the moved pie
     expect(undone.furniture).toEqual(apart.furniture);
   });
 });
+
+describe('apartment-c demo data', () => {
+  const houseC = loadJson<House>('public/houses', 'apartment-c.json');
+
+  it('judges the whole scandinavian preset of apartment-c valid', () => {
+    const pieces = stagingToPieces(houseC, 'scandinavian');
+    const results = evaluateAll(houseC, pieces, catalog);
+    expect(results.size).toBe(20);
+    const invalid = [...results].filter(([, r]) => r.status !== 'valid').map(([id]) => id);
+    expect(invalid).toEqual([]);
+  });
+});

@@ -125,7 +125,7 @@ export interface MergedParams {
 }
 
 export const DEFAULT_PARAMS: Readonly<Params> = Object.freeze({
-  house: 'apartment-a',
+  house: 'apartment-c',
   role: 'visitor',
   reset: false,
   seed: 1,

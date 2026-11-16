@@ -93,9 +93,9 @@ src/
   ui/               panels and palm menu; strings.ts with all the texts (English)
   data/             loading + validation of the JSON files (house, catalog, issues)
   debug/            development-only tools (behind a flag)
-public/houses/      apartment-a.json, apartment-b.json
+public/houses/      apartment-a.json, apartment-b.json, apartment-c.json (default, from a real floor plan)
 public/catalog/     catalog.json (+ glb models)
-public/demo/        my-furniture.json, issues-apartment-a.json
+public/demo/        my-furniture.json, issues-apartment-a.json, issues-apartment-c.json
 schemas/            house.schema.json, issue.schema.json
 tests/unit/         Vitest tests
 qa/scenarios/       acceptance scenarios for the emulator (Markdown)

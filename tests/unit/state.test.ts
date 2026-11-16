@@ -29,7 +29,7 @@ function initial(overrides: Partial<Params> = {}): AppState {
 function savedState(patch: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     version: 1,
-    houseId: 'apartment-a',
+    houseId: 'apartment-c',
     role: 'visitor',
     miniature: { scale: 0.05, yawDeg: 0 },
     selectedRoomId: null,
@@ -573,7 +573,7 @@ describe('serialize', () => {
 
   it('produces the exact expected string for the initial state', () => {
     expect(serialize(initial())).toBe(
-      '{"version":1,"houseId":"apartment-a","role":"visitor",' +
+      '{"version":1,"houseId":"apartment-c","role":"visitor",' +
         '"miniature":{"scale":0.05,"yawDeg":0,"offset":[0,0]},"selectedRoomId":null,' +
         '"prefs":{"onboardingStep":"pinch","menuOpened":false,"moveInVisible":false,"contrast":false,"largeText":false,"leftHandMenu":false,"coach":"menu-button"},' +
         '"furniture":[],"nextInstance":{},"history":[],"view":{"kind":"tabletop"},' +
@@ -825,7 +825,7 @@ describe('deserialize rejects invalid input', () => {
   // JSON cannot carry NaN or Infinity, so these are written as raw text: a 1e999 literal parses to Infinity.
   it('returns null when the scale is not finite', () => {
     const json =
-      '{"version":1,"houseId":"apartment-a","role":"visitor",' +
+      '{"version":1,"houseId":"apartment-c","role":"visitor",' +
       '"miniature":{"scale":1e999,"yawDeg":0},"selectedRoomId":null,' +
       '"prefs":{"onboardingStep":"pinch"}}';
     expect(deserialize(json)).toBeNull();
@@ -833,7 +833,7 @@ describe('deserialize rejects invalid input', () => {
 
   it('returns null when the yaw is not finite', () => {
     const json =
-      '{"version":1,"houseId":"apartment-a","role":"visitor",' +
+      '{"version":1,"houseId":"apartment-c","role":"visitor",' +
       '"miniature":{"scale":0.05,"yawDeg":-1e999},"selectedRoomId":null,' +
       '"prefs":{"onboardingStep":"pinch"}}';
     expect(deserialize(json)).toBeNull();
@@ -869,7 +869,7 @@ describe('deserialize normalisation', () => {
 
   it('normalises a negative zero yaw to positive zero', () => {
     const restored = deserialize(
-      '{"version":1,"houseId":"apartment-a","role":"visitor",' +
+      '{"version":1,"houseId":"apartment-c","role":"visitor",' +
         '"miniature":{"scale":0.05,"yawDeg":-0},"selectedRoomId":null,' +
         '"prefs":{"onboardingStep":"pinch"}}',
     );
@@ -900,7 +900,7 @@ describe('deserialize normalisation', () => {
     const shuffled =
       '{"prefs":{"onboardingStep":"pinch"},"selectedRoomId":null,' +
       '"miniature":{"yawDeg":0,"scale":0.05},"role":"visitor",' +
-      '"houseId":"apartment-a","version":1}';
+      '"houseId":"apartment-c","version":1}';
     const restored = deserialize(shuffled);
     expect(restored).not.toBeNull();
     expect(serialize(restored as AppState)).toBe(serialize(initial()));

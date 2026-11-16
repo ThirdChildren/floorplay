@@ -33,7 +33,7 @@ describe('addScanned', () => {
 
 describe('saving the scanned pieces', () => {
   const ctx = {
-    houseId: 'apartment-a',
+    houseId: 'apartment-c',
     catalogIds: new Set(['my-scan-couch-1']),
     roomIds: new Set<string>(),
   };

@@ -18,7 +18,7 @@ import { strings } from '../../src/ui/strings';
 
 // UI fix 1: the Menu / Issues / View buttons are for the right hand, or, with the accessibility preference `leftHandMenu`, for the left.
 const initial = (): AppState => createInitialState({ ...DEFAULT_PARAMS });
-const ctx = (): RestoreContext => ({ houseId: 'apartment-a', catalogIds: new Set<string>(), roomIds: new Set<string>() });
+const ctx = (): RestoreContext => ({ houseId: 'apartment-c', catalogIds: new Set<string>(), roomIds: new Set<string>() });
 
 describe('the preference leftHandMenu', () => {
   it('starts off: the right hand', () => {

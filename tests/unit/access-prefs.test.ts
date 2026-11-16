@@ -13,7 +13,7 @@ import { createInitialState, deserialize, reduce, restoreSaved, serialize, setCo
 
 const initial = (extra: Partial<typeof DEFAULT_PARAMS> = {}): AppState => createInitialState({ ...DEFAULT_PARAMS, ...extra });
 const ctx = (extra: Partial<RestoreContext> = {}): RestoreContext => ({
-  houseId: 'apartment-a',
+  houseId: 'apartment-c',
   catalogIds: new Set<string>(),
   roomIds: new Set<string>(),
   ...extra,

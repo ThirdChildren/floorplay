@@ -26,7 +26,7 @@ describe('a state saved before the FitCheck and the tape measure were removed', 
 
   it('comes back through the restore path with its pieces and preferences', () => {
     const old = JSON.stringify({ ...base, tool: 'measure' });
-    const picked = pickRestorable(old, { houseId: 'apartment-a', catalogIds: new Set<string>(), roomIds: new Set<string>() });
+    const picked = pickRestorable(old, { houseId: 'apartment-c', catalogIds: new Set<string>(), roomIds: new Set<string>() });
     expect(picked).not.toBeNull();
     expect(picked?.prefs.leftHandMenu).toBe(false);
   });
