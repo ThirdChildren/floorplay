@@ -7,6 +7,21 @@ The `contest-reviewer` rechecks it at every gate.
 **Reread on 2026-11-11** (Rules, Overview, FAQ and the Meta "Build and Deploy" guide for IWSDK): no change
 compared with this summary; the details of the submission form and of hosting were added below.
 
+**Reread on 2026-11-16** (full Official Rules page, saved copy supplied by the owner): no change to dates,
+divisions, tracks or judging. Points to keep in view for the submission:
+
+- **Testing instructions** are an explicit entry material and must be in English (section 4, "Language").
+- **Content rating**: the project must follow the Developer Content Guidelines for 10+, 13+ or 18+; Floorplay
+  targets **10+**.
+- **No association with the Sponsor**: "Projects must not create or imply any association between Sponsor and any
+  individual, entity…". The app no longer names the Meta Quest Browser in its messages (generic "the browser of
+  a VR headset"); submission text may say the app is built for Meta Quest, without logos or implied endorsement.
+- **No Meta funding** for the project (to confirm on the form).
+- **Code license**: the source code is MIT (`LICENSE`), compatible with the license the entrant grants to the
+  Sponsor in section 9.
+- **60 fps** is a judging expectation (Technical Implementation), not an eligibility gate; gaze is cited only for
+  Unity/Unreal ISDK.
+
 ## Dates
 
 - Period: from 24 September 2026, 10:00 PT, to **18 November 2026, 12:00 PT** (21:00 in Italy).
