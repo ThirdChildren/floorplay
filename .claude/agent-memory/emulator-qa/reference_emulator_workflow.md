@@ -1,6 +1,6 @@
 ---
 name: reference-emulator-workflow
-description: Verified working sequence and gotchas for running the IWER emulator gate via MCP in Soglia (headless start, hand mode, reload, shutdown)
+description: Verified working sequence and gotchas for running the IWER emulator gate via MCP in Floorplay (headless start, hand mode, reload, shutdown)
 metadata:
   type: reference
 ---
