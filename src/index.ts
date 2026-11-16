@@ -15,7 +15,7 @@ import { attachStats } from './debug/stats';
 import { installTuning } from './debug/tuning';
 import { createCatalogSizeStore } from './data/catalog-sizes';
 import { loadCatalog } from './data/load-catalog';
-import { loadMyFurniture, type LoadMyFurnitureResult } from './data/load-my-furniture';
+import type { LoadMyFurnitureResult } from './data/load-my-furniture';
 import { loadHouse } from './data/load-house';
 import { loadInfoPoints } from './data/load-issues';
 import { createHouseFiles } from './data/house-files';
@@ -178,7 +178,9 @@ async function start(): Promise<void> {
     slog('debug failmy=1: my-furniture.json is not loaded');
     myLoad = Promise.resolve({ ok: false, reason: 'failmy' });
   } else {
-    myLoad = loadMyFurniture();
+    // Mine holds only what the user adds from the room scan (Add to Mine, plan MR): the sample own pieces of
+    // `my-furniture.json` are no longer loaded (owner's decision, 2026-11-16).
+    myLoad = Promise.resolve({ ok: true, items: [] });
   }
   // `house=file-<id>` is a home the user loaded from a file: it comes from storage, never from the network (HF4).
   const [result, catalog, myResult] = await Promise.all([loadHouse(params.house, houseFiles), catalogLoad, myLoad, fontsReady]);

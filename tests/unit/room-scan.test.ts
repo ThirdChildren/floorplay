@@ -22,6 +22,7 @@ import {
   type ScanVolume,
   type ScannedPiece,
   type VolumeHit,
+  scanSkinFor,
 } from '../../src/logic/room-scan';
 import { volumeCenter, type Quat } from '../../src/logic/room-scan-log';
 import { checkOwnFurniture, mergeCatalog, menuSections } from '../../src/logic/catalog';
@@ -466,5 +467,28 @@ describe('sanitizeScanned', () => {
   it('keeps at most MAX_SCANNED', () => {
     const many = Array.from({ length: MAX_SCANNED + 5 }, (_, i) => good(i + 1, 0.3 + i / 100));
     expect(sanitizeScanned(many)).toHaveLength(MAX_SCANNED);
+  });
+});
+
+describe('scanSkinFor: the catalog model a scanned piece wears', () => {
+  it.each<[string, [number, number, number], string | null]>([
+    ['my-scan-bed-1', [1.6, 2.0, 0.5], 'bed-double'],
+    ['my-scan-bed-2', [0.9, 2.0, 0.5], 'bed-single'],
+    ['my-scan-couch-1', [1.69, 0.82, 0.82], 'sofa-3seat'],
+    ['my-scan-couch-2', [0.8, 0.8, 0.9], 'armchair'],
+    ['my-scan-table-1', [1.4, 0.9, 0.75], 'table-dining'],
+    ['my-scan-table-2', [1.2, 0.6, 0.74], 'desk'],
+    ['my-scan-table-3', [0.7, 0.6, 0.4], 'coffee-table'],
+    ['my-scan-storage-1', [1.8, 0.6, 2.0], 'wardrobe'],
+    ['my-scan-storage-2', [0.9, 0.35, 1.8], 'bookcase'],
+    ['my-scan-storage-3', [1.6, 0.4, 0.5], 'tv-stand'],
+    ['my-scan-shelf-1', [0.45, 0.4, 0.5], 'nightstand'],
+    ['my-scan-screen-1', [1.2, 0.1, 0.7], 'tv-stand'],
+    ['my-scan-plant-1', [0.4, 0.4, 1.0], 'plant'],
+    ['my-scan-lamp-1', [0.3, 0.3, 1.5], null],
+    ['my-scan-other-1', [0.5, 0.5, 0.5], null],
+    ['sofa-3seat', [2.1, 0.9, 0.85], null],
+  ])('%s %j -> %s', (id, size, skin) => {
+    expect(scanSkinFor(id, size)).toBe(skin);
   });
 });

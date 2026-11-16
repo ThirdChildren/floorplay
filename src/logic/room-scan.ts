@@ -241,6 +241,38 @@ const SCAN_ID_PATTERN = /^my-scan-([a-z0-9]+)-([1-9][0-9]*)$/;
 export function isScanId(id: string): boolean {
   return SCAN_ID_PATTERN.test(id);
 }
+
+/**
+ * The catalog model a piece made from a room scan is drawn with (its "skin"), from the label in its id and its size
+ * [width, depth, height] in metres: a scanned bed looks like a bed, a couch like a sofa, and so on. The model is stretched to
+ * the measured size. Null when no catalog model fits the label (lamp, other): the piece stays a block.
+ */
+export function scanSkinFor(id: string, size: readonly [number, number, number]): string | null {
+  const match = SCAN_ID_PATTERN.exec(id);
+  if (!match) return null;
+  const [w, d, h] = size;
+  const narrow = Math.min(w, d);
+  const long = Math.max(w, d);
+  switch (match[1]) {
+    case 'bed':
+      return narrow < 1.2 ? 'bed-single' : 'bed-double';
+    case 'couch':
+      return long < 1.3 ? 'armchair' : 'sofa-3seat';
+    case 'table':
+      if (h < 0.55) return 'coffee-table';
+      return narrow < 0.8 ? 'desk' : 'table-dining';
+    case 'storage':
+    case 'shelf':
+      if (h >= 1.2) return long >= 1.4 && narrow >= 0.5 ? 'wardrobe' : 'bookcase';
+      return long < 0.7 ? 'nightstand' : 'tv-stand';
+    case 'screen':
+      return 'tv-stand';
+    case 'plant':
+      return 'plant';
+    default:
+      return null;
+  }
+}
 const MAX_NAME_LENGTH = 40;
 const MAX_SIDE_METRES = 10;
 

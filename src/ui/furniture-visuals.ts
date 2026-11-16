@@ -27,6 +27,7 @@ import {
 import { slog, swarn } from '../log';
 import type { CatalogItem } from '../logic/catalog';
 import { modelScale } from '../logic/catalog-sizes';
+import { scanSkinFor } from '../logic/room-scan';
 import type { OutlineKind } from '../logic/furniture-diff';
 import { palette } from './theme';
 
@@ -163,6 +164,19 @@ export class FurnitureVisuals {
       const gltf = AssetManager.getGLTF(modelAssetId(item.id));
       if (gltf) return this.scaled(item, gltf.scene);
       swarn(`furniture model missing from the cache ${item.id}: using a block`);
+    }
+    // A piece added from the room scan has no model of its own: it wears the catalog model of what it is, stretched to its size.
+    const skin = scanSkinFor(item.id, item.size);
+    if (skin && this.modelReady.has(skin)) {
+      const gltf = AssetManager.getGLTF(modelAssetId(skin));
+      const natural = this.naturalSize.get(skin);
+      if (gltf && natural) {
+        const [sx, sy, sz] = modelScale(item, natural);
+        const holder = new Group();
+        holder.scale.set(sx, sy, sz);
+        holder.add(gltf.scene);
+        return holder;
+      }
     }
     return this.createBlock(item);
   }

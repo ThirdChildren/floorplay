@@ -124,7 +124,12 @@ Automated QA that does not use the start screen must set `intro=0` (in the URL o
 
 ## my furniture (`public/demo/my-furniture.json`)
 
-Like `catalog.items`, with `owner: "me"`. In MR the measurements can come from pinching the corners.
+Like `catalog.items`, with `owner: "me"`. **Not loaded by the app since 2026-11-16** (owner's decision): the file stays as
+a test fixture. Mine now holds only the objects added from the room scan in mixed reality (**My room → Add to Mine**,
+ids `my-scan-<label>-<n>`). Each one is drawn with the catalog model of what it is, stretched to its measured size
+(`scanSkinFor` in `src/logic/room-scan.ts`): bed → single or double bed, couch → armchair or sofa, table → coffee
+table, desk or dining table, storage/shelf → wardrobe, bookcase, nightstand or TV stand, screen → TV stand,
+plant → plant; lamp and other stay blocks.
 
 ## issue (`public/demo/issues-*.json`, schema `schemas/issue.schema.json`)
 

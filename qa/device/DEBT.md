@@ -238,3 +238,8 @@ measurement rows stay pending.
 button; `?mr=0` forces the VR model; browsers without `immersive-ar` fall back to VR. The owner had reported the
 mixed reality path (My room, real object, Add to Mine) working with `?mr=1`. To check on the deployed site: the
 start screen, the tabletop model in passthrough, real-scale viewpoints and walking while in mixed reality.
+
+## Scanned objects with catalog models (2026-11-16, night)
+
+To check on the Quest: Mine is empty until an object is added from My room; a scanned bed, couch, table and
+storage unit show the matching catalog model (not a block) at the measured size, both in the model and in My room.

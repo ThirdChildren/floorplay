@@ -95,7 +95,7 @@ src/
   debug/            development-only tools (behind a flag)
 public/houses/      apartment-a.json, apartment-b.json, apartment-c.json (default, from a real floor plan)
 public/catalog/     catalog.json (+ glb models)
-public/demo/        my-furniture.json, issues-apartment-a.json, issues-apartment-c.json
+public/demo/        my-furniture.json (test fixture, not loaded), issues-apartment-a.json, issues-apartment-c.json
 schemas/            house.schema.json, issue.schema.json
 tests/unit/         Vitest tests
 qa/scenarios/       acceptance scenarios for the emulator (Markdown)
