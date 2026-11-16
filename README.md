@@ -123,4 +123,4 @@ division). It is an independent project, not endorsed by or affiliated with any 
 
 ## License
 
-This repository has no license file yet. Third-party assets keep their own licenses (see `CREDITS.md`).
+The source code is released under the [MIT License](LICENSE). Third-party assets keep their own licenses (see `CREDITS.md`).
