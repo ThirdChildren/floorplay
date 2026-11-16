@@ -11,6 +11,11 @@
 // at their DOORS, `wallPieces`: doors are gaps; windows stay solid) plus a closed "plug" in each door that leads outside (the
 // user stays inside the house). A step moves the circle and then pushes it out of every rectangle it overlaps: along a wall the
 // push cancels the part of the step that points into the wall, so the body SLIDES instead of stopping dead.
+//
+// EASY PASSAGE. Getting between two close solids (the two jambs of a door, two walls) must be effortless: the body is thin
+// (BODY_RADIUS), and every inner door FUNNELS the body toward its centre line while the step goes through it (`funnelDoors`), so
+// aiming roughly at a doorway is enough. Wall ends are treated as round (the circle-rectangle push), so a jamb clipped at an angle
+// turns the body into the doorway instead of stopping it.
 
 import type { House } from './house';
 import { doorZone, wallPieces, type Rect } from './footprint';
@@ -24,8 +29,14 @@ import { DEFAULT_EYE_HEIGHT } from './viewpoint-pose';
  * head). A walk that starts at a viewpoint keeps the eye height of that viewpoint; one restored from the saved `walk` view uses this.
  */
 export const WALK_EYE_HEIGHT = DEFAULT_EYE_HEIGHT;
-/** Radius of the body on the plan, metres (a doorway of 0.75 m leaves 0.31 m of play). */
-export const BODY_RADIUS = 0.22;
+/** Radius of the body on the plan, metres (thin on purpose: a doorway of 0.75 m leaves 0.55 m of play). */
+export const BODY_RADIUS = 0.1;
+/** A door pulls the body toward its centre line when the body is within this distance of the wall, metres. */
+export const FUNNEL_REACH = 0.9;
+/** ...and within this distance beyond each jamb, along the wall, metres. */
+export const FUNNEL_SIDE = 0.6;
+/** Sideways correction per metre of step toward the wall (1 = a 45-degree funnel). */
+export const FUNNEL_GAIN = 1.5;
 /** A step is cut into pieces of at most this length so a fast frame cannot jump across a wall (metres; walls are 0.1 m thick). */
 export const MAX_SUBSTEP = 0.05;
 /** How many times the body is pushed out of the walls in one substep (a corner needs two). */
@@ -40,17 +51,32 @@ export interface WalkWorld {
   readonly bounds: { readonly minX: number; readonly minZ: number; readonly maxX: number; readonly maxZ: number };
   /** The plan point that sits on the root origin (`planCenter`). */
   readonly center: Readonly<[number, number]>;
+  /** The inner doors the body can walk through, used to funnel it toward their centre line. */
+  readonly doors: readonly WalkDoor[];
+}
+
+/** An inner door on the plan: centre, unit vector along the wall, half of the clear width. */
+export interface WalkDoor {
+  readonly cx: number;
+  readonly cz: number;
+  readonly ux: number;
+  readonly uz: number;
+  readonly halfWidth: number;
 }
 
 /** Builds the solid rectangles of `house`. Walls are split at doors; a door to the outside is closed by a plug. */
 export function buildWalkWorld(house: Pick<House, 'walls' | 'rooms'>): WalkWorld {
   const solids: Rect[] = [];
+  const doors: WalkDoor[] = [];
   for (const wall of house.walls) {
     for (const piece of wallPieces(wall)) solids.push(piece);
     for (const opening of wall.openings) {
       if (opening.type !== 'door') continue;
       const toOutside = wall.exterior || (opening.connects?.includes('outside') ?? false);
-      if (toOutside) solids.push(doorZone(wall, opening, 0));
+      const zone = doorZone(wall, opening, 0);
+      if (toOutside) solids.push(zone);
+      else
+        doors.push({ cx: zone.cx, cz: zone.cz, ux: Math.cos(zone.angleRad), uz: Math.sin(zone.angleRad), halfWidth: zone.w / 2 });
     }
   }
   const box = planBox(house);
@@ -58,7 +84,37 @@ export function buildWalkWorld(house: Pick<House, 'walls' | 'rooms'>): WalkWorld
     solids,
     bounds: { minX: box.minX - BOUNDS_MARGIN, minZ: box.minZ - BOUNDS_MARGIN, maxX: box.maxX + BOUNDS_MARGIN, maxZ: box.maxZ + BOUNDS_MARGIN },
     center: [box.cx, box.cz],
+    doors,
   };
+}
+
+/**
+ * Moves the body at `p` sideways toward the centre line of the inner door it is heading through, by at most `FUNNEL_GAIN` times
+ * the part of the step (`dx`, `dz`) that goes toward the wall of that door. Nothing happens when the step goes away from the wall,
+ * runs along it, or the body is far from every door, so walking past a doorway is not disturbed.
+ */
+export function funnelDoors(p: PlanPoint, dx: number, dz: number, world: Readonly<WalkWorld>, r: number = BODY_RADIUS): void {
+  for (const door of world.doors) {
+    const ox = p.x - door.cx;
+    const oz = p.z - door.cz;
+    const a = ox * door.ux + oz * door.uz; // along the wall, from the door centre
+    const b = -ox * door.uz + oz * door.ux; // across the wall
+    if (Math.abs(b) > FUNNEL_REACH || Math.abs(a) > door.halfWidth + FUNNEL_SIDE) continue;
+    const stepAcross = -dx * door.uz + dz * door.ux;
+    // Only a step that goes toward (or through) the wall: across, not mostly along it.
+    if (stepAcross * b >= 0 && Math.abs(b) > 1e-6) continue;
+    const stepAlong = dx * door.ux + dz * door.uz;
+    if (Math.abs(stepAcross) < Math.abs(stepAlong) * 0.25) continue;
+    const free = Math.max(0, door.halfWidth - r - 0.03);
+    const target = Math.max(-free, Math.min(free, a));
+    const need = target - a;
+    if (need === 0) continue;
+    const most = Math.abs(stepAcross) * FUNNEL_GAIN;
+    const shift = Math.max(-most, Math.min(most, need));
+    p.x += door.ux * shift;
+    p.z += door.uz * shift;
+    return;
+  }
 }
 
 /** A point on the plan. */
@@ -162,6 +218,7 @@ export function stepWalk(p: PlanPoint, dx: number, dz: number, world: Readonly<W
   const sx = dx / parts;
   const sz = dz / parts;
   for (let i = 0; i < parts; i += 1) {
+    funnelDoors(p, sx, sz, world);
     p.x += sx;
     p.z += sz;
     resolveBody(p, world);

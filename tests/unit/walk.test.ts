@@ -5,6 +5,7 @@ import {
   WALK_EYE_HEIGHT,
   buildWalkWorld,
   freeSpot,
+  funnelDoors,
   planStep,
   pushOutOfRect,
   resolveBody,
@@ -152,10 +153,36 @@ describe('collisions: doors are passable', () => {
     expect(p.x).toBeLessThan(2.0);
   });
 
-  it('the same door blocks a body that is not lined up with it', () => {
-    const p = at(3.6, 4.9); // the door starts at z 5.0, the body is 0.22 wide: it hits the jamb
+  it('a body that is not lined up with the door is funnelled through it instead of stopping on the jamb', () => {
+    const p = at(3.6, 4.85); // the door starts at z 5.0: the body would clip the jamb
     walk(p, -1, 0, 2, worldA);
-    expect(p.x).toBeGreaterThan(2.6);
+    expect(p.x).toBeLessThan(2.0);
+    expect(p.z).toBeGreaterThan(5.0 + BODY_RADIUS - 1e-6);
+    expect(p.z).toBeLessThan(5.75 - BODY_RADIUS + 1e-6);
+  });
+
+  it('aiming at the doorway at 45 degrees is enough to get through', () => {
+    const p = at(3.4, 4.75);
+    walk(p, -1, 0.6, 2, worldA);
+    expect(p.x).toBeLessThan(2.4);
+  });
+
+  it('walking along the wall past a door does not pull the body into it', () => {
+    const p = at(3.0, 4.75);
+    walk(p, 0, 1, 1, worldA);
+    expect(p.x).toBeCloseTo(3.0, 6);
+  });
+
+  it('a body far from the door along the wall still meets the wall', () => {
+    const p = at(3.0, 6.0); // the door ends at z 5.75; 0.25 m beyond the jamb...
+    const q = at(3.0, 6.0);
+    walk(p, -1, 0, 0.3, worldA);
+    funnelDoors(q, 0, 0, worldA);
+    expect(q).toEqual({ x: 3.0, z: 6.0 }); // ...a zero step never moves the body
+  });
+
+  it('the body is thin: a 0.75 m doorway leaves more than half a metre of play', () => {
+    expect(0.75 - 2 * BODY_RADIUS).toBeGreaterThan(0.5);
   });
 });
 
