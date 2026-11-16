@@ -29,9 +29,11 @@ import { strings } from '../ui/strings';
 import { isMiniatureGestureActive } from './miniature-gesture';
 import { getMenuMode, getPalmMenuHand } from './palm-menu';
 import { isFurnitureInteractionActive, isPanActive, isPinchStarted, pinchClaims } from './pinch-input';
-import { isTabletopLocked } from './view-mode';
+import { isModelHidden, isRealScale, isRoomView, isTabletopLocked } from './view-mode';
 
 const ROOM_PREFIX = 'room:';
+/** The room label stays on the model this long, then goes away by itself (owner's request, 2026-11-16); a new pinch shows it again. */
+export const ROOM_LABEL_SECONDS = 4;
 
 interface RoomLabelContext {
   store: Store;
@@ -59,11 +61,14 @@ export class RoomLabelSystem extends createSystem({
 }) {
   private shownRoomId: string | null = null;
   private readonly pinches = { left: false, right: false };
+  /** True while the label is on screen; `labelAge` counts the seconds since it was shown. */
+  private labelOn = false;
+  private labelAge = 0;
 
   init(): void {
     const ctx = context;
     if (!ctx) return;
-    const { store, house, panel } = ctx;
+    const { store, house } = ctx;
     this.shownRoomId = store.get().selectedRoomId;
 
     this.cleanupFuncs.push(
@@ -84,6 +89,11 @@ export class RoomLabelSystem extends createSystem({
         if (!allowed) return;
         const roomId = name.slice(ROOM_PREFIX.length);
         if (!house.rooms.some((room) => room.id === roomId)) return;
+        // The same room again after its label went away: the store does not change, so show the label from here.
+        if (roomId === store.get().selectedRoomId) {
+          if (!this.labelOn) this.showLabel(roomId);
+          return;
+        }
         store.dispatch(selectRoom(roomId));
       }),
     );
@@ -95,30 +105,51 @@ export class RoomLabelSystem extends createSystem({
         if (current === previous) return;
         this.shownRoomId = current;
         if (current === null) {
-          panel.hide();
+          this.hideLabel();
           if (previous !== null) slog(`room deselected ${previous}`);
           return;
         }
-        const room = house.rooms.find((r) => r.id === current);
-        const floor = room ? this.findRoomObject(current) : null;
-        if (!room || !floor) return;
-        const area = polygonArea(room.polygon);
-        slog(`room selected ${room.id} area=${formatArea(area)}`);
-        const unicode = strings.roomLabel(room.name, area);
-        // Fallback only if the local panel font did not load (the bundled font has no `·` or `²`).
-        const text = panelFontSupports(unicode) ? unicode : strings.roomLabel(room.name, area, true);
-        panel.show(text, floor);
-        slog(`label shown "${text}"`);
+        this.showLabel(current);
       }),
     );
   }
 
-  update(): void {
+  update(delta: number): void {
     const ctx = context;
     if (!ctx) return;
+    if (this.labelOn) {
+      this.labelAge += delta;
+      // Gone after a few seconds, and at once in the room view of mixed reality or at real scale (the model is not there).
+      if (this.labelAge >= ROOM_LABEL_SECONDS) this.hideLabel('timeout');
+      else if (isRoomView() || isModelHidden() || isRealScale()) this.hideLabel('view');
+    }
     // In session the XR camera only gets the viewer pose after the systems run, so use the head group.
     const head = this.world.renderer.xr.isPresenting ? this.world.player.head : this.world.camera;
     ctx.panel.update(head);
+  }
+
+  /** Shows the label of `roomId` above its floor and starts its clock. */
+  private showLabel(roomId: string): void {
+    const ctx = context;
+    if (!ctx) return;
+    const room = ctx.house.rooms.find((r) => r.id === roomId);
+    const floor = room ? this.findRoomObject(roomId) : null;
+    if (!room || !floor) return;
+    const area = polygonArea(room.polygon);
+    slog(`room selected ${room.id} area=${formatArea(area)}`);
+    const unicode = strings.roomLabel(room.name, area);
+    // Fallback only if the local panel font did not load (the bundled font has no `·` or `²`).
+    const text = panelFontSupports(unicode) ? unicode : strings.roomLabel(room.name, area, true);
+    ctx.panel.show(text, floor);
+    this.labelOn = true;
+    this.labelAge = 0;
+    slog(`label shown "${text}"`);
+  }
+
+  private hideLabel(reason?: 'timeout' | 'view'): void {
+    context?.panel.hide();
+    if (this.labelOn && reason) slog(`label hidden reason=${reason}`);
+    this.labelOn = false;
   }
 
   private findRoomObject(roomId: string): Object3D | null {

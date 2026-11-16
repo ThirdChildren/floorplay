@@ -359,6 +359,7 @@ across the whole demo (D71); no statement "works on the headset" without the rep
 
 ## Changelog
 
+- 2026-11-16 (night): the room label goes away by itself after 4 s (`ROOM_LABEL_SECONDS`) and at once in My room (mixed reality) or at real scale; pinching the same room shows it again. Owner's request after the device test; scanned-piece sizes confirmed correct on the Quest by the owner.
 - 2026-11-16 (night): fix: a scanned piece whose long side runs across the catalog model (e.g. a double bed scanned 2.0 × 1.6) turned the model a quarter turn instead of stretching its width; every side now keeps its measured length (`skinFit`). Reported by the owner on the Quest.
 - 2026-11-16 (night): Mine holds only the objects added from the room scan (the sample own pieces are no longer loaded); scanned objects are drawn with the matching catalog model stretched to their size instead of a block. Unit tests for the mapping; not yet tried on the headset.
 - 2026-11-16 (evening): **mixed reality on by default** (owner's request): `mr` defaults to on, `?mr=0` turns it off, no `immersive-ar` falls back to VR. README, Devpost texts and video script updated.
