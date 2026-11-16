@@ -264,6 +264,19 @@ export function skinFit(
 }
 
 /**
+ * The model a catalog item is drawn with once the user has changed its size (Furniture): a double bed made 90 cm wide looks like
+ * a single bed, a single bed made 160 cm wide like a double bed, a sofa made short like an armchair and the other way round.
+ * Any other item (or a size that still suits it) keeps its own model: the id itself is returned.
+ */
+export function resizedSkinFor(catalogId: string, size: readonly [number, number, number]): string {
+  const narrow = Math.min(size[0], size[1]);
+  const long = Math.max(size[0], size[1]);
+  if (catalogId === 'bed-double' || catalogId === 'bed-single') return narrow < 1.2 ? 'bed-single' : 'bed-double';
+  if (catalogId === 'sofa-3seat' || catalogId === 'armchair') return long < 1.3 ? 'armchair' : 'sofa-3seat';
+  return catalogId;
+}
+
+/**
  * The catalog model a piece made from a room scan is drawn with (its "skin"), from the label in its id and its size
  * [width, depth, height] in metres: a scanned bed looks like a bed, a couch like a sofa, and so on. The model is stretched to
  * the measured size. Null when no catalog model fits the label (lamp, other): the piece stays a block.

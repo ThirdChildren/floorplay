@@ -27,7 +27,7 @@ import {
 import { slog, swarn } from '../log';
 import type { CatalogItem } from '../logic/catalog';
 import { modelScale } from '../logic/catalog-sizes';
-import { scanSkinFor, skinFit } from '../logic/room-scan';
+import { resizedSkinFor, scanSkinFor, skinFit } from '../logic/room-scan';
 import type { OutlineKind } from '../logic/furniture-diff';
 import { palette } from './theme';
 
@@ -160,6 +160,14 @@ export class FurnitureVisuals {
   }
 
   private createBody(item: CatalogItem): Object3D {
+    // A resized item may suit a sibling model better (a double bed made 90 cm wide is drawn as a single bed, stretched to its size).
+    if (item.defaultSize) {
+      const sibling = resizedSkinFor(item.id, item.size);
+      if (sibling !== item.id) {
+        const body = this.skinBody(item, sibling);
+        if (body) return body;
+      }
+    }
     if (this.modelReady.has(item.id)) {
       const gltf = AssetManager.getGLTF(modelAssetId(item.id));
       if (gltf) return this.scaled(item, gltf.scene);
@@ -167,22 +175,30 @@ export class FurnitureVisuals {
     }
     // A piece added from the room scan has no model of its own: it wears the catalog model of what it is, stretched to its size.
     const skin = scanSkinFor(item.id, item.size);
-    if (skin && this.modelReady.has(skin)) {
-      const gltf = AssetManager.getGLTF(modelAssetId(skin));
-      const natural = this.naturalSize.get(skin);
-      if (gltf && natural) {
-        // Each side keeps its measured length; a scan whose long side runs the other way turns the model a quarter turn.
-        const fit = skinFit(item.size, natural);
-        const stretch = new Group();
-        stretch.scale.set(fit.scale[0], fit.scale[1], fit.scale[2]);
-        stretch.add(gltf.scene);
-        const holder = new Group();
-        if (fit.quarterTurn) holder.rotation.y = Math.PI / 2;
-        holder.add(stretch);
-        return holder;
-      }
+    if (skin) {
+      const body = this.skinBody(item, skin);
+      if (body) return body;
     }
     return this.createBlock(item);
+  }
+
+  /**
+   * The model of catalog item `skin` fitted to the size of `item`: each side keeps its length, and a footprint whose long side runs
+   * the other way turns the model a quarter turn (`skinFit`). Null when that model is not loaded.
+   */
+  private skinBody(item: CatalogItem, skin: string): Object3D | null {
+    if (!this.modelReady.has(skin)) return null;
+    const gltf = AssetManager.getGLTF(modelAssetId(skin));
+    const natural = this.naturalSize.get(skin);
+    if (!gltf || !natural) return null;
+    const fit = skinFit(item.size, natural);
+    const stretch = new Group();
+    stretch.scale.set(fit.scale[0], fit.scale[1], fit.scale[2]);
+    stretch.add(gltf.scene);
+    const holder = new Group();
+    if (fit.quarterTurn) holder.rotation.y = Math.PI / 2;
+    holder.add(stretch);
+    return holder;
   }
 
   /**

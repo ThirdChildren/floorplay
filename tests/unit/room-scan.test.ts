@@ -22,6 +22,7 @@ import {
   type ScanVolume,
   type ScannedPiece,
   type VolumeHit,
+  resizedSkinFor,
   scanSkinFor,
   skinFit,
 } from '../../src/logic/room-scan';
@@ -519,5 +520,19 @@ describe('skinFit: a catalog model fitted to a scanned size', () => {
 
   it('does not turn a square footprint', () => {
     expect(skinFit([0.8, 0.8, 0.9], [0.8, 0.8, 0.85]).quarterTurn).toBe(false);
+  });
+});
+
+describe('resizedSkinFor: the model of a catalog item after the user changed its size', () => {
+  it.each<[string, [number, number, number], string]>([
+    ['bed-double', [0.9, 2.0, 0.9], 'bed-single'],
+    ['bed-double', [1.6, 2.0, 0.95], 'bed-double'],
+    ['bed-single', [1.6, 2.0, 0.9], 'bed-double'],
+    ['bed-single', [0.9, 1.9, 0.9], 'bed-single'],
+    ['sofa-3seat', [0.9, 0.9, 0.85], 'armchair'],
+    ['armchair', [2.0, 0.9, 0.85], 'sofa-3seat'],
+    ['wardrobe', [0.9, 0.5, 2.0], 'wardrobe'],
+  ])('%s at %j -> %s', (id, size, model) => {
+    expect(resizedSkinFor(id, size)).toBe(model);
   });
 });
