@@ -180,6 +180,7 @@ to the user in Italian what was done and what remains.
   Experience division): no import of pre-existing code, no history rewriting.
 - Deploying to GitHub Pages is **manual** (workflow `pages.yml`): never during the freeze.
 - Never commit secrets; `.env` is ignored.
+- **No AI attribution in commits or PRs**: no `Co-Authored-By: Claude…`, no `Claude-Session:` trailer, no "Generated with Claude Code" footer (owner's decision, 2026-11-16).
 
 ## What not to do
 
