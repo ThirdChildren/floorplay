@@ -151,7 +151,7 @@ network requests, console warnings, exact distances or angles) are marked 🟨 b
 | HOME | "Back to home" in the palm menu (`qa/scenarios/HOME-back-to-home.md`): the control is at the right end of the header (18 x 4 cm, next to the tabs "Items" and "Mine", which are now 8.6 cm wide). Pinch it with the hand pointer at 0.5-0.6 m with the pinned menu and with the palm menu, on the right and the left hand: it must be picked at the first try, and the tabs next to it must still be picked correctly (no neighbour taken); check the label reads at 2.4 cm and that it is not pinched by mistake while reaching for a tab or the first row of cards | high | 2026-11-15 | ✅ passed (owner's device test, 2026-11-16) |
 | HOME | Ending the session from inside the Quest Browser: `XRSession.end()` returns to the 2D page of the browser and the start screen (Load house file, Furniture, Enter VR) is visible in the 2D window without a reload; Enter VR starts a new immersive session from a hand press on the page, and the saved house, role, layout, issues and the saved view (table or the viewpoint/walk spot) come back; confirm the `sessionend` event arrives (log `intro shown reason=session-ended`) and that no pinch lands on the page behind (the pinch that pressed the control ends with the session) | high | 2026-11-15 | ✅ passed (owner's device test, 2026-11-16) |
 | HOME | From the start screen after "Back to home": pick another house (Load house file -> Use this house), press Enter VR, and the new house opens at the table with its own saved state; change a furniture size ("Apply and go back"), press Enter VR, and the menu cards show the new size; both reload the page, so check the Quest Browser does not ask anything and `localStorage` keeps the sizes | medium | 2026-11-15 | ✅ passed (owner's device test, 2026-11-16) |
-| DEMO | apartment-c as default home: fixtures reachable for a long pinch, Furnish preset readable and not crowded at 1:20, info diamonds and issue pins placed sensibly, viewpoints V1–V3 not inside furniture | high | 2026-11-16 | — |
+| DEMO | apartment-c as default home: fixtures reachable for a long pinch, Furnish preset readable and not crowded at 1:20, info diamonds and issue pins placed sensibly, viewpoints V1–V3 not inside furniture | high | 2026-11-16 | ✅ passed (owner's device test, 2026-11-16 evening) |
 
 ## Owner device test of 2026-11-16 (Quest, hands; everything after the 2026-11-11 session)
 
@@ -225,3 +225,9 @@ Succeeded on the headset:
 
 Failed: the palm menu did not accept the pinches on the cards (M6 row above, "Defect found on the headset"). Passed
 after the fix per the owner's test of 2026-11-16.
+
+## Owner device test of 2026-11-16 (evening, Quest over USB with `adb reverse`)
+
+The owner ran the local build on the Quest after `apartment-c` became the default home and PR #14 (thinner body,
+doors that funnel the body when walking) was merged, and reported that everything works. No numbers were reported:
+measurement rows stay pending.

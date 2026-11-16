@@ -359,6 +359,7 @@ across the whole demo (D71); no statement "works on the headset" without the rep
 
 ## Changelog
 
+- 2026-11-16 (evening): PR #14 merged (easy passage when walking). The owner tested `apartment-c` as default home and the new walking on the Quest: everything works (no measurements). Deployed to GitHub Pages.
 - 2026-11-16: **apartment-c is the default demo home** (converted from a real floor plan): fixtures (washer, boiler, kitchen unit, roller shutter), a 20-piece Furnish preset (all valid per `evaluateAll`), demo issues, move-in entry and 5 info points (`public/demo/issues-apartment-c.json`, Sample data). Tests updated for the new default; headless smoke test clean. Not yet tried on the headset.
 - 2026-11-16: **project renamed Soglia → Floorplay** (app title, page title, package, schemas, README; repository
   to be renamed `ThirdChildren/floorplay`, Pages URL https://thirdchildren.github.io/floorplay/). Source code released
