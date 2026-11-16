@@ -1,4 +1,4 @@
-// The "Rotate" button (`ui:rotate-button`, task T5.14, decision D59 in docs/plans/M5.md): for 12 seconds after a piece is put down, a
+// The "Rotate" button (`ui:rotate-button`, task T5.14, decision D59 in docs/plans/M5.md): for 2 seconds after a piece is put down, a
 // small button hangs above that piece; a pinch of one hand on it turns the piece +90 degrees in place (`moveFurniture`, undoable,
 // with the same rules as any pose: if the new rotation collides, the piece stays in the model with its red frame and its reason).
 //

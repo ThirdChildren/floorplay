@@ -53,7 +53,7 @@ const M5_VALUES: Record<Exclude<TuningName, 'foveation'>, number> = {
   anchorForward: 0.45,
   anchorDown: 0.25,
   buttonRing: 0.45,
-  rotateWindow: 12,
+  rotateWindow: 2,
   coachTimeout: 20,
   fovMask: 0,
 };

@@ -43,8 +43,8 @@ const inputs = (now: number, extra: Partial<{ holding: boolean; pieceExists: boo
 });
 
 describe('the window of the Rotate button', () => {
-  it('is 12 seconds', () => {
-    expect(ROTATE_WINDOW_SECONDS).toBe(12);
+  it('is 2 seconds', () => {
+    expect(ROTATE_WINDOW_SECONDS).toBe(2);
   });
 
   it('shows nothing without a window and ends nothing', () => {
@@ -52,18 +52,18 @@ describe('the window of the Rotate button', () => {
     expect(rotateDecision(NO_ROTATE_WINDOW, inputs(5, { holding: true }))).toEqual({ end: null, visible: false });
   });
 
-  it('opens for a piece and shows the button until 12 seconds have passed (the 12th included)', () => {
+  it('opens for a piece and shows the button until 2 seconds have passed (the 2nd included)', () => {
     const w = openRotateWindow('furniture:armchair#1', 100);
     expect(w).toEqual({ pieceId: 'furniture:armchair#1', startedAt: 100 });
-    for (const t of [100, 100.5, 105, 111.99, 112]) expect(rotateDecision(w, inputs(t)), String(t)).toEqual({ end: null, visible: true });
-    expect(rotateDecision(w, inputs(112.001))).toEqual({ end: 'timeout', visible: false });
+    for (const t of [100, 100.5, 101, 101.99, 102]) expect(rotateDecision(w, inputs(t)), String(t)).toEqual({ end: null, visible: true });
+    expect(rotateDecision(w, inputs(102.001))).toEqual({ end: 'timeout', visible: false });
     expect(rotateDecision(w, inputs(500))).toEqual({ end: 'timeout', visible: false });
   });
 
   it('works on any clock: only the difference counts', () => {
     const w = openRotateWindow('furniture:chair#2', 123456.789);
-    expect(rotateDecision(w, inputs(123456.789 + 11)).visible).toBe(true);
-    expect(rotateDecision(w, inputs(123456.789 + 13)).end).toBe('timeout');
+    expect(rotateDecision(w, inputs(123456.789 + 1.5)).visible).toBe(true);
+    expect(rotateDecision(w, inputs(123456.789 + 3)).end).toBe('timeout');
   });
 
   it('ends when a piece is taken in a hand (the other hand has the tap), before the time', () => {
@@ -98,8 +98,8 @@ describe('the window of the Rotate button', () => {
   it('a new window for the same piece starts the time again', () => {
     const first = openRotateWindow('furniture:armchair#1', 0);
     const again = openRotateWindow('furniture:armchair#1', 10);
-    expect(rotateDecision(first, inputs(15)).end).toBe('timeout');
-    expect(rotateDecision(again, inputs(15)).visible).toBe(true);
+    expect(rotateDecision(first, inputs(11)).end).toBe('timeout');
+    expect(rotateDecision(again, inputs(11)).visible).toBe(true);
   });
 });
 
@@ -118,52 +118,36 @@ describe('a menu or a panel that is open hides the button (F-D-2)', () => {
 
   it('hides the button for every surface and every moment of the window, without ending it', () => {
     const w = openRotateWindow('furniture:sofa-3seat#1', 100);
-    for (const t of [100, 101, 105.5, 111.9, 112]) {
+    for (const t of [100, 100.5, 101, 101.9, 102]) {
       expect(rotateDecision(w, inputs(t, { covered: true })), String(t)).toEqual({ end: null, visible: false });
     }
   });
 
   it('brings the button back when the surface closes', () => {
     const w = openRotateWindow('furniture:sofa-3seat#1', 100);
-    expect(rotateDecision(w, inputs(104, { covered: true })).visible).toBe(false);
-    expect(rotateDecision(w, inputs(106, { covered: false }))).toEqual({ end: null, visible: true });
-    expect(rotateDecision(w, inputs(113, { covered: false }))).toEqual({ end: 'timeout', visible: false });
+    expect(rotateDecision(w, inputs(100.5, { covered: true })).visible).toBe(false);
+    expect(rotateDecision(w, inputs(101, { covered: false }))).toEqual({ end: null, visible: true });
+    expect(rotateDecision(w, inputs(103, { covered: false }))).toEqual({ end: 'timeout', visible: false });
   });
 
-  it('does not run the window out while a surface covers the button (review warning 6)', () => {
+  it('runs the window out also while a surface covers the button (2026-11-16: never longer than 2 s)', () => {
     const w = openRotateWindow('furniture:sofa-3seat#1', 100);
-    for (const t of [112.5, 130, 1000]) expect(rotateDecision(w, inputs(t, { covered: true })), String(t)).toEqual({ end: null, visible: false });
+    for (const t of [102.5, 130, 1000]) expect(rotateDecision(w, inputs(t, { covered: true })), String(t)).toEqual({ end: 'timeout', visible: false });
   });
 });
 
-describe('the 12 seconds start again when the last covering surface closes (review warning 6)', () => {
+describe('the window no longer starts again when a covering surface closes (2026-11-16)', () => {
   const id = 'furniture:sofa-3seat#1';
 
-  it('restarts the window at the moment the cover goes away', () => {
+  it('keeps the same window whatever the cover did', () => {
     const w = openRotateWindow(id, 100);
-    const next = rotateResumedWindow(w, true, false, 140);
-    expect(next).toEqual({ pieceId: id, startedAt: 140 });
-    // The button is there for a full window from then on, and not a second longer.
-    expect(rotateDecision(next, inputs(140)).visible).toBe(true);
-    expect(rotateDecision(next, inputs(151.9))).toEqual({ end: null, visible: true });
-    expect(rotateDecision(next, inputs(152.1))).toEqual({ end: 'timeout', visible: false });
-  });
-
-  it('is the same window when nothing was covering, when something still covers, or when there is no window', () => {
-    const w = openRotateWindow(id, 100);
+    expect(rotateResumedWindow(w, true, false, 140)).toBe(w);
     expect(rotateResumedWindow(w, false, false, 140)).toBe(w);
     expect(rotateResumedWindow(w, true, true, 140)).toBe(w);
-    expect(rotateResumedWindow(w, false, true, 140)).toBe(w);
     expect(rotateResumedWindow(NO_ROTATE_WINDOW, true, false, 140)).toBe(NO_ROTATE_WINDOW);
   });
 
-  it('keeps the window if the clock is not usable', () => {
-    const w = openRotateWindow(id, 100);
-    expect(rotateResumedWindow(w, true, false, Number.NaN)).toBe(w);
-  });
-
-  it('plays out the pinned-menu story: put down at 0 under an open menu, closed at 50 s, still pressable at 60 s, gone after 62 s', () => {
-    // Put down at t=0 with the pinned menu open; the user looks around and closes the menu at t=50.
+  it('is gone 2 s after the release even if a menu was open meanwhile', () => {
     let w = openRotateWindow(id, 0);
     let wasCovered = false;
     const frame = (t: number, covered: boolean) => {
@@ -171,20 +155,9 @@ describe('the 12 seconds start again when the last covering surface closes (revi
       wasCovered = covered;
       return rotateDecision(w, inputs(t, { covered }));
     };
-    expect(frame(0.1, true)).toEqual({ end: null, visible: false });
-    expect(frame(30, true)).toEqual({ end: null, visible: false });
-    expect(frame(49.9, true)).toEqual({ end: null, visible: false });
-    expect(frame(50, false)).toEqual({ end: null, visible: true });
-    expect(frame(60, false)).toEqual({ end: null, visible: true });
-    expect(frame(62.1, false)).toEqual({ end: 'timeout', visible: false });
-  });
-
-  it('a second cover restarts it again', () => {
-    let w = openRotateWindow(id, 0);
-    w = rotateResumedWindow(w, true, false, 20);
-    expect(w.startedAt).toBe(20);
-    w = rotateResumedWindow(w, true, false, 35);
-    expect(w.startedAt).toBe(35);
+    expect(frame(0.5, true)).toEqual({ end: null, visible: false });
+    expect(frame(1, false)).toEqual({ end: null, visible: true });
+    expect(frame(2.1, false)).toEqual({ end: 'timeout', visible: false });
   });
 });
 
@@ -193,9 +166,9 @@ describe('a menu or a panel that is open hides the button (F-D-2), cont.', () =>
     const w = openRotateWindow('furniture:sofa-3seat#1', 0);
     expect(rotateDecision(w, inputs(3, { covered: true, holding: true })).end).toBe('grab');
     expect(rotateDecision(w, inputs(3, { covered: true, pieceExists: false })).end).toBe('removed');
-    // While covered the clock is stopped: the window does not run out behind the surface.
-    expect(rotateDecision(w, inputs(30, { covered: true })).end).toBeNull();
-    expect(rotateDecision(w, inputs(30, { covered: false })).end).toBe('timeout');
+    // The clock runs while covered too: the window runs out behind the surface.
+    expect(rotateDecision(w, inputs(1, { covered: true })).end).toBeNull();
+    expect(rotateDecision(w, inputs(30, { covered: true })).end).toBe('timeout');
   });
 
   it('never has a visible button and a covering surface at the same time (the button and Undo are one pinch apart)', () => {

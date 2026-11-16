@@ -471,7 +471,7 @@ export const TUNING_LIMITS = Object.freeze({
   anchorForward: [0.35, 0.65],
   anchorDown: [0.1, 0.4],
   buttonRing: [0.35, 0.6],
-  rotateWindow: [6, 30],
+  rotateWindow: [1, 30],
   coachTimeout: [8, 60],
   foveation: [0, 1],
   fovMask: [20, 55],

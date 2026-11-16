@@ -4,7 +4,7 @@
 // For a short time after a piece has been put down, a small button hangs above THAT piece. A pinch of one hand on it turns the
 // piece a quarter turn (+90 degrees clockwise, in place), so a piece can be turned with one hand only (rule 9): while a piece is
 // in a hand the other hand has the tap and the wrist, and with no piece in hand this button does the same for a piece in the model.
-// The window is 12 seconds; it ends by itself, when another piece is taken, or when the piece is gone. Every press starts it again.
+// The window is 2 seconds (12 until 2026-11-16); it ends by itself, when another piece is taken, or when the piece is gone. Every press starts it again.
 //
 // The button is never nearer to the head than 0.50 m, like the labels, and is kept inside the 30 degree cone.
 //
@@ -115,8 +115,9 @@ export function rotateDecision(window: RotateWindow, inputs: Readonly<RotateInpu
   if (!inputs.pieceExists) return { end: 'removed', visible: false };
   const elapsed = inputs.now - window.startedAt;
   if (!Number.isFinite(elapsed) || elapsed < 0) return { end: null, visible: false };
-  if (inputs.covered) return { end: null, visible: false };
+  // The time runs also while a menu or a panel covers the button (owner's request, 2026-11-16: never more than a couple of seconds).
   if (elapsed > getTuning().rotateWindow) return { end: 'timeout', visible: false };
+  if (inputs.covered) return { end: null, visible: false };
   return { end: null, visible: true };
 }
 
@@ -125,10 +126,9 @@ export function rotateDecision(window: RotateWindow, inputs: Readonly<RotateInpu
  * seconds start again at `now`, so the button is there for a full window; otherwise the window is as it was. No window (or a clock
  * that is not finite) stays as it is.
  */
-export function rotateResumedWindow(window: RotateWindow, wasCovered: boolean, covered: boolean, now: number): RotateWindow {
-  if (window.pieceId === null || !wasCovered || covered) return window;
-  const restarted = openRotateWindow(window.pieceId, now);
-  return restarted.pieceId === null ? window : restarted;
+export function rotateResumedWindow(window: RotateWindow, _wasCovered: boolean, _covered: boolean, _now: number): RotateWindow {
+  // Since 2026-11-16 the window no longer starts again when a surface closes: it lasts ROTATE_WINDOW_SECONDS from the release.
+  return window;
 }
 
 /** The action of a press: the piece turned a quarter turn clockwise where it stands (same place, same room). */

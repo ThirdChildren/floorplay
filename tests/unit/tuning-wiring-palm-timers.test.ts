@@ -180,8 +180,8 @@ describe('rotateWindow', () => {
   const window = openRotateWindow('furniture:bed#1', 100);
   const at = (now: number) => rotateDecision(window, { now, holding: false, pieceExists: true, covered: false });
 
-  it('the button lasts 12 s by default and 20 s with rotateWindow=20', () => {
-    expect(at(111)).toEqual({ end: null, visible: true });
+  it('the button lasts 2 s by default and 20 s with rotateWindow=20', () => {
+    expect(at(101.5)).toEqual({ end: null, visible: true });
     expect(at(113)).toEqual({ end: 'timeout', visible: false });
     set('rotateWindow', '20');
     expect(at(113)).toEqual({ end: null, visible: true });

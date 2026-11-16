@@ -82,7 +82,7 @@ export const TUNING_TABLE: readonly TuningEntry[] = Object.freeze([
   { name: 'anchorForward', default: 0.45, min: 0.35, max: 0.65, unit: 'm', applies: 'placement', optional: false },
   { name: 'anchorDown', default: 0.25, min: 0.1, max: 0.4, unit: 'm', applies: 'placement', optional: false },
   { name: 'buttonRing', default: 0.45, min: 0.35, max: 0.6, unit: 'm', applies: 'reload', optional: true },
-  { name: 'rotateWindow', default: 12, min: 6, max: 30, unit: 's', applies: 'now', optional: false },
+  { name: 'rotateWindow', default: 2, min: 1, max: 30, unit: 's', applies: 'now', optional: false },
   { name: 'coachTimeout', default: 20, min: 8, max: 60, unit: 's', applies: 'now', optional: false },
   { name: 'foveation', default: null, min: 0, max: 1, unit: '', applies: 'now', optional: false },
   { name: 'fovMask', default: 0, min: 20, max: 55, off: 0, unit: 'deg (half angle)', applies: 'now', optional: true },
