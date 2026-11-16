@@ -1,35 +1,35 @@
-# S2.5 · Rotazione a scatti di 90° (polso e tocco con l'altra mano)
+# S2.5 · 90° snap rotation (wrist and tap with the other hand)
 
-**Milestone**: M2 · **Tipo**: PC (emulatore IWER via MCP `iwsdk-runtime`)
-Prerequisiti di implementazione: T2.6, T2.13, T2.14 (vedi `docs/plans/M2.md`, D13 e D19).
+**Milestone**: M2 · **Type**: PC (IWER emulator via MCP `iwsdk-runtime`)
+Implementation prerequisites: T2.6, T2.13, T2.14 (see `docs/plans/M2.md`, D13 and D19).
 
-## Precondizioni
-- Come S2.2: `dev-params.local.txt` = `house=apartment-a&role=visitor&reset=1&seed=1&debug=1`, reload, accept, mani, testa (0; 1,6; 0), O dall'ultima riga `miniature placed`, menu aperto (`hand-left` a `L_MENU` con `Q_UP`, tenuto in alto). `W(px, pz)` come in S2.2.
-- Letto posato come in S2.2 a **P1** = (0,065; 1,39; −0,565) → (6,80; 1,125) rot 0. Centro del letto in mondo: `C0` = (0,065; 1,39; −0,574).
-- Convenzione (D13/D19): `rotationDeg` orario visto dall'alto; la mano che gira come il pezzo; relativa alla presa (`rotationDeg = iniziale − torsione quantizzata`, torsione + = antiorario). Quaternioni di sola imbardata: −30° `(0, −0.2588190, 0, 0.9659258)`, −60° `(0, −0.5, 0, 0.8660254)`, −90° `(0, −0.7071068, 0, 0.7071068)`, +90° `(0, 0.7071068, 0, 0.7071068)`.
-- Nota: `xr_set_transform` richiede sempre `orientation`; se `xr_animate_to` accetta `orientation` (da verificare, `docs/plans/M2.md` "Esiti degli spike") usarlo con 0,4 s a tappa al posto dei tre `xr_set_transform`.
+## Preconditions
+- As S2.2: `dev-params.local.txt` = `house=apartment-a&role=visitor&reset=1&seed=1&debug=1`, reload, accept, hands, head (0; 1.6; 0), O from the last `miniature placed` line, menu open (`hand-left` at `L_MENU` with `Q_UP`, held up). `W(px, pz)` as in S2.2.
+- Bed placed as in S2.2 at **P1** = (0.065; 1.39; −0.565) → (6.80; 1.125) rot 0. Center of the bed in world: `C0` = (0.065; 1.39; −0.574).
+- Convention (D13/D19): `rotationDeg` clockwise seen from above; the hand turns like the piece; relative to the grab (`rotationDeg = initial − quantized twist`, twist + = counterclockwise). Yaw-only quaternions: −30° `(0, −0.2588190, 0, 0.9659258)`, −60° `(0, −0.5, 0, 0.8660254)`, −90° `(0, −0.7071068, 0, 0.7071068)`, +90° `(0, 0.7071068, 0, 0.7071068)`.
+- Note: `xr_set_transform` always requires `orientation`; if `xr_animate_to` accepts `orientation` (to be checked, `docs/plans/M2.md` "Spike outcomes") use it with 0.4 s per leg in place of the three `xr_set_transform`.
 
-## Passi
-1. Posare il letto a **P1** (S2.2, passi 2–5). Leggere `furniture placed`.
-2. **Polso, senso orario**: `hand-right` a `C0` con orientamento `(0, 0, 0, 1)`, select 1, attesa 0,3 s (log `furniture grabbed … source=model`). Poi, **senza spostare la posizione**, tre `xr_set_transform` di `hand-right` con le orientazioni −30°, −60°, −90°, con 0,3 s di attesa dopo ciascuno. Dopo ciascuno: `browser_get_console_logs` con `pattern: "furniture rotated"` e `ecs_query_entity` sul letto con `["Furniture"]`. `browser_screenshot` dopo −90° (letto ruotato, cornice di anteprima).
-3. Rilascio (select 0, attesa 0,5 s). Log `furniture placed`, `ecs_query_entity` con `["Furniture"]`, stato.
-4. **Polso, senso antiorario**: riprendere il letto al suo centro attuale `W(6,8; 0,925)` = (0,065; 1,39; −0,584), orientamento `(0, 0, 0, 1)`, select 1; `xr_set_transform` con +30°, +60°, +90° (stessa posizione, 0,3 s ciascuno); rilascio. Log e `Furniture`.
-5. **Tocco con l'altra mano**: riprendere il letto (centro `W(6,8; 1,125)`), select 1 con la destra; `xr_select {device: "hand-left", duration: 0.2}`, attesa 0,4 s, log `furniture rotated`; secondo `xr_select` della sinistra, attesa 0,4 s, log; rilascio della destra. Log `furniture placed`, `Furniture`, stato.
-6. Con il letto rilasciato: **controllo** che il tocco a mano libera non sia una presa: `xr_select {device: "hand-left", duration: 0.2}` sulla posizione del letto con la destra a riposo → `furniture grabbed` **compare** (è una presa normale con la sinistra, source=model) e va rilasciato con select 0 senza spostarlo; annotare il comportamento (non decide l'esito).
-7. `browser_get_console_logs` senza filtro (cercare `error`).
+## Steps
+1. Place the bed at **P1** (S2.2, steps 2–5). Read `furniture placed`.
+2. **Wrist, clockwise**: `hand-right` at `C0` with orientation `(0, 0, 0, 1)`, select 1, wait 0.3 s (log `furniture grabbed … source=model`). Then, **without moving the position**, three `xr_set_transform` of `hand-right` with the orientations −30°, −60°, −90°, with 0.3 s wait after each. After each: `browser_get_console_logs` with `pattern: "furniture rotated"` and `ecs_query_entity` on the bed with `["Furniture"]`. `browser_screenshot` after −90° (rotated bed, preview outline).
+3. Release (select 0, wait 0.5 s). Log `furniture placed`, `ecs_query_entity` with `["Furniture"]`, state.
+4. **Wrist, counterclockwise**: grab the bed again at its current center `W(6.8; 0.925)` = (0.065; 1.39; −0.584), orientation `(0, 0, 0, 1)`, select 1; `xr_set_transform` with +30°, +60°, +90° (same position, 0.3 s each); release. Log and `Furniture`.
+5. **Tap with the other hand**: grab the bed again (center `W(6.8; 1.125)`), select 1 with the right hand; `xr_select {device: "hand-left", duration: 0.2}`, wait 0.4 s, log `furniture rotated`; second `xr_select` of the left hand, wait 0.4 s, log; release the right hand. Log `furniture placed`, `Furniture`, state.
+6. With the bed released: **check** that the free-hand tap is not a grab: `xr_select {device: "hand-left", duration: 0.2}` on the position of the bed with the right hand at rest → `furniture grabbed` **appears** (it is a normal grab with the left hand, source=model) and must be released with select 0 without moving it; note the behavior (does not decide the outcome).
+7. `browser_get_console_logs` without a filter (look for `error`).
 
-## Verifiche (tutte obbligatorie)
-1. Passo 2: dopo −30° **nessuna** riga `furniture rotated` (sotto la soglia di 50°); dopo −60° `[soglia] furniture rotated furniture:bed-double#1 rot=90`; dopo −90° nessun'altra riga (resta 90); in volo `Furniture.rotationDeg` = 90 e `outline` = `green`.
-2. Passo 3: `furniture placed furniture:bed-double#1 room=bedroom x=6.80 z=0.93 rot=90 status=valid` (z = 0,925 ± 0,02: con l'impronta ruotata 2,0 × 1,6 il lato nord si aggancia al muro a z = 0,125 con centro a 0,925); `Furniture.rotationDeg` = 90 e `status` = `valid`; `historyLength` 2.
-3. Passo 4: da 90° con la mano antioraria di 90° la rotazione torna a **0**: riga `furniture rotated … rot=0` dopo +60° e `furniture placed … x=6.80 z=1.13 rot=0 status=valid`.
-4. Passo 5: primo tocco `rot=90`, secondo tocco `rot=180`; `furniture placed … x=6.80 z=1.13 rot=180 status=valid` (l'impronta di 180° è uguale a quella di 0°); **nessun** `furniture grabbed` prodotto dai tocchi dell'altra mano, nessun `miniature gesture start`, nessun `room selected`.
-4b. Quattro tocchi consecutivi riportano alla rotazione di partenza (0 → 90 → 180 → 270 → 0): ripetere i tocchi con la destra che tiene e leggere le righe `rot=…` (verifica facoltativa se il tempo manca; va dichiarata nel report).
-5. Passo 6: la presa con la sinistra è una presa normale (l'esito è annotato); il rilascio senza spostamento non cambia lo stato e non crea una voce di cronologia inutile (`historyLength` invariato oppure +1 con lo stesso stato: il report riporta quale).
-6. Nessuna voce `error`; scala 0,05 e yaw 0 invariati nello store.
-7. Screenshot del passo 2 allegato; il report descrive a parole l'orientamento del letto (lungo l'asse x quando ruotato di 90°) e la cornice verde.
+## Checks (all mandatory)
+1. Step 2: after −30° **no** `furniture rotated` line (below the 50° threshold); after −60° `[soglia] furniture rotated furniture:bed-double#1 rot=90`; after −90° no other line (stays 90); in flight `Furniture.rotationDeg` = 90 and `outline` = `green`.
+2. Step 3: `furniture placed furniture:bed-double#1 room=bedroom x=6.80 z=0.93 rot=90 status=valid` (z = 0.925 ± 0.02: with the rotated footprint 2.0 × 1.6 the north side snaps to the wall at z = 0.125 with the center at 0.925); `Furniture.rotationDeg` = 90 and `status` = `valid`; `historyLength` 2.
+3. Step 4: from 90° with the hand rotated 90° counterclockwise the rotation returns to **0**: line `furniture rotated … rot=0` after +60° and `furniture placed … x=6.80 z=1.13 rot=0 status=valid`.
+4. Step 5: first tap `rot=90`, second tap `rot=180`; `furniture placed … x=6.80 z=1.13 rot=180 status=valid` (the 180° footprint is the same as the 0° one); **no** `furniture grabbed` produced by the taps of the other hand, no `miniature gesture start`, no `room selected`.
+4b. Four consecutive taps bring back the starting rotation (0 → 90 → 180 → 270 → 0): repeat the taps with the right hand holding and read the `rot=…` lines (optional check if time is short; it must be declared in the report).
+5. Step 6: the grab with the left hand is a normal grab (the outcome is noted); the release without movement does not change the state and does not create a useless history entry (`historyLength` unchanged or +1 with the same state: the report says which).
+6. No `error` entry; scale 0.05 and yaw 0 unchanged in the store.
+7. Screenshot of step 2 attached; the report describes in words the orientation of the bed (along the x axis when rotated by 90°) and the green outline.
 
-## Esito
-PASS se le verifiche 1–4 e 6 sono soddisfatte · FAIL altrimenti. Se `furniture rotated` non compare dopo −60°, ripetere **una sola volta** con −75° prima di −90° e riportare il valore effettivo della soglia (non decide l'esito se il tocco dell'altra mano passa).
+## Outcome
+PASS if checks 1–4 and 6 are met · FAIL otherwise. If `furniture rotated` does not appear after −60°, repeat **only once** with −75° before −90° and report the actual value of the threshold (it does not decide the outcome if the tap of the other hand passes).
 
-## Da rimandare al visore
-Affidabilità del polso (isteresi 50°/40°) con la mano vera, confronto con il tocco dell'altra mano, comodità della rotazione da seduti (voci M2 in `qa/device/DEBT.md`).
+## To defer to the headset
+Reliability of the wrist (50°/40° hysteresis) with a real hand, comparison with the tap of the other hand, comfort of rotating while seated (M2 entries in `qa/device/DEBT.md`).
