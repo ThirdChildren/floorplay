@@ -44,6 +44,9 @@ Floorplay turns the plan of a home into a 1:20 model on your table. You use it s
 - **Live (tenant and landlord).** Hold a pinch on the exact spot, such as the washer, to report a problem: a
   category, a predefined phrase and an urgency, no keyboard needed. The pin moves from red to orange to green as
   the landlord handles it, with a history and a move-in report.
+- **Your real room (mixed reality).** On a headset with passthrough the model sits on your real table. Pinch
+  **My room** to see the room around you: the objects from the headset room scan are outlined, and one pinch adds
+  a real couch or table, with its measured size, to your own furniture ("Mine"), ready to try in the new home.
 
 Everything saves itself. Take the headset off, put it back on, or reload: you are where you left off.
 
@@ -68,9 +71,8 @@ and walking uses a slow rowing gesture with a comfort vignette.
 ### What's next
 
 Floor plans imported from common formats, shared sessions so an agent and a visitor can tour the same model
-together, real photos attached to issue reports, and a landlord view across several homes. Mixed reality is
-already available as an experimental option (`?mr=1`): your real room's furniture from the headset scan can join
-your own pieces.
+together, real photos attached to issue reports, and a landlord view across several homes, and saving the
+virtual pieces placed in your real room.
 
 ## Optional: hand interactions and the future of VR (about 150 words)
 
@@ -99,7 +101,10 @@ Time needed: about 5 minutes. Seated, hands only (put the controllers down).
 6. **Sun:** pinch **View**, change the time, and watch the light patches move.
 7. **Report an issue:** pinch **Issues**, switch the role to **Tenant**, then hold a pinch on the washer to
    report a problem. Switch to **Landlord** to move it from red to orange to green.
-8. **Resume:** take the headset off and put it back on, or reload the page: the home is as you left it.
+8. **Your room (mixed reality, needs Space Setup on the headset):** pinch **My room** beside the model, pinch an
+   outlined real object, then **Add to Mine**; pinch **Model**, open **Menu**: the object is in Mine. `?mr=0`
+   turns mixed reality off.
+9. **Resume:** take the headset off and put it back on, or reload the page: the home is as you left it.
 
 Useful links (add to the address): `?house=apartment-a` or `?house=apartment-b` for other homes, `?role=agent`
 for the agent tools, `?reset=1` to start clean, `?text=large&contrast=1` for the accessibility options.

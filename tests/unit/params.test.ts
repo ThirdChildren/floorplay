@@ -34,7 +34,7 @@ describe('parseParams defaults', () => {
       seed: 1,
       time: null,
       debug: false,
-      mr: false,
+      mr: true,
       glyphs: false,
       furnish: 'none',
       failmodels: false,
@@ -156,7 +156,7 @@ describe('parseParams boolean flags', () => {
     FLAGS.flatMap((key) => ['true', 'false', 'yes', '2', '-1', '01', '', 'on'].map((v) => [key, v] as const)),
   )('%s rejects "%s" (only 0 and 1 are valid)', (key, value) => {
     const r = parseParams(`${key}=${value}`);
-    expect(r.params[key]).toBe(false);
+    expect(r.params[key]).toBe(DEFAULT_PARAMS[key]);
     expect(r.present).toEqual([]);
     expect(r.warnings).toHaveLength(1);
     expect(r.warnings[0]).toContain(key);
@@ -462,7 +462,7 @@ describe('mergeParams', () => {
     ['seed', 'seed=5'],
     ['time', 'time=2026-12-21T10:00'],
     ['debug', 'debug=1'],
-    ['mr', 'mr=1'],
+    ['mr', 'mr=0'],
     ['glyphs', 'glyphs=1&debug=1'],
     ['furnish', 'furnish=scandinavian'],
     ['failmodels', 'failmodels=1&debug=1'],

@@ -54,7 +54,7 @@ export interface Params {
   time: string | null;
   /** `debug=1`: show stats and state logs. */
   debug: boolean;
-  /** `mr=1`: request mixed reality (passthrough) instead of VR. */
+  /** Mixed reality (passthrough) when the browser supports `immersive-ar`; on by default, `mr=0` forces the VR model. */
   mr: boolean;
   /** `glyphs=1`: show the glyph test panel (`ui:glyph-test`), a development aid. Only honoured together with `debug=1` (T5.R6). */
   glyphs: boolean;
@@ -131,7 +131,7 @@ export const DEFAULT_PARAMS: Readonly<Params> = Object.freeze({
   seed: 1,
   time: null,
   debug: false,
-  mr: false,
+  mr: true,
   glyphs: false,
   furnish: 'none',
   failmodels: false,

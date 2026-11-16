@@ -231,3 +231,10 @@ after the fix per the owner's test of 2026-11-16.
 The owner ran the local build on the Quest after `apartment-c` became the default home and PR #14 (thinner body,
 doors that funnel the body when walking) was merged, and reported that everything works. No numbers were reported:
 measurement rows stay pending.
+
+## Mixed reality on by default (2026-11-16, evening)
+
+`mr` now defaults to on: on a headset that supports `immersive-ar` the app starts in passthrough with the **My room**
+button; `?mr=0` forces the VR model; browsers without `immersive-ar` fall back to VR. The owner had reported the
+mixed reality path (My room, real object, Add to Mine) working with `?mr=1`. To check on the deployed site: the
+start screen, the tabletop model in passthrough, real-scale viewpoints and walking while in mixed reality.

@@ -37,7 +37,7 @@ Useful URL parameters (add them after the address, for example `?house=apartment
 | `time` | `2026-12-21T10:00` | Set the date and time of the sun. |
 | `intro` | `0` | Skip the start screen. |
 | `contrast`, `text` | `contrast=1`, `text=large` | Start with high contrast or large text. |
-| `mr` | `1` | Opt in to mixed reality (experimental, see below). |
+| `mr` | `0` | Turn mixed reality off and use the VR model only. |
 | `debug` | `1` | Show draw calls, triangles and fps. |
 
 ## Hand gestures
@@ -72,11 +72,13 @@ Some content is made up so you can see the full flow. It is labelled **Sample da
 report, the issue history of the demo apartment, and the agent's info points. The sun is a simplified light: patches
 on the floor through the windows, with no shadows.
 
-## Mixed reality (experimental)
+## Mixed reality
 
-Add `?mr=1` to use passthrough. You can see the real objects from your headset room scan (Space Setup), add
-them to your own furniture, and place virtual pieces at real size on the floor. This is off by default and is
-not part of the main demo path. Without the parameter, the app runs as described above.
+On a headset that supports passthrough, Floorplay starts in mixed reality: the model sits on your real table.
+Pinch **My room** beside the model to see your real room. The objects from your headset room scan (Space Setup)
+are outlined: pinch one to see its size and **Add to Mine**, so it joins your own furniture in the menu. You can
+also place virtual pieces at real size on your floor. Pinch **Model** to go back. Without a room scan the app says
+so and the rest works as usual. Add `?mr=0` to use the VR model only. Browsers without passthrough get VR.
 
 ## Tech
 

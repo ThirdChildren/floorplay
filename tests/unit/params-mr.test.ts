@@ -4,9 +4,13 @@ import { DEFAULT_PARAMS, formatParamsLine, mergeParams, parseParams } from '../.
 describe('the mr parameter (plan MR, DMR1)', () => {
   const none = parseParams('');
 
-  it('is off by default', () => {
-    expect(DEFAULT_PARAMS.mr).toBe(false);
-    expect(mergeParams(none, null).params.mr).toBe(false);
+  it('is on by default (the world falls back to VR when immersive-ar is missing)', () => {
+    expect(DEFAULT_PARAMS.mr).toBe(true);
+    expect(mergeParams(none, null).params.mr).toBe(true);
+  });
+
+  it('is turned off with mr=0', () => {
+    expect(mergeParams(parseParams('mr=0'), null).params.mr).toBe(false);
   });
 
   it('is read from the URL without debug=1', () => {
@@ -30,9 +34,9 @@ describe('the mr parameter (plan MR, DMR1)', () => {
     expect(m.explicit).toContain('mr');
   });
 
-  it('ignores a bad value with a warning and stays off', () => {
+  it('ignores a bad value with a warning and keeps the default', () => {
     const parsed = parseParams('mr=yes');
-    expect(parsed.params.mr).toBe(false);
+    expect(parsed.params.mr).toBe(true);
     expect(parsed.warnings).toEqual(['param mr="yes" ignored: expected 1 or 0']);
   });
 
