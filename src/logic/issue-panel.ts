@@ -68,8 +68,8 @@ export type StaticControlId = 'back' | 'close' | RoleControlId | HomeActionId;
 export type FormControlId = `category-${string}` | `phrase-${string}` | `urgency-${string}` | 'cancel' | 'report';
 /** The controls of the list (T4.8, src/logic/issue-list.ts places them): its rows (`row-0` .. `row-4`) and the buttons for the pages. */
 export type ListControlId = `row-${number}` | 'page-prev' | 'page-next';
-/** The action buttons of the detail (T4.9, src/logic/issue-detail.ts places them): `resolve` is the button `action-resolved`. */
-export type DetailActionControlId = 'action-take-on' | 'action-resolved' | 'action-confirm' | 'action-reopen';
+/** The action buttons of the detail (T4.9, src/logic/issue-detail.ts places them): `resolve` is the button `action-resolved`; `action-delete` is the Delete button of an archived issue. */
+export type DetailActionControlId = 'action-take-on' | 'action-resolved' | 'action-confirm' | 'action-reopen' | 'action-delete';
 /** The controls of the detail: the action buttons and the bar. */
 export type DetailControlId = DetailActionControlId | 'back' | 'close';
 /** The switch of the move-in report (T4.10, src/logic/issue-movein.ts places it): `ui:issue-movein-toggle`. */

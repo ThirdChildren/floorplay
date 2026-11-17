@@ -107,6 +107,9 @@ export interface DetailTexts {
   readonly categories: Readonly<Record<IssueCategory, string>>;
   readonly events: Readonly<Record<HistoryEvent, string>>;
   readonly actions: Readonly<Record<IssueAction, string>>;
+  /** The Delete button of an archived issue, and its text after the first press (the second press deletes). */
+  readonly delete: string;
+  readonly deleteConfirm: string;
   readonly more: (count: number) => string;
   /** Title and status word of a move-in entry (`baseline`): it is read-only and has no status of an issue. */
   readonly moveIn: string;
@@ -114,8 +117,11 @@ export interface DetailTexts {
   readonly separator: string;
 }
 
+/** What a button of the detail does: a status transition, or `delete` (an archived issue only). */
+export type DetailButtonAction = IssueAction | 'delete';
+
 export interface DetailAction {
-  readonly action: IssueAction;
+  readonly action: DetailButtonAction;
   readonly control: DetailActionControlId;
   readonly label: string;
   /** Width of the button (cm): the buttons share the row. */
@@ -226,8 +232,13 @@ export function lastHistory(history: readonly HistoryEntry[]): { entries: Histor
 }
 
 /** The control id of an action button (`ui:issue-action-resolved` is the one for the action `resolve`). */
-export function actionControlId(action: IssueAction): DetailActionControlId {
+export function actionControlId(action: DetailButtonAction): DetailActionControlId {
   return action === 'resolve' ? 'action-resolved' : `action-${action}`;
+}
+
+/** True for the control id of the Delete button. */
+export function isDeleteControl(id: string): boolean {
+  return id === 'action-delete';
 }
 
 /** The action of a control id, or null for any other control. */
@@ -293,6 +304,7 @@ export function buildDetail(
   texts: DetailTexts,
   backText: string,
   closeText: string,
+  deleteArmed = false,
 ): DetailModel {
   const baseline = issue !== undefined && issue.kind === 'baseline' && can(role, 'view-move-in');
   if (issue === undefined || !can(role, 'view-pins') || (!baseline && (issue.kind !== 'issue' || issue.status === undefined))) {
@@ -300,7 +312,9 @@ export function buildDetail(
   }
   // A move-in entry is read-only: no status of an issue, no urgency, no buttons (D48). Its colour is the violet of its pin.
   const status = baseline ? null : (issue.status as IssueStatus);
-  const actionIds = baseline ? [] : availableActions(role, issue);
+  // The Delete button comes after the transitions; it exists only for an archived issue and a role with the `delete` permission.
+  const actionIds: DetailButtonAction[] = baseline ? [] : [...availableActions(role, issue)];
+  if (!baseline && can(role, 'delete', issue)) actionIds.push('delete');
   const { entries, older } = lastHistory(issue.history);
   const more = older > 0;
   const room = infoRoomFor(actionIds.length > 0);
@@ -335,7 +349,12 @@ export function buildDetail(
     historyLines: entries.map((entry) => historyLine(entry, texts)),
     moreText: more ? texts.more(older) : '',
     sample,
-    actions: actionIds.map((action) => ({ action, control: actionControlId(action), label: texts.actions[action], width })),
+    actions: actionIds.map((action) => ({
+      action,
+      control: actionControlId(action),
+      label: action === 'delete' ? (deleteArmed ? texts.deleteConfirm : texts.delete) : texts.actions[action],
+      width,
+    })),
     infoHeight: infoHeightFor(lines.length, entries.length, more, metaLines),
     backText,
     closeText,
@@ -398,6 +417,21 @@ export function formatTransitionLine(id: string, from: IssueStatus, to: IssueSta
 /** `issue transition denied id=issue-014 action=resolve role=tenant reason=role-not-allowed` (a warning, never an error). */
 export function formatTransitionDenied(id: string, action: IssueAction, role: Role, reason: string): string {
   return `issue transition denied id=${id} action=${action} role=${role} reason=${reason}`;
+}
+
+/** `issue delete armed id=issue-014` (the first press of Delete). */
+export function formatIssueDeleteArmed(id: string): string {
+  return `issue delete armed id=${id}`;
+}
+
+/** `issue deleted id=issue-014 by=tenant` (the second press: the issue is gone from the store and from the saved state). */
+export function formatIssueDeleted(id: string, by: Role): string {
+  return `issue deleted id=${id} by=${by}`;
+}
+
+/** `issue delete denied id=issue-014 role=visitor` (a warning, never an error). */
+export function formatIssueDeleteDenied(id: string, role: Role): string {
+  return `issue delete denied id=${id} role=${role}`;
 }
 
 /** `issues pin pressed id=issue-014 hand=right`. */

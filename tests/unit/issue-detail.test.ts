@@ -103,11 +103,11 @@ const detail = (issue: StoredIssue | undefined, role: Role, room: string | null 
 
 describe('the buttons are exactly the ones the permission table lets this role press now (D43)', () => {
   // The table of D43, written out here once more on purpose: role -> status -> actions.
-  const EXPECTED: Record<Role, Record<IssueStatus, IssueAction[]>> = {
+  const EXPECTED: Record<Role, Record<IssueStatus, (IssueAction | 'delete')[]>> = {
     visitor: { open: [], in_progress: [], resolved: [], archived: [] },
     agent: { open: [], in_progress: [], resolved: [], archived: [] },
-    tenant: { open: [], in_progress: [], resolved: ['confirm', 'reopen'], archived: [] },
-    landlord: { open: ['take-on'], in_progress: ['resolve'], resolved: [], archived: [] },
+    tenant: { open: [], in_progress: [], resolved: ['confirm', 'reopen'], archived: ['delete'] },
+    landlord: { open: ['take-on'], in_progress: ['resolve'], resolved: [], archived: ['delete'] },
   };
 
   for (const role of ROLES) {
@@ -117,7 +117,7 @@ describe('the buttons are exactly the ones the permission table lets this role p
         // The visitor and the agent do not see the issues at all (no pins, no list): the detail is the "not found" one.
         const expected = role === 'visitor' || role === 'agent' ? [] : EXPECTED[role][status];
         expect(model.actions.map((a) => a.action)).toEqual(expected);
-        expect(model.actions.map((a) => a.action)).toEqual(role === 'visitor' || role === 'agent' ? [] : availableActions(role, withStatus(mine(14), status)));
+        expect(model.actions.map((a) => a.action).filter((a) => a !== 'delete')).toEqual(role === 'visitor' || role === 'agent' ? [] : availableActions(role, withStatus(mine(14), status)));
         expect(detailControlIds(model).filter((id) => id.startsWith('action-'))).toEqual(expected.map(actionControlId));
         expect(model.missing).toBe(role === 'visitor' || role === 'agent');
       });
@@ -316,8 +316,8 @@ describe('the text is wrapped in the logic and never leaves its box', () => {
     const long = 'The kitchen unit has a cracked door and the hinge on the left side is loose so it will not stay closed and the handle came off.';
     // Open issue, landlord: one button, one history entry: the text keeps its three lines.
     expect(detail(mine(14, long), 'landlord').textLines).toHaveLength(DETAIL_TEXT_LINES);
-    // Archived with four entries and no button: still three.
-    expect(detail(walked('archived', long), 'tenant').textLines).toHaveLength(DETAIL_TEXT_LINES);
+    // Archived with four entries and the Delete button: the button takes room, so the text keeps two lines.
+    expect(detail(walked('archived', long), 'tenant').textLines).toHaveLength(2);
   });
 });
 

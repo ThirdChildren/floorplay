@@ -53,8 +53,12 @@ import {
   detailSlots,
   formatDetailLine,
   formatPinPressed,
+  formatIssueDeleteArmed,
+  formatIssueDeleteDenied,
+  formatIssueDeleted,
   formatTransitionDenied,
   formatTransitionLine,
+  isDeleteControl,
   type DetailModel,
   type DetailTexts,
 } from '../logic/issue-detail';
@@ -123,7 +127,8 @@ import {
   type MoveInPage,
   type MoveInTexts,
 } from '../logic/issue-movein';
-import { planTransition, setMoveIn, setRole, transitionIssue, type AppState, type Store } from '../logic/state';
+import { can } from '../logic/permissions';
+import { deleteIssue, planTransition, setMoveIn, setRole, transitionIssue, type AppState, type Store } from '../logic/state';
 import { pickRect, type PickSlot } from '../logic/menu';
 import { pinnedPanelPoint } from '../logic/menu-anchor';
 import type { Role } from '../logic/params';
@@ -175,6 +180,8 @@ interface IssuePanelContext {
   detailIssues: unknown;
   /** Where the detail was opened from, so `Back` returns there: the list, or the move-in report for a `baseline` (T4.10). */
   detailOrigin: DetailOrigin;
+  /** The id of the archived issue whose Delete button was pressed once (the next press deletes it), or null. Dropped when the detail changes or closes. */
+  deleteArmed: string | null;
   /** The move-in report (T4.10): its model and what it was made from (the issues and the switch). */
   moveInModel: MoveInPage | null;
   moveInIssues: unknown;
@@ -229,6 +236,7 @@ export function createIssuePanel(
     detailModel: null,
     detailIssues: null,
     detailOrigin: 'list',
+    deleteArmed: null,
     moveInModel: null,
     moveInIssues: null,
     moveInVisible: false,
@@ -543,6 +551,7 @@ export class IssuePanelSystem extends createSystem({}) {
     ctx.detailModel = null;
     ctx.detailIssues = null;
     ctx.detailOrigin = 'list';
+    ctx.deleteArmed = null;
     ctx.panel.setDetail(null);
     ctx.formRev += 1;
   }
@@ -554,7 +563,16 @@ export class IssuePanelSystem extends createSystem({}) {
     const state = ctx.store.get();
     const issue = state.issues.find((candidate) => candidate.id === id);
     const room = issue === undefined ? null : ctx.house.rooms.find((r) => r.id === roomAt(ctx.house, issue.position[0], issue.position[2]))?.name ?? null;
-    const model = buildDetail(issue, id, state.role, room, detailTexts(), strings.issues.back, strings.issues.close);
+    const model = buildDetail(
+      issue,
+      id,
+      state.role,
+      room,
+      detailTexts(),
+      strings.issues.back,
+      strings.issues.close,
+      ctx.deleteArmed === id,
+    );
     ctx.detailModel = model;
     ctx.detailIssues = state.issues;
     ctx.panel.setDetail(model);
@@ -573,6 +591,7 @@ export class IssuePanelSystem extends createSystem({}) {
       return;
     }
     this.dropForm(ctx);
+    ctx.deleteArmed = null;
     ctx.detailId = id;
     ctx.detailOrigin = ctx.store.get().issues.find((issue) => issue.id === id)?.kind === 'baseline' ? 'movein' : 'list';
     ctx.selectedId = id;
@@ -633,6 +652,39 @@ export class IssuePanelSystem extends createSystem({}) {
       this.syncList(ctx);
       ctx.panel.setScreen(target);
     }
+  }
+
+  /**
+   * The Delete button of an archived issue: the first press arms it (the button asks `Press again to delete`), the second deletes the
+   * issue for good (`deleteIssue`, saved with the state) and goes back to the list. Denied for a role or an issue that does not allow it.
+   */
+  private pressDelete(ctx: IssuePanelContext): void {
+    const id = ctx.detailId;
+    if (id === null) return;
+    const state = ctx.store.get();
+    const issue = state.issues.find((candidate) => candidate.id === id);
+    if (issue === undefined || !can(state.role, 'delete', issue)) {
+      swarn(formatIssueDeleteDenied(id, state.role));
+      return;
+    }
+    if (ctx.deleteArmed !== id) {
+      ctx.deleteArmed = id;
+      slog(formatIssueDeleteArmed(id));
+      this.syncDetail(ctx);
+      return;
+    }
+    ctx.deleteArmed = null;
+    ctx.store.dispatch(deleteIssue(id));
+    slog(formatIssueDeleted(id, state.role));
+    // The issue is gone: the selection and its ring go with it, and the panel returns to the list.
+    if (ctx.selectedId === id) {
+      ctx.selectedId = null;
+      setPinRing(null);
+    }
+    const target = ctx.navigator.back();
+    if (target === null) return;
+    this.syncList(ctx);
+    ctx.panel.setScreen(target);
   }
 
   /** A row of the list (or of the move-in report) was pinched: its detail opens at once, with the ring on its pin (T5.R5). */
@@ -816,6 +868,10 @@ export class IssuePanelSystem extends createSystem({}) {
       }
     }
     if (ctx.navigator.screen === 'detail') {
+      if (isDeleteControl(hit.id)) {
+        this.pressDelete(ctx);
+        return;
+      }
       const action = actionOfControl(hit.id);
       if (action !== null) {
         this.pressAction(ctx, action);
