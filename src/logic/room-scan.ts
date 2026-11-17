@@ -220,7 +220,7 @@ export function pickVolume(
 
 // --- The own piece made from a volume ("Add to Mine") ---------------------------------------------------------------------
 
-/** At most this many scanned pieces are kept in the saved state. */
+/** At most this many scanned pieces are kept in the saved state, in Mine and, separately, in the Removed list. */
 export const MAX_SCANNED = 12;
 
 /** A piece of furniture of the room that the user added to their own furniture. It is saved with the state. */
@@ -403,4 +403,16 @@ export function sanitizeScanned(list: readonly unknown[]): ScannedPiece[] {
     out.push(cloneScanned(entry));
   }
   return out;
+}
+
+/**
+ * The Removed list of a saved state: like `sanitizeScanned`, and also without an id or an object (label and sizes) that `active` (Mine)
+ * already has, so a piece is never in both lists.
+ */
+export function sanitizeRemovedScanned(list: readonly unknown[], active: readonly ScannedPiece[]): ScannedPiece[] {
+  const activeIds = new Set(active.map((piece) => piece.id));
+  const free = list.filter((entry) => !(isScannedPiece(entry) && activeIds.has(entry.id)));
+  return sanitizeScanned(free).filter(
+    (piece) => findScannedDuplicate(active, piece.label, [toCm(piece.size[0]), toCm(piece.size[1]), toCm(piece.size[2])]) === null,
+  );
 }

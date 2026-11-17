@@ -307,8 +307,25 @@ async function start(): Promise<void> {
       const sections = menuSections(catalogItems, merged.mine);
       createMenuItems(world, store, sections.items);
       setMenuPickDebug(params.debug);
-      // The tab `mine` appears only when its data arrived.
-      setMenuTabData({ mine: sections.mine });
+      // The tab `mine` appears only when it has something: the pieces added from the room scan, or removed from Mine and not gone for good.
+      // It follows the store, so an Add to Mine, a removal and a restore all show at once, and a removed piece keeps its catalog entry
+      // (a copy of it already placed in the house stays as it is).
+      const syncMine = (): void => {
+        const { scannedFurniture, removedScanned } = store.get();
+        for (const piece of [...scannedFurniture, ...removedScanned]) {
+          if (!merged.items.some((existing) => existing.id === piece.id)) merged.items.push(scannedToCatalogItem(piece));
+        }
+        setMenuTabData({ mine: scannedFurniture.map(scannedToCatalogItem), removed: removedScanned.map(scannedToCatalogItem) });
+      };
+      syncMine();
+      let seenMine = store.get().scannedFurniture;
+      let seenRemoved = store.get().removedScanned;
+      store.subscribe((state) => {
+        if (state.scannedFurniture === seenMine && state.removedScanned === seenRemoved) return;
+        seenMine = state.scannedFurniture;
+        seenRemoved = state.removedScanned;
+        syncMine();
+      });
     }
     // The Menu buttons (T3.3b) come after the menu items (a control of an open menu wins a pinch) and before the grab and the drag.
     createMenuButton(world, store);
@@ -325,17 +342,7 @@ async function start(): Promise<void> {
     // The real objects of the room (plan MR, DMR3, DMR4): outlines, the ray of the hands, the card and `Add to Mine`. After every control that
     // is a `menu` claim, before the grab: in the room view it takes every pinch the controls above did not.
     if (mrEntry.mode === 'ar') {
-      createRoomObjects(world, store, {
-        onAdded: (piece) => {
-          // The piece joins the catalog the systems share (they look pieces up by id at use time) and the tab Mine of the menu.
-          if (!merged) return;
-          const item = scannedToCatalogItem(piece);
-          if (merged.items.some((existing) => existing.id === item.id)) return;
-          merged.items.push(item);
-          merged.mine.push(item);
-          setMenuTabData({ mine: [...merged.mine] });
-        },
-      });
+      createRoomObjects(world, store);
       // The virtual pieces at real scale (MR.4) and the ray of the hands: right after the room objects (they use its volumes and its hover).
       createRoomPieces(world, merged ? merged.items : []);
     }

@@ -70,6 +70,7 @@ describe('createInitialState', () => {
       issuesSeeded: false,
       sunTime: '2026-12-21T10:00',
       scannedFurniture: [],
+      removedScanned: [],
     });
   });
 
@@ -110,6 +111,7 @@ describe('createInitialState', () => {
       'issuesSeeded',
       'sunTime',
       'scannedFurniture',
+      'removedScanned',
     ]);
   });
 });

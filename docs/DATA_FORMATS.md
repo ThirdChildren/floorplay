@@ -131,6 +131,15 @@ ids `my-scan-<label>-<n>`). Each one is drawn with the catalog model of what it 
 table, desk or dining table, storage/shelf → wardrobe, bookcase, nightstand or TV stand, screen → TV stand,
 plant → plant; lamp and other stay blocks.
 
+**Removing and restoring Mine pieces.** In the palm menu, the Mine tab ends with a card **Manage**. In that list a press on a piece of Mine
+asks ("Press again"), a second press on the same card removes it from Mine; the removed pieces follow, a press on one puts it back in Mine
+with its original id and data; **Done** (or the Mine tab again) goes back. The saved state (same key, version 1) gets one more optional
+field, `removedScanned`: the same `ScannedPiece` entries as `scannedFurniture`, at most 12, written only when there is one, never also in
+`scannedFurniture` (an older save has none). A removed piece keeps its catalog entry, so **pieces of it already placed in the house stay
+where they are** (nothing is removed from the layout, nothing is parked at the next start). **Add to Mine** on the scanned object of a
+removed piece restores that piece instead of making a second one, and a new piece never takes the number of a removed one. The built-in
+`my-furniture.json` items are not loaded (see above), so there is nothing built in to remove: only room-scan pieces go through this.
+
 ## issue (`public/demo/issues-*.json`, schema `schemas/issue.schema.json`)
 
 | Field | Meaning |

@@ -158,6 +158,19 @@ export const strings = {
       items: 'Items',
       mine: 'Mine',
     },
+    /**
+     * The cards of the Mine tab that are not a piece (2.4 cm text, 16 cm of room: each one has a short fallback). `Manage` opens the list where a
+     * piece is removed from Mine (a press asks, a second one removes) or restored; `Done` closes it.
+     */
+    mine: {
+      manage: 'Manage',
+      manageHint: ['Remove or restore', 'Edit list'],
+      done: 'Done',
+      doneHint: ['Back to Mine', 'Back'],
+      removeHint: ['Press to remove', 'Remove'],
+      removeConfirm: ['Press again', 'Again'],
+      restoreHint: ['Removed: restore', 'Restore'],
+    },
     /** Shown in the header when the catalog is missing; one line at 2.6 cm text in the left part of the header (17.6 cm wide, "Back to home" takes the rest). */
     catalogUnavailable: 'No catalog',
     /** The fixed buttons beside the model (T3.3b): they open and close the pinned menu with one hand. */

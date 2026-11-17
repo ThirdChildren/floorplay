@@ -50,7 +50,8 @@ export function readSavedScanned(storage: SafeStorage, houseId: string): Scanned
   const saved = storage.get(storageKey(houseId));
   if (saved === null) return [];
   const state = deserialize(saved);
-  return state !== null && state.houseId === houseId ? [...state.scannedFurniture] : [];
+  // The removed pieces are read too: a piece of one that is already placed in the house still needs its catalog entry.
+  return state !== null && state.houseId === houseId ? [...state.scannedFurniture, ...state.removedScanned] : [];
 }
 
 /**
@@ -152,7 +153,8 @@ function savedPartChanged(prev: AppState, next: AppState): boolean {
     prev.nextIssue !== next.nextIssue ||
     prev.issuesSeeded !== next.issuesSeeded ||
     prev.sunTime !== next.sunTime ||
-    prev.scannedFurniture !== next.scannedFurniture
+    prev.scannedFurniture !== next.scannedFurniture ||
+    prev.removedScanned !== next.removedScanned
   );
 }
 
@@ -180,7 +182,8 @@ export function attachPersistence(store: Store, storage: SafeStorage, parked: re
     slog(
       `state saved key=${key} pieces=${state.furniture.length} bytes=${utf8Length(text)} reason=${reason} ` +
         `issues=${state.issues.length} role=${state.role} parked=${written} sun=${state.sunTime}` +
-        (state.scannedFurniture.length > 0 ? ` scanned=${state.scannedFurniture.length}` : ''),
+        (state.scannedFurniture.length > 0 ? ` scanned=${state.scannedFurniture.length}` : '') +
+        (state.removedScanned.length > 0 ? ` removedScanned=${state.removedScanned.length}` : ''),
     );
   };
 

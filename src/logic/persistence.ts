@@ -77,6 +77,8 @@ export interface Restorable {
   sunTime: string | null;
   /** The saved objects of the room added to the user's own furniture (plan MR), as copies. */
   scanned: ScannedPiece[];
+  /** The saved Removed list of Mine (pieces taken out of Mine that can be restored), as copies. */
+  removedScanned: ScannedPiece[];
   /** Saved issues left out for good (malformed, repeated, over the limit): the caller logs them. */
   discardedIssues: DiscardedIssue[];
   /** Pieces left out for good (a room that is gone), with the reason (the caller logs them). */
@@ -120,6 +122,7 @@ export function pickRestorable(saved: string, ctx: RestoreContext): Restorable |
     issuesSeeded: state.issuesSeeded,
     sunTime: ctx.timeExplicit === true ? null : savedSunTime,
     scanned: state.scannedFurniture as ScannedPiece[],
+    removedScanned: state.removedScanned as ScannedPiece[],
     discardedIssues,
   };
 

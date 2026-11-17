@@ -7,8 +7,9 @@
 //     volume it reaches (`pickVolume`, slab test, scratch objects only); that outline changes colour;
 //   - a pinch (brief) with a hand that points at a volume SELECTS it: logs `mr object selected label=couch size=169x82x82` (cm) and opens the
 //     card `ui:scan-card` (name, measures, `Add to Mine`, `Close`) pinned in front of the head (src/ui/scan-card-panel.ts);
-//   - `Add to Mine` makes the own piece `my-scan-<kind>-<n>` (`ownPieceFromVolume`), dispatches `addScanned` (saved with the state) and tells
-//     `onAdded` so the app joins it to the catalog (menu tab `Mine`, FitCheck). An object that is already there shows `Added`.
+//   - `Add to Mine` makes the own piece `my-scan-<kind>-<n>` (`ownPieceFromVolume`) and dispatches `addScanned` (saved with the state); the app
+//     follows the store and joins it to the catalog (menu tab `Mine`, FitCheck). An object that is already there shows `Added`; one that was
+//     removed from Mine comes back with its old id and data.
 //
 // Pinch arbitration: in the room view the pinches of the model do not exist. This system claims EVERY free pinch as `menu` (the
 // highest priority), so no later listener (the grab, the pins, the viewpoint markers, the one-hand drag) gets it.
@@ -25,11 +26,11 @@ import {
   addStatus,
   classifyVolume,
   createScanVolume,
+  findScannedDuplicate,
   furnitureLabel,
   ownPieceFromVolume,
   pickVolume,
   type ScanVolume,
-  type ScannedPiece,
   type VolumeHit,
   type VolumeInfo,
 } from '../logic/room-scan';
@@ -62,11 +63,6 @@ const POSE_EPSILON = 1e-4;
 
 const HANDS: readonly Hand[] = ['left', 'right'];
 
-export interface RoomObjectsHooks {
-  /** Called after a piece was added to the state (the app joins it to the catalog). */
-  onAdded?(piece: ScannedPiece): void;
-}
-
 interface Entry {
   entity: Entity;
   info: VolumeInfo;
@@ -80,7 +76,6 @@ interface Entry {
 
 interface RoomObjectsContext {
   store: Store;
-  hooks: RoomObjectsHooks;
   outlines: ScanOutlines;
   card: ScanCardPanel;
 }
@@ -89,12 +84,12 @@ interface RoomObjectsContext {
 let context: RoomObjectsContext | null = null;
 
 /** Creates the outlines and the card and registers the system. */
-export function createRoomObjects(world: World, store: Store, hooks: RoomObjectsHooks = {}): void {
+export function createRoomObjects(world: World, store: Store): void {
   const outlines = new ScanOutlines();
   outlines.setHighContrast(isHighContrast());
   // An entity for the mesh (never `scene.add`); the mesh keeps its own name, `ui:scan-outlines`.
   world.createTransformEntity(outlines.mesh);
-  context = { store, hooks, outlines, card: new ScanCardPanel(world) };
+  context = { store, outlines, card: new ScanCardPanel(world) };
   world.registerSystem(RoomObjectsSystem);
 }
 
@@ -536,13 +531,18 @@ export class RoomObjectsSystem extends createSystem({
       return;
     }
     const entry = this.selected;
-    const piece = ownPieceFromVolume(entry.info, ctx.store.get().scannedFurniture);
+    // The removed pieces count for the number: an id that was handed out is never handed out again.
+    const before = ctx.store.get();
+    const piece = ownPieceFromVolume(entry.info, [...before.scannedFurniture, ...before.removedScanned]);
     if (!piece) return;
-    const before = ctx.store.get().scannedFurniture.length;
     ctx.store.dispatch(addScanned(piece));
-    if (ctx.store.get().scannedFurniture.length === before) return;
-    slog(`mr object added id=${piece.id} name="${piece.name}" size=${piece.size.map((v) => Math.round(v * 100)).join('x')}`);
-    ctx.hooks.onAdded?.(piece);
+    const after = ctx.store.get();
+    if (after.scannedFurniture.length === before.scannedFurniture.length) return;
+    // An object that was removed from Mine comes back as it was (same id and data) instead of as a new piece.
+    const added = findScannedDuplicate(after.scannedFurniture, entry.info.key, entry.info.cm) ?? piece;
+    const verb = before.removedScanned.some((p) => p.id === added.id) ? 'restored' : 'added';
+    slog(`mr object ${verb} id=${added.id} name="${added.name}" size=${added.size.map((v) => Math.round(v * 100)).join('x')}`);
+    // The menu follows the store (index.ts): nothing else to tell.
     this.refreshCard();
   }
 

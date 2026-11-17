@@ -62,7 +62,17 @@ import {
   type Offset,
 } from '../logic/menu';
 import { menuSelectable } from '../logic/menu-dim';
-import { recenterMiniature, undo, type Store } from '../logic/state';
+import {
+  mineEntries,
+  mineEntryId,
+  mineTabHasContent,
+  pressRemove,
+  settleMineView,
+  type MineEntry,
+  type MineEntryKind,
+  type MineView,
+} from '../logic/mine-menu';
+import { recenterMiniature, removeScanned, restoreScanned, undo, type Store } from '../logic/state';
 import { stableId } from '../logic/ids';
 import { isScanId } from '../logic/room-scan';
 import { fitLine } from '../logic/text-fit';
@@ -83,6 +93,8 @@ export interface MenuTabData {
   items: readonly CatalogItem[];
   /** The user's own furniture (`mine`, T3.8). */
   mine: readonly CatalogItem[];
+  /** The pieces taken out of Mine that can be put back (the Manage list of the `mine` tab). */
+  removed: readonly CatalogItem[];
 }
 
 interface MenuItemsContext {
@@ -127,7 +139,7 @@ export function releaseMenuHand(hand: Hand): void {
 
 /** Registers the menu content system. */
 export function createMenuItems(world: World, store: Store, items: readonly CatalogItem[]): void {
-  context = { store, data: { items, mine: [] }, version: 0 };
+  context = { store, data: { items, mine: [], removed: [] }, version: 0 };
   world.registerSystem(MenuItemsSystem);
 }
 
@@ -148,6 +160,8 @@ interface Control {
   half: HalfSize;
   /** What a pinch does: the catalog id of an item, a tab, or the button. */
   catalogId?: string;
+  /** A card of the Mine tab that is not a pick: remove, restore, or the card that switches the view (`piece` is the piece it is about). */
+  mine?: { kind: Exclude<MineEntryKind, 'pick'>; piece?: string };
   tab?: MenuTabId;
   button?: ButtonId | 'tabletop';
   /** "Back to home" at the right end of the header. */
@@ -169,6 +183,10 @@ export class MenuItemsSystem extends createSystem({}) {
   private open = false;
   private page = 0;
   private tab: MenuTabId = 'items';
+  /** The view of the Mine tab (`pick`, or `manage` where a piece is removed or restored). */
+  private mineView: MineView = 'pick';
+  /** The piece whose `Press again` is showing (the first press of a removal), or null. */
+  private armedRemove: string | null = null;
   private appliedVersion = 0;
   private itemControls: Control[] = [];
   private tabControls: Control[] = [];
@@ -203,6 +221,8 @@ export class MenuItemsSystem extends createSystem({}) {
     if (!this.open) {
       this.open = true;
       this.page = 0;
+      this.mineView = 'pick';
+      this.armedRemove = null;
       this.tab = validTab('items', this.visibleTabs(ctx));
       this.appliedVersion = ctx.version;
       this.buildButtons(menu);
@@ -220,6 +240,8 @@ export class MenuItemsSystem extends createSystem({}) {
     } else if (ctx.version !== this.appliedVersion) {
       // A tab got (or lost) its data while the menu is open: draw the tabs again, on the same tab if it still exists.
       this.appliedVersion = ctx.version;
+      this.armedRemove = null;
+      this.mineView = settleMineView(this.mineView, ctx.data.mine.length, ctx.data.removed.length);
       const tab = validTab(this.tab, this.visibleTabs(ctx));
       if (tab !== this.tab) this.page = 0;
       this.tab = tab;
@@ -251,8 +273,8 @@ export class MenuItemsSystem extends createSystem({}) {
 
   /** The tabs that have something to show. */
   private visibleTabs(ctx: MenuItemsContext): MenuTabId[] {
-    const { items, mine } = ctx.data;
-    return menuTabs({ items: items.length, mine: mine.length });
+    const { items, mine, removed } = ctx.data;
+    return menuTabs({ items: items.length, mine: mineTabHasContent(mine.length, removed.length) ? 1 : 0 });
   }
 
   /** The bar of four buttons; the fourth is "Recenter" on the table-top model and "Tabletop" at real scale (T3.12). */
@@ -289,41 +311,66 @@ export class MenuItemsSystem extends createSystem({}) {
     menu.setTabs(visible, this.tab);
   }
 
+  /** The cards of the current tab: the catalog items, or what the Mine tab lists in its current view. */
+  private entries(ctx: MenuItemsContext): MineEntry<CatalogItem>[] {
+    if (this.tab === 'mine') return mineEntries(this.mineView, ctx.data.mine, ctx.data.removed);
+    return tabPieces(ctx.data, this.tab).map((item): MineEntry<CatalogItem> => ({ kind: 'pick', item }));
+  }
+
+  /** The two lines of a card. */
+  private cardText(entry: MineEntry<CatalogItem>, ascii: boolean): { name: string; size: string } {
+    const text = strings.menu.mine;
+    const hint = (lines: readonly string[]): string => fitLine(lines, ITEM_NAME_MAX_WIDTH, ITEM_NAME_SIZE, ITEM_SIZE_MARGIN);
+    const item = entry.item;
+    switch (entry.kind) {
+      case 'manage':
+        return { name: text.manage, size: hint(text.manageHint) };
+      case 'done':
+        return { name: text.done, size: hint(text.doneHint) };
+      case 'remove':
+        return { name: item?.name ?? '', size: hint(item && item.id === this.armedRemove ? text.removeConfirm : text.removeHint) };
+      case 'restore':
+        return { name: item?.name ?? '', size: hint(text.restoreHint) };
+      default:
+        break;
+    }
+    if (!item) return { name: '', size: '' };
+    return {
+      name: item.name,
+      // The long form "1.6 × 2.0 m", or "0.35×0.35 m" when the long one would touch the border (R25).
+      // A piece made from a room scan has rough measures: "~1.7 × 0.8 m" (when even the short form touches the border, the plain one).
+      size: fitLine(
+        isScanId(item.id)
+          ? [
+              strings.menu.itemSizeAbout(item.size[0], item.size[1], ascii),
+              strings.menu.itemSizeAboutCompact(item.size[0], item.size[1], ascii),
+              strings.menu.itemSizeCompact(item.size[0], item.size[1], ascii),
+            ]
+          : [strings.menu.itemSize(item.size[0], item.size[1], ascii), strings.menu.itemSizeCompact(item.size[0], item.size[1], ascii)],
+        ITEM_NAME_MAX_WIDTH,
+        ITEM_NAME_SIZE,
+        ITEM_SIZE_MARGIN,
+      ),
+    };
+  }
+
   /** Moves the anchors to the items of the current page of the current tab and rewrites the item cards in place. */
   private buildItems(ctx: MenuItemsContext, menu: PalmMenuPanel, log: boolean): void {
     for (const control of this.itemControls) control.anchor.dispose();
-    const pieces = tabPieces(ctx.data, this.tab);
+    const pieces = this.entries(ctx);
     const items = pageItems(pieces, this.page);
     const ascii = !panelFontSupports(strings.menu.itemSize(1, 1));
-    this.itemControls = items.map((item, index) => ({
-      anchor: new MenuAnchor(this.world, stableId.ui(`menu-item-${item.id}`), item.id),
+    this.itemControls = items.map((entry, index) => ({
+      anchor: new MenuAnchor(this.world, stableId.ui(`menu-item-${mineEntryId(entry)}`), entry.item?.id),
       offset: ITEM_SLOTS[index],
       half: ITEM_HALF,
-      catalogId: item.id,
+      ...(entry.kind === 'pick' ? { catalogId: entry.item?.id } : { mine: { kind: entry.kind, piece: entry.item?.id } }),
     }));
-    menu.setItems(
-      items.map((item) => ({
-        name: item.name,
-        // The long form "1.6 × 2.0 m", or "0.35×0.35 m" when the long one would touch the border (R25).
-        // A piece made from a room scan has rough measures: "~1.7 × 0.8 m" (when even the short form touches the border, the plain one).
-        size: fitLine(
-          isScanId(item.id)
-            ? [
-                strings.menu.itemSizeAbout(item.size[0], item.size[1], ascii),
-                strings.menu.itemSizeAboutCompact(item.size[0], item.size[1], ascii),
-                strings.menu.itemSizeCompact(item.size[0], item.size[1], ascii),
-              ]
-            : [strings.menu.itemSize(item.size[0], item.size[1], ascii), strings.menu.itemSizeCompact(item.size[0], item.size[1], ascii)],
-          ITEM_NAME_MAX_WIDTH,
-          ITEM_NAME_SIZE,
-          ITEM_SIZE_MARGIN,
-        ),
-      })),
-    );
+    menu.setItems(items.map((entry) => this.cardText(entry, ascii)));
     menu.setPage(clampPage(this.page, pieces.length), pageCount(pieces.length));
     this.rebuildSlots();
     if (log) {
-      slog(formatPageLine(this.page, pieces.length, items.map((item) => item.id), this.tab));
+      slog(formatPageLine(this.page, pieces.length, items.map(mineEntryId), this.tab));
     }
   }
 
@@ -370,12 +417,21 @@ export class MenuItemsSystem extends createSystem({}) {
     // The Rotate button comes first (T5.14): a pinch that pressed it is not a second press on a control under it.
     if (pinchClaims.ownerOf(hand) === 'menu' || !pinchClaims.claim(hand, 'menu')) return;
     const control = hit.control;
+    // Pressing anything but the card that asked "Press again" takes the question back.
+    if (this.armedRemove !== null && !(control.mine?.kind === 'remove' && control.mine.piece === this.armedRemove)) {
+      this.armedRemove = null;
+      this.buildItems(ctx, menu, false);
+    }
     if (control.home) {
       backToHome();
       return;
     }
     if (control.tab !== undefined) {
       this.selectTab(ctx, menu, control.tab);
+      return;
+    }
+    if (control.mine !== undefined) {
+      this.pressMine(ctx, menu, control.mine.kind, control.mine.piece);
       return;
     }
     if (control.catalogId !== undefined) {
@@ -442,7 +498,12 @@ export class MenuItemsSystem extends createSystem({}) {
 
   /** Shows `tab` from its first page. The same tab again does nothing. */
   private selectTab(ctx: MenuItemsContext, menu: PalmMenuPanel, tab: MenuTabId): void {
-    if (tab === this.tab) return;
+    if (tab === this.tab) {
+      // The Mine tab again, from the Manage list: back to the pieces.
+      if (tab === 'mine' && this.mineView === 'manage') this.setMineView(ctx, menu, 'pick');
+      return;
+    }
+    this.mineView = 'pick';
     this.tab = tab;
     this.page = 0;
     slog(formatTabLine(tab));
@@ -450,8 +511,41 @@ export class MenuItemsSystem extends createSystem({}) {
     this.buildItems(ctx, menu, true);
   }
 
+  private setMineView(ctx: MenuItemsContext, menu: PalmMenuPanel, view: MineView): void {
+    this.mineView = view;
+    this.page = 0;
+    this.armedRemove = null;
+    slog(`menu mine view=${view}`);
+    this.buildItems(ctx, menu, true);
+  }
+
+  /** A card of the Mine tab that is not a pick: the switch cards, a removal (two presses) and a restore (one press). */
+  private pressMine(ctx: MenuItemsContext, menu: PalmMenuPanel, kind: Exclude<MineEntryKind, 'pick'>, piece: string | undefined): void {
+    if (kind === 'manage') return this.setMineView(ctx, menu, 'manage');
+    if (kind === 'done') return this.setMineView(ctx, menu, 'pick');
+    if (piece === undefined) return;
+    if (kind === 'restore') {
+      ctx.store.dispatch(restoreScanned(piece));
+      const done = ctx.store.get().scannedFurniture.some((p) => p.id === piece);
+      slog(done ? `mine restored id=${piece}` : `mine restore refused id=${piece} reason=mine-full`);
+      return;
+    }
+    const press = pressRemove(this.armedRemove, piece);
+    this.armedRemove = press.armed;
+    if (!press.remove) {
+      slog(`mine remove armed id=${piece}`);
+      this.buildItems(ctx, menu, false);
+      return;
+    }
+    ctx.store.dispatch(removeScanned(piece));
+    const done = ctx.store.get().removedScanned.some((p) => p.id === piece);
+    slog(done ? `mine removed id=${piece}` : `mine remove refused id=${piece} reason=removed-full`);
+    if (!done) this.buildItems(ctx, menu, false);
+  }
+
   private turn(ctx: MenuItemsContext, direction: -1 | 1): void {
-    const count = tabPieces(ctx.data, this.tab).length;
+    this.armedRemove = null;
+    const count = this.entries(ctx).length;
     const next = turnPage(this.page, direction, count);
     if (next === this.page || next >= pageCount(count)) return;
     const menu = getPalmMenuPanel();

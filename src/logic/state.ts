@@ -10,7 +10,7 @@ import type { Issue, StoredIssue } from './issues';
 import { applyTransition } from './issue-state';
 import type { IssueAction, TransitionDenied, TransitionResult } from './issue-state';
 import { can, isRole } from './permissions';
-import { MAX_SCANNED, cloneScanned, findScannedDuplicate, isScannedPiece, sanitizeScanned, toCm } from './room-scan';
+import { MAX_SCANNED, cloneScanned, findScannedDuplicate, isScannedPiece, sanitizeRemovedScanned, sanitizeScanned, toCm } from './room-scan';
 import type { ScannedPiece } from './room-scan';
 import { FALLBACK_SUN_TIME, parseSunTime, stepHour, stepMonth, sunTimeFromParam } from './sun-time';
 
@@ -154,6 +154,12 @@ export interface AppState {
    * as own pieces.
    */
   readonly scannedFurniture: readonly ScannedPiece[];
+  /**
+   * Pieces of `scannedFurniture` the user removed from Mine, at most MAX_SCANNED, never also in `scannedFurniture`. They keep their id and
+   * data so one press restores them (`restoreScanned`), and their catalog entry stays, so a piece already placed in the house stays as it
+   * is. Saved only when there are some.
+   */
+  readonly removedScanned: readonly ScannedPiece[];
 }
 
 /** The saved preferences as a restore may give them: `moveInVisible` can be absent (an older state). */
@@ -194,6 +200,8 @@ export type Action =
   | { readonly type: 'setLeftHandMenu'; readonly on: boolean }
   | { readonly type: 'setSunTime'; readonly sunTime: string }
   | { readonly type: 'addScanned'; readonly piece: ScannedPiece }
+  | { readonly type: 'removeScanned'; readonly id: string }
+  | { readonly type: 'restoreScanned'; readonly id: string }
   | { readonly type: 'stepSunTime'; readonly unit: SunStepUnit; readonly delta: number }
   | {
       readonly type: 'placeFurniture';
@@ -233,6 +241,8 @@ export type Action =
       readonly sunTime?: string | null;
       /** Absent: the scanned pieces stay as they are. */
       readonly scanned?: readonly ScannedPiece[];
+      /** Absent: the removed scanned pieces stay as they are. */
+      readonly removedScanned?: readonly ScannedPiece[];
     };
 
 export type SunStepUnit = 'hour' | 'month';
@@ -314,6 +324,17 @@ export function addScanned(piece: ScannedPiece): Action {
   return { type: 'addScanned', piece };
 }
 /**
+ * Takes the piece `id` out of Mine and into the Removed list. Pieces of it that are already placed in the house stay (its catalog entry
+ * stays). Ignored for an id that is not in Mine, or when the Removed list is full (MAX_SCANNED). Not undoable (`restoreScanned` is the way back).
+ */
+export function removeScanned(id: string): Action {
+  return { type: 'removeScanned', id };
+}
+/** Puts the piece `id` of the Removed list back in Mine, with its original id and data. Ignored for an id that is not removed, or when Mine is full. */
+export function restoreScanned(id: string): Action {
+  return { type: 'restoreScanned', id };
+}
+/**
  * Steps the sun time by `delta` hours (wrapping 24 on the same day) or months (wrapping Dec to Jan in the same year,
  * the day clamped to the month). An unknown unit or a delta that is not a finite integer is ignored. Not undoable.
  */
@@ -388,6 +409,7 @@ export function restoreSaved(saved: {
   issuesSeeded?: boolean;
   sunTime?: string | null;
   scanned?: readonly ScannedPiece[];
+  removedScanned?: readonly ScannedPiece[];
 }): Action {
   return { type: 'restoreSaved', ...saved };
 }
@@ -422,6 +444,7 @@ export function createInitialState(params: Params): AppState {
     issuesSeeded: false,
     sunTime: sunTimeFromParam(params.time) ?? DEFAULT_SUN_TIME,
     scannedFurniture: [],
+    removedScanned: [],
   };
 }
 
@@ -689,11 +712,31 @@ export function reduce(state: AppState, action: Action): AppState {
     case 'addScanned': {
       const piece = action.piece;
       if (!isScannedPiece(piece) || state.scannedFurniture.length >= MAX_SCANNED) return state;
-      if (state.scannedFurniture.some((p) => p.id === piece.id)) return state;
-      if (findScannedDuplicate(state.scannedFurniture, piece.label, [toCm(piece.size[0]), toCm(piece.size[1]), toCm(piece.size[2])])) {
-        return state;
-      }
+      if (state.scannedFurniture.some((p) => p.id === piece.id) || state.removedScanned.some((p) => p.id === piece.id)) return state;
+      const cm: [number, number, number] = [toCm(piece.size[0]), toCm(piece.size[1]), toCm(piece.size[2])];
+      if (findScannedDuplicate(state.scannedFurniture, piece.label, cm)) return state;
+      // The same object as a removed piece: it comes back with its original id and data (no second entry for one object).
+      const removed = findScannedDuplicate(state.removedScanned, piece.label, cm);
+      if (removed) return reduce(state, { type: 'restoreScanned', id: removed.id });
       return { ...state, scannedFurniture: [...state.scannedFurniture, cloneScanned(piece)] };
+    }
+    case 'removeScanned': {
+      const piece = state.scannedFurniture.find((p) => p.id === action.id);
+      if (!piece || state.removedScanned.length >= MAX_SCANNED) return state;
+      return {
+        ...state,
+        scannedFurniture: state.scannedFurniture.filter((p) => p.id !== action.id),
+        removedScanned: [...state.removedScanned, piece],
+      };
+    }
+    case 'restoreScanned': {
+      const piece = state.removedScanned.find((p) => p.id === action.id);
+      if (!piece || state.scannedFurniture.length >= MAX_SCANNED) return state;
+      return {
+        ...state,
+        scannedFurniture: [...state.scannedFurniture, piece],
+        removedScanned: state.removedScanned.filter((p) => p.id !== action.id),
+      };
     }
     case 'seedIssues': {
       if (state.issuesSeeded || !Array.isArray(action.issues)) return state;
@@ -802,6 +845,8 @@ export function reduce(state: AppState, action: Action): AppState {
       const issues = action.issues === undefined ? state.issues : sanitizeIssues(action.issues, state.houseId).issues;
       const counter = action.nextIssue === undefined ? state.nextIssue : Math.max(state.nextIssue, action.nextIssue);
       const moveInVisible = typeof prefs.moveInVisible === 'boolean' ? prefs.moveInVisible : state.prefs.moveInVisible;
+      const scannedFurniture =
+        action.scanned === undefined || !Array.isArray(action.scanned) ? state.scannedFurniture : sanitizeScanned(action.scanned);
       return {
         ...state,
         role,
@@ -822,7 +867,11 @@ export function reduce(state: AppState, action: Action): AppState {
         nextIssue: nextIssueFor(counter, issues),
         issuesSeeded: typeof action.issuesSeeded === 'boolean' ? action.issuesSeeded : state.issuesSeeded,
         sunTime: (typeof action.sunTime === 'string' ? parseSunTime(action.sunTime) : null) ?? state.sunTime,
-        scannedFurniture: action.scanned === undefined || !Array.isArray(action.scanned) ? state.scannedFurniture : sanitizeScanned(action.scanned),
+        scannedFurniture,
+        removedScanned:
+          action.removedScanned === undefined || !Array.isArray(action.removedScanned)
+            ? state.removedScanned.filter((p) => !scannedFurniture.some((a) => a.id === p.id))
+            : sanitizeRemovedScanned(action.removedScanned, scannedFurniture),
       };
     }
     default:
@@ -868,6 +917,8 @@ export function serialize(state: AppState): string {
   const saved: Record<string, unknown> = { ...state };
   // Added in MR: written only when there are scanned pieces, so a state without any is the same text as before.
   if (state.scannedFurniture.length === 0) delete saved.scannedFurniture;
+  // Added with the Removed list of Mine: the same rule.
+  if (state.removedScanned.length === 0) delete saved.removedScanned;
   return JSON.stringify(saved);
 }
 
@@ -1013,6 +1064,7 @@ export function deserializeWithReport(
   const savedSunTime = 'sunTime' in data ? parseSunTime(data.sunTime) : null;
   // Added in MR: absent or broken means none; a broken entry goes away alone.
   const scannedFurniture = Array.isArray(data.scannedFurniture) ? sanitizeScanned(data.scannedFurniture) : [];
+  const removedScanned = Array.isArray(data.removedScanned) ? sanitizeRemovedScanned(data.removedScanned, scannedFurniture) : [];
 
   return {
     state: {
@@ -1031,6 +1083,7 @@ export function deserializeWithReport(
       issuesSeeded,
       sunTime: savedSunTime ?? DEFAULT_SUN_TIME,
       scannedFurniture,
+      removedScanned,
     },
     discardedIssues,
     savedSunTime,
