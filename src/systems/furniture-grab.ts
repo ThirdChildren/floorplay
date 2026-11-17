@@ -57,6 +57,7 @@ import {
   type HouseCollision,
   type PlacedPiece,
 } from '../logic/placement-rules';
+import { can } from '../logic/permissions';
 import { moveFurniture, placeFurniture, removeFurniture, type Store } from '../logic/state';
 import type { FurnitureVisuals } from '../ui/furniture-visuals';
 import { forgetPieceStatus, getFurnitureEntity, logPieceStatus, publishReason } from './furniture';
@@ -250,6 +251,11 @@ export class FurnitureGrabSystem extends createSystem({}) {
       ctx.store.subscribe(() => {
         this.dirty = true;
         const held = this.held;
+        // The role changed to one that may not furnish (the tenant) while a piece is in the hand: put it back safely.
+        if (held && !can(ctx.store.get().role, 'furnish')) {
+          this.cancel(ctx, 'role');
+          return;
+        }
         // The piece disappeared from the store while it was in the hand (an Undo of the other hand): drop it.
         if (held && held.source === 'model' && !ctx.store.get().furniture.some((p) => p.id === held.id)) {
           this.cancel(ctx, 'removed');
@@ -414,6 +420,8 @@ export class FurnitureGrabSystem extends createSystem({}) {
       return;
     }
     if (pinchClaims.ownerOf(hand) !== null) return; // the menu (or another owner) has this pinch
+    // A role that may not furnish (the tenant) takes no piece: the pinch is not claimed, so a long pinch over a piece still starts an issue.
+    if (!can(ctx.store.get().role, 'furnish')) return;
     if (isMiniatureGestureActive() || isPanActive()) return; // a drag of the model is running: no new grab
     this.readHand(ctx, hand);
     const id = pickPiece(this.planTuple, ctx.store.get().furniture, ctx.catalog, this.rootPose.scale);
@@ -447,6 +455,7 @@ export class FurnitureGrabSystem extends createSystem({}) {
   private startFromMenu(ctx: GrabContext, catalogId: string, hand: GrabHand): void {
     if (this.held) return; // one piece at a time: the menu claim of this hand lasts until its pinch ends
     if (isPanActive()) return; // a drag of the model is running: the menu keeps this pinch, nothing is picked
+    if (!can(ctx.store.get().role, 'furnish')) return; // the tenant cannot add pieces (the menu shows no items for that role)
     // The room view of the mixed reality mode has no model to put a piece in: the menu pick makes a piece at 1:1 there (room-pieces.ts).
     if (isRoomView()) return;
     const item = findItem(ctx.catalog, catalogId);

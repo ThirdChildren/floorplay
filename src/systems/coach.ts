@@ -9,6 +9,7 @@
 // ends it; 20 seconds of a step end it too. While a piece is in a hand, at real scale, or outside a session, the hand and the text wait.
 // Register it after the menu buttons and the grab (it reads their entities and their release event). Nothing here allocates per frame.
 
+import { can } from '../logic/permissions';
 import { createSystem, Quaternion, Vector3, type Object3D, type World } from '@iwsdk/core';
 import { StableId } from '../components/stable-id';
 import { slog } from '../log';
@@ -132,6 +133,7 @@ export class CoachSystem extends createSystem({ named: { required: [StableId] } 
   private handle(event: CoachEvent): void {
     const ctx = context;
     if (!ctx) return;
+    if (!can(ctx.store.get().role, 'furnish')) return; // no furnishing coach for the tenant (see `update`)
     const step = ctx.store.get().prefs.coach;
     const next = coachNext(step, event);
     if (next === step) return;
@@ -155,6 +157,12 @@ export class CoachSystem extends createSystem({ named: { required: [StableId] } 
       this.dispose();
     }
     if (step === 'done') {
+      this.dispose();
+      return;
+    }
+    // The coach teaches the menu and the first piece: a role that may not furnish (the tenant) has nothing to learn here. It stays
+    // at its step, with its clock not started, so the coach is still there if the role changes back.
+    if (!can(state.role, 'furnish')) {
       this.dispose();
       return;
     }

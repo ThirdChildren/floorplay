@@ -62,6 +62,7 @@ import {
   type Offset,
 } from '../logic/menu';
 import { menuSelectable } from '../logic/menu-dim';
+import { can } from '../logic/permissions';
 import { recenterMiniature, undo, type Store } from '../logic/state';
 import { stableId } from '../logic/ids';
 import { isScanId } from '../logic/room-scan';
@@ -170,6 +171,8 @@ export class MenuItemsSystem extends createSystem({}) {
   private page = 0;
   private tab: MenuTabId = 'items';
   private appliedVersion = 0;
+  /** The menu was built for a role that may not furnish (the tenant): no tabs, no items, Undo does nothing. */
+  private locked = false;
   private itemControls: Control[] = [];
   private tabControls: Control[] = [];
   private buttonControls: Control[] = [];
@@ -200,14 +203,26 @@ export class MenuItemsSystem extends createSystem({}) {
       if (this.open) this.closeAll();
       return;
     }
+    const locked = !can(ctx.store.get().role, 'furnish');
     if (!this.open) {
       this.open = true;
+      this.locked = locked;
+      menu.setLocked(locked);
       this.page = 0;
       this.tab = validTab('items', this.visibleTabs(ctx));
       this.appliedVersion = ctx.version;
       this.buildButtons(menu);
       this.buildTabs(ctx, menu);
       this.buildItems(ctx, menu, false);
+    } else if (locked !== this.locked) {
+      // The role changed while the menu is open (the role switch of the Issues panel): the items appear or go away at once.
+      this.locked = locked;
+      menu.setLocked(locked);
+      this.page = 0;
+      this.tab = validTab('items', this.visibleTabs(ctx));
+      this.buildTabs(ctx, menu);
+      this.buildItems(ctx, menu, false);
+      slog(`menu furniture ${locked ? 'locked' : 'unlocked'} role=${ctx.store.get().role}`);
     } else if (isRealScale() !== this.barRealScale) {
       // The view changed while the menu is open (a viewpoint was entered or left): the fourth button changes.
       for (const control of this.buttonControls) control.anchor.dispose();
@@ -251,6 +266,7 @@ export class MenuItemsSystem extends createSystem({}) {
 
   /** The tabs that have something to show. */
   private visibleTabs(ctx: MenuItemsContext): MenuTabId[] {
+    if (this.locked) return [];
     const { items, mine } = ctx.data;
     return menuTabs({ items: items.length, mine: mine.length });
   }
@@ -292,7 +308,7 @@ export class MenuItemsSystem extends createSystem({}) {
   /** Moves the anchors to the items of the current page of the current tab and rewrites the item cards in place. */
   private buildItems(ctx: MenuItemsContext, menu: PalmMenuPanel, log: boolean): void {
     for (const control of this.itemControls) control.anchor.dispose();
-    const pieces = tabPieces(ctx.data, this.tab);
+    const pieces = this.locked ? [] : tabPieces(ctx.data, this.tab);
     const items = pageItems(pieces, this.page);
     const ascii = !panelFontSupports(strings.menu.itemSize(1, 1));
     this.itemControls = items.map((item, index) => ({
@@ -379,6 +395,7 @@ export class MenuItemsSystem extends createSystem({}) {
       return;
     }
     if (control.catalogId !== undefined) {
+      if (!can(ctx.store.get().role, 'furnish')) return; // no item can be picked for a role that may not furnish
       slog(`menu item picked id=${control.catalogId} hand=${hand}`);
       for (const listener of pickListeners) listener(control.catalogId, hand);
       return;
@@ -430,6 +447,10 @@ export class MenuItemsSystem extends createSystem({}) {
   }
 
   private undo(ctx: MenuItemsContext): void {
+    if (!can(ctx.store.get().role, 'furnish')) {
+      slog(`undo denied role=${ctx.store.get().role}`);
+      return;
+    }
     const history = ctx.store.get().history;
     const last = history[history.length - 1];
     if (!last) {
@@ -451,7 +472,7 @@ export class MenuItemsSystem extends createSystem({}) {
   }
 
   private turn(ctx: MenuItemsContext, direction: -1 | 1): void {
-    const count = tabPieces(ctx.data, this.tab).length;
+    const count = this.locked ? 0 : tabPieces(ctx.data, this.tab).length;
     const next = turnPage(this.page, direction, count);
     if (next === this.page || next >= pageCount(count)) return;
     const menu = getPalmMenuPanel();

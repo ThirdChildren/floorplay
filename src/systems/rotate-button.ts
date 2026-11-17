@@ -14,6 +14,7 @@
 // run before theirs, or a control or the piece under the button would get the pinch meant for it (the button is drawn over the menu
 // when the menu is open). Nothing here allocates per frame.
 
+import { can } from '../logic/permissions';
 import { createSystem, Quaternion, Vector3, type Entity, type Object3D, type World } from '@iwsdk/core';
 import { Furniture } from '../components/furniture';
 import { slog } from '../log';
@@ -160,7 +161,7 @@ export class RotateButtonSystem extends createSystem({ pieces: { required: [Furn
     }
     const piece = this.pieceObjects.get(pieceId);
     // At real scale the model is the room around the head, and outside a session there is no hand: the button waits.
-    if (!decision.visible || !piece || !presenting || isModelHidden() || isViewTransitioning()) {
+    if (!decision.visible || !piece || !presenting || !can(ctx.store.get().role, 'furnish') || isModelHidden() || isViewTransitioning()) {
       ctx.panel.place(0, 0, 0, 0, false);
       this.shown = false;
       return;
@@ -196,6 +197,7 @@ export class RotateButtonSystem extends createSystem({ pieces: { required: [Furn
   private onPinch(hand: Hand): void {
     const ctx = context;
     if (!ctx || !this.shown || this.window.pieceId === null) return;
+    if (!can(ctx.store.get().role, 'furnish')) return; // the tenant cannot turn pieces
     if (!this.world.renderer.xr.isPresenting) return;
     // Someone has this pinch already (a menu, a button, the Issues or View panel): it is not a press on this button.
     if (pinchClaims.ownerOf(hand) !== null) return;

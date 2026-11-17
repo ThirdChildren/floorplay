@@ -337,7 +337,7 @@ async function start(): Promise<void> {
         },
       });
       // The virtual pieces at real scale (MR.4) and the ray of the hands: right after the room objects (they use its volumes and its hover).
-      createRoomPieces(world, merged ? merged.items : []);
+      createRoomPieces(world, merged ? merged.items : [], store);
     }
     // The long pinch (T4.5): after the menu and the panels, before the grab (it waits for the claims of the later systems).
     createIssueCreate(world, store, result.house, miniature.root, issueClock);

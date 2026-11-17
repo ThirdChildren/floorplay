@@ -35,6 +35,8 @@ import {
 import { tagEntity } from '../components/tag-entity';
 import { slog } from '../log';
 import { findItem, type CatalogItem } from '../logic/catalog';
+import { can } from '../logic/permissions';
+import type { Store } from '../logic/state';
 import { reasonLabelExtent } from '../logic/furniture-label';
 import {
   createWristRotation,
@@ -174,6 +176,8 @@ interface RoomPiecesContext {
   rays: RoomRays;
   card: ScanCardPanel;
   notice: RoomNoticePanel;
+  /** The application store, for the role (the tenant cannot furnish); null in a test that has none. */
+  store: Store | null;
 }
 
 // Shared with the system, which has no constructor arguments: set by `createRoomPieces`.
@@ -181,13 +185,18 @@ let context: RoomPiecesContext | null = null;
 let activeSystem: RoomPiecesSystem | null = null;
 
 /** Creates the ray meshes, the card and the notice, and registers the system. Register it right after the room objects system. */
-export function createRoomPieces(world: World, catalog: readonly CatalogItem[]): void {
+export function createRoomPieces(world: World, catalog: readonly CatalogItem[], store: Store | null = null): void {
   const rays = new RoomRays();
   rays.setHighContrast(isHighContrast());
   world.createTransformEntity(rays.lines);
   world.createTransformEntity(rays.cursors);
-  context = { world, catalog, visuals: null, rays, card: new ScanCardPanel(world), notice: new RoomNoticePanel(world) };
+  context = { world, catalog, visuals: null, rays, card: new ScanCardPanel(world), notice: new RoomNoticePanel(world), store };
   world.registerSystem(RoomPiecesSystem);
+}
+
+/** True when the role of the store may furnish (every role but the tenant); without a store, yes. */
+function mayFurnish(ctx: RoomPiecesContext): boolean {
+  return ctx.store === null || can(ctx.store.get().role, 'furnish');
 }
 
 /** Gives the system the visuals of the furniture (the models and the blocks); until then a menu pick in the room does nothing. */
@@ -498,7 +507,7 @@ export class RoomPiecesSystem extends createSystem({
   private startFromMenu(catalogId: string, hand: Hand): void {
     const ctx = context;
     if (!ctx || !isRoomView() || !this.world.renderer.xr.isPresenting) return;
-    if (this.held || !ctx.visuals) return;
+    if (this.held || !ctx.visuals || !mayFurnish(ctx)) return;
     const item = findItem(ctx.catalog, catalogId);
     if (!item) return;
     if (!canAddRoomPiece(this.pieces.length)) {
@@ -565,7 +574,7 @@ export class RoomPiecesSystem extends createSystem({
   /** The pinch of the room view, offered by the room objects system before it selects an object. True when taken here. */
   private handlePinch(hand: Hand): boolean {
     const ctx = context;
-    if (!ctx || this.held) return false;
+    if (!ctx || this.held || !mayFurnish(ctx)) return false;
     // A control of the card of a piece.
     if (ctx.card.hasFrame && this.selected) {
       pinchPoint(hand, this.point);
