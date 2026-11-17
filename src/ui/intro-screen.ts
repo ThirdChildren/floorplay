@@ -66,8 +66,12 @@ const STYLE = `
 .soglia-intro *{box-sizing:border-box}
 .soglia-intro-inner{max-width:780px;margin:0 auto;padding:24px 20px 56px}
 .soglia-intro h1{margin:0 0 4px;font-size:2em;line-height:1.15}
+.soglia-intro-head{display:flex;align-items:center;gap:20px;margin:0 0 16px}
+.soglia-intro-head p{margin:0}
+.soglia-intro-mark{flex:none;width:clamp(88px,24vw,150px);height:auto}
+.soglia-intro-headtext{min-width:0}
 .soglia-intro h1.soglia-intro-brand{margin:0 0 8px;line-height:0}
-.soglia-intro-logo{display:block;width:min(100%,360px);height:auto}
+.soglia-intro-wordmark{display:block;width:min(100%,260px);height:auto}
 .soglia-intro h2{margin:0 0 8px;font-size:1.4em;line-height:1.2}
 .soglia-intro h1:focus,.soglia-intro h2:focus{outline:none}
 .soglia-intro p{margin:0 0 12px}
@@ -195,18 +199,28 @@ export function createIntroScreen(deps: IntroDeps): IntroScreen {
   // --- home --------------------------------------------------------------------------------------------------------
   const home = el('section');
   home.dataset.soglia = 'intro-home';
-  // The logo is the title of the page: an h1 that holds the image, with the name as its text alternative (screen readers, and the
-  // text that shows if the image cannot load). The sizes keep the layout from jumping while it loads.
+  // The head of the page is the logo lockup: the icon on the left, and on the right the name (the title of the page: an h1 that holds
+  // the wordmark, with the name as its text alternative for screen readers and for when the image cannot load) with the tagline
+  // under it. The icon is decoration. The sizes keep the layout from jumping while the images load.
+  const image = (file: string, className: string, alt: string, width: number, height: number): HTMLImageElement => {
+    const img = document.createElement('img');
+    img.className = className;
+    img.src = `${import.meta.env.BASE_URL}branding/${file}`;
+    img.alt = alt;
+    img.width = width;
+    img.height = height;
+    return img;
+  };
+  const head = el('div', 'soglia-intro-head');
+  const mark = image('icon.png', 'soglia-intro-mark', '', 320, 337);
+  mark.setAttribute('aria-hidden', 'true');
   const title = el('h1', 'soglia-intro-brand');
-  const logo = document.createElement('img');
-  logo.className = 'soglia-intro-logo';
-  logo.src = `${import.meta.env.BASE_URL}branding/logo.png`;
-  logo.alt = t.title;
-  logo.width = 720;
-  logo.height = 327;
-  title.append(logo);
+  title.append(image('wordmark.png', 'soglia-intro-wordmark', t.title, 440, 108));
   title.tabIndex = -1;
   const tagline = el('p', undefined, t.tagline);
+  const headText = el('div', 'soglia-intro-headtext');
+  headText.append(title, tagline);
+  head.append(mark, headText);
   const card = el('div', 'soglia-intro-card');
   card.dataset.soglia = 'intro-selected-house';
   const cardLabel = el('p', 'soglia-intro-label', t.selectedLabel);
@@ -221,7 +235,7 @@ export function createIntroScreen(deps: IntroDeps): IntroScreen {
   const enterNote = el('p', 'soglia-intro-note');
   enterNote.setAttribute('aria-live', 'polite');
   enterNote.dataset.soglia = 'intro-enter-note';
-  home.append(title, tagline, card, loadButton, furnitureButton, enterButton, enterNote);
+  home.append(head, card, loadButton, furnitureButton, enterButton, enterNote);
 
   // --- houses ------------------------------------------------------------------------------------------------------
   const housesScreen = el('section');
