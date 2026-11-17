@@ -251,3 +251,19 @@ Tested only in the IWER emulator (see `qa/reports/TENANT-2026-11-17.md`). To che
 | Milestone | Item | Priority | Added on | Device result |
 |---|---|---|---|---|
 | TENANT | Confirm a resolved issue, open it from History: the Delete button (4 cm high) is easy to hit with a pinch, the second press ("Press again to delete") is not hit by accident, the issue is gone after reopening the app | high | 2026-11-17 | pending |
+
+## Pointing at a spot, Mine removal (2026-11-17)
+
+Tested only in the IWER emulator (`qa/reports/POINT-MINE-2026-11-17.md`; the emulator hand is posed with a custom `point` finger pose, real joints, but its fingers are not a person's). To check on the Quest:
+
+| Milestone | Item | Priority | Added on | Device result |
+|---|---|---|---|---|
+| POINT | As tenant, index out and the other fingers curled, held on a spot of the model for 1 s: the ghost pin grows and the new-issue form opens at that spot. Check it is told apart from a pinch, a fist and an open hand, and that a normal relaxed hand never starts it | high | 2026-11-17 | pending |
+| POINT | The thresholds (`INDEX_REACH_*`, `CURL_REACH_*` in `src/logic/point-gesture.ts`; 1 s dwell; tolerance 3 cm of the model) feel right: the spot does not slip on a real finger, the form is not opened by accident when moving the hand around | high | 2026-11-17 | pending |
+| POINT | Pointing at real scale (inside a viewpoint): the ghost pin (world size, small) is visible enough, the form opens in front of the head, the pin appears after "Tabletop" | medium | 2026-11-17 | pending |
+| POINT | The panel under the finger is not checked: pointing through the menu, the View panel or the Issues panel does nothing only because those panels shut the gesture off while open. Check the fixed buttons (Menu, Issues, View) near the model are not in the way | medium | 2026-11-17 | pending |
+| POINT | Tenant: a pinch on a placed piece picks it up again, a long pinch on the floor still opens the form, a long pinch that starts on a piece moves the piece | high | 2026-11-17 | pending |
+| POINT | The hint "Point at a spot for 1 second to report an issue" shows a few seconds into a tenant session, does not cover "Palm up for the menu", and disappears when the user points | low | 2026-11-17 | pending |
+| MINE | In the palm menu, Mine tab: the last card "Manage" opens the list; a piece asks "Press again" then is removed; a removed piece shows "Restore" and comes back in one press; "Done" goes back. Cards are easy to hit with a pinch | medium | 2026-11-17 | pending |
+| MINE | After removing a piece from Mine, copies of it already placed in the house stay; reload keeps the Removed list | medium | 2026-11-17 | pending |
+
