@@ -4,6 +4,8 @@
 
 Live demo: <https://thirdchildren.github.io/floorplay/> (open it in the headset browser)
 
+Demo video: <https://youtu.be/pn9RRxbicKw>
+
 Floorplay is a hands-first WebXR app for Meta Quest, built with the Immersive Web SDK. It has no controller
 steps, no thumbstick movement and no teleport. You sit at a table and use your hands.
 
@@ -55,6 +57,7 @@ Useful URL parameters (add them after the address, for example `?house=apartment
 | Close both fists, pull back like rowing | Walk inside the model. Look where you want to go. A comfort vignette shows while you move. |
 | **Tabletop** button | Go back to the model on the table. |
 | Hold a pinch on an appliance or a spot (tenant) | Report a problem. Pick a category, a phrase and an urgency. |
+| Point at a spot for one second (tenant) | Open the new-issue form there, with no pinch. |
 
 Moving between places uses a short fade. Walking is slow and only starts with the row gesture.
 
@@ -76,7 +79,8 @@ on the floor through the windows, with no shadows.
 
 On a headset that supports passthrough, Floorplay starts in mixed reality: the model sits on your real table.
 Pinch **My room** beside the model to see your real room. The objects from your headset room scan (Space Setup)
-are outlined: pinch one to see its size and **Add to Mine**, so it joins your own furniture in the menu. You can
+are outlined: pinch one to see its size and **Add to Mine**, so it joins your own furniture in the menu. In the Mine tab,
+**Manage** removes a piece (press twice) or brings a removed one back. You can
 also place virtual pieces at real size on your floor. Pinch **Model** to go back. Without a room scan the app says
 so and the rest works as usual. Add `?mr=0` to use the VR model only. Browsers without passthrough get VR.
 

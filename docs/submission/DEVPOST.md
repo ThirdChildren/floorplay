@@ -13,8 +13,8 @@ Copy-ready texts for the Devpost "Enter a Submission" form. Everything here is c
 | Division | New Experience |
 | Link (WebXR) | https://thirdchildren.github.io/floorplay/ |
 | Source code | https://github.com/ThirdChildren/floorplay |
-| Video | **[OWNER]** YouTube or Vimeo link, public, under 3 minutes (script: `docs/submission/VIDEO_SCRIPT.md`) |
-| Target launch date | **[OWNER]** suggestion: "Public web release: March 2027" |
+| Video | https://youtu.be/pn9RRxbicKw (public, under 3 minutes; script: `docs/submission/VIDEO_SCRIPT.md`) |
+| Target launch date | March 2027: a free public web release. It is a target, not a commitment; change the month if your plans change. |
 | Content rating | 10+ |
 | Built with | Immersive Web SDK, WebXR, TypeScript, Vite, Three.js, Vitest |
 
@@ -41,7 +41,7 @@ Floorplay turns the plan of a home into a 1:20 model on your table. You use it s
   sizes of your own furniture and try them. Pinch a blue marker to step into a room at real size, then row with
   both fists to walk slowly through it. Pick a date and time to see where the sun falls.
 - **Present (agent).** Open info points on the model, furnish or clear the whole home in one pinch, and undo.
-- **Live (tenant and landlord).** Hold a pinch on the exact spot, such as the washer, to report a problem: a
+- **Live (tenant and landlord).** Hold a pinch on the exact spot, such as the washer, or just point at it for one second, to report a problem: a
   category, a predefined phrase and an urgency, no keyboard needed. The pin moves from red to orange to green as
   the landlord handles it, with a history and a move-in report.
 - **Your real room (mixed reality).** On a headset with passthrough the model sits on your real table. Pinch
@@ -99,7 +99,7 @@ Time needed: about 5 minutes. Seated, hands only (put the controllers down).
 5. **Step inside:** pinch a blue marker in a room. Close both fists and pull back, like rowing, to walk; look where
    you want to go. Pinch **Tabletop** to return.
 6. **Sun:** pinch **View**, change the time, and watch the light patches move.
-7. **Report an issue:** pinch **Issues**, switch the role to **Tenant**, then hold a pinch on the washer to
+7. **Report an issue:** pinch **Issues**, switch the role to **Tenant**, then hold a pinch on the washer (or point at a spot for one second) to
    report a problem. Switch to **Landlord** to move it from red to orange to green.
 8. **Your room (mixed reality, needs Space Setup on the headset):** pinch **My room** beside the model, pinch an
    outlined real object, then **Add to Mine**; pinch **Model**, open **Menu**: the object is in Mine. `?mr=0`
@@ -112,8 +112,8 @@ Content marked **Sample data** in the app (issue history, move-in report, info p
 
 ## Before submitting — checklist
 
-- [ ] Video uploaded, public, under 3 minutes, link pasted.
-- [ ] Target launch date chosen **[OWNER]**.
+- [x] Video uploaded, public, under 3 minutes (link above): paste it in the form.
+- [x] Target launch date chosen (March 2027, a target): paste it in the form.
 - [ ] 3–5 screenshots attached (suggested: model with furniture and a red "Blocks the door" note; real-scale room
       with sunlight; issue pin with the form; palm menu; start screen).
 - [ ] Confirm on the form: no previous Meta funding for this project.
