@@ -146,4 +146,8 @@ plant → plant; lamp and other stay blocks.
 
 Valid `status` transitions: `open→in_progress` (landlord), `in_progress→resolved` (landlord),
 `resolved→archived` (tenant confirms), `resolved→in_progress` (tenant rejects). The others are forbidden.
+An `archived` issue can also be **deleted** (permission `delete`: tenant and landlord, only in status `archived`, never an `open`,
+`in_progress` or `resolved` one, never a `baseline`). The Delete button of the issue detail asks twice ("Press again to delete");
+the entry leaves the saved state. The demo seed is applied once (`issuesSeeded`), so a deleted entry of `public/demo/issues-*.json`
+does not come back on reload; only `reset=1` starts again from the seed. The number of a deleted `issue-<n>` is not handed out again.
 Colors: open red, in_progress orange, resolved green, archived grey, baseline blue.
