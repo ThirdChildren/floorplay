@@ -359,6 +359,7 @@ across the whole demo (D71); no statement "works on the headset" without the rep
 
 ## Changelog
 
+- 2026-11-17: logo (generated with Gemini from our own prompt, credited in `CREDITS.md`) shown at the top of the start screen as the page title (`public/branding/logo.png`, transparent, dark-background version); sources and the YouTube thumbnail kept in `assets-src/branding/`.
 - 2026-11-16 (night): a resized catalog bed or sofa is drawn with the sibling model that suits its new size (a double bed made 90 cm wide looks like a single bed, a short sofa like an armchair), stretched to the exact size (`resizedSkinFor`). Owner's request after the device test.
 - 2026-11-16 (night): the Rotate button above a piece that was just put down lasts 2 s (was 12), and its time runs also while a menu or panel covers it (it no longer starts again when the surface closes). Owner's request after the device test. Owner fixed the odd double bed by resetting its sizes in Furniture.
 - 2026-11-16 (night): the room label goes away by itself after 4 s (`ROOM_LABEL_SECONDS`) and at once in My room (mixed reality) or at real scale; pinching the same room shows it again. Owner's request after the device test; scanned-piece sizes confirmed correct on the Quest by the owner.
