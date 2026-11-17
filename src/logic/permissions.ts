@@ -16,7 +16,6 @@ export const PERMISSION_ACTIONS = [
   'view-move-in',
   'view-info',
   'stage',
-  'furnish',
   'delete',
   'change-role',
 ] as const;
@@ -39,8 +38,6 @@ export const PERMISSION_TABLE: Readonly<Record<PermissionAction, readonly Role[]
   'view-move-in': ['tenant', 'landlord'],
   'view-info': ['visitor', 'agent'],
   stage: ['agent'],
-  // Picking up, moving, turning, adding and removing furniture (and Undo of those). Every role but the tenant, who only reports issues.
-  furnish: ['visitor', 'agent', 'landlord'],
   // Deleting an issue for good: tenant and landlord, and only once the issue is archived (see `can`).
   delete: ['tenant', 'landlord'],
   'change-role': ['visitor', 'agent', 'tenant', 'landlord'],

@@ -65,8 +65,6 @@ export type PalmMenuMode = 'palm' | 'pinned';
 
 const PANEL_ASSET = 'palm-menu';
 const TITLE_ELEMENT = 'palm-menu-title';
-/** Opacity of Undo for a role that may not furnish (it does nothing there). */
-const LOCKED_UNDO_OPACITY = 0.35;
 const TITLE_BOX_ELEMENT = 'palm-menu-title-box';
 const TAB_ROW_ELEMENT = 'menu-tab-row';
 const ROOT_ELEMENT = 'palm-menu-root';
@@ -154,9 +152,6 @@ export class PalmMenuPanel {
   private slotElements: SlotElements[] = [];
   private items: readonly MenuItemContent[] = [];
   private titleBox: UIKit.Container | null = null;
-  /** The menu is for a role that may not furnish: the heading shows `strings.menu.locked`. */
-  private lockedValue = false;
-  private undoButton: UIKit.Container | null = null;
   private tabRow: UIKit.Container | null = null;
   private tabElements = new Map<MenuTabId, TabElements>();
   /** The page indicator and the two arrows (`Back` and `Next` are drawn faint when there is no page in that direction). */
@@ -290,23 +285,6 @@ export class PalmMenuPanel {
     if (this.textApplied) this.writeFourthButton();
   }
 
-  /**
-   * A role that may not furnish (the tenant) gets a menu without items: the heading says so (`strings.menu.locked`) instead of the
-   * title. Written in place; kept until the layout is loaded.
-   */
-  setLocked(locked: boolean): void {
-    if (locked === this.lockedValue) return;
-    this.lockedValue = locked;
-    if (this.textApplied) this.writeTitle();
-  }
-
-  private writeTitle(): void {
-    const doc = this.entity?.getValue(PanelDocument, 'document') as UiDocument | undefined;
-    doc?.getElementById<UIKit.Text>(TITLE_ELEMENT)?.setProperties({ text: this.lockedValue ? strings.menu.locked : this.title });
-    // Undo does nothing for this role: it is drawn faint, like an arrow with nowhere to go.
-    this.undoButton?.setProperties({ opacity: this.lockedValue ? LOCKED_UNDO_OPACITY : 1 });
-  }
-
   /** Dims the menu panel (1 = normal): see `src/logic/menu-dim.ts`. */
   setOpacity(opacity: number): void {
     if (opacity === this.opacity) return;
@@ -335,7 +313,6 @@ export class PalmMenuPanel {
     this.arrowIcons = {};
     this.prevButton = null;
     this.nextButton = null;
-    this.undoButton = null;
     this.pageNumber = 0;
     this.pageTotal = 1;
   }
@@ -354,7 +331,7 @@ export class PalmMenuPanel {
         // The hand menu is never hidden by the model or the table that happen to be in front of it.
         this.root = doc?.getElementById<UIKit.Container>(ROOT_ELEMENT) ?? null;
         this.root?.setProperties({ depthTest: false, renderOrder: MENU_RENDER_ORDER, opacity: this.opacity });
-        title.setProperties({ text: this.lockedValue ? strings.menu.locked : this.title });
+        title.setProperties({ text: this.title });
         doc?.getElementById<UIKit.Text>('menu-btn-home-label')?.setProperties({ text: strings.menu.home });
         this.fillButtons(doc);
         this.slotElements = [];
@@ -376,11 +353,9 @@ export class PalmMenuPanel {
           this.tabElements.get(tab)?.label?.setProperties({ text: strings.menu.tabs[tab] });
         }
         this.pageLabel = doc?.getElementById<UIKit.Text>('menu-page-label') ?? null;
-        this.undoButton = doc?.getElementById<UIKit.Container>('menu-btn-undo') ?? null;
         this.prevButton = doc?.getElementById<UIKit.Container>('menu-btn-prev') ?? null;
         this.nextButton = doc?.getElementById<UIKit.Container>('menu-btn-next') ?? null;
         this.textApplied = true;
-        this.writeTitle();
         this.writeTabs();
         this.writeItems();
         this.writePage();

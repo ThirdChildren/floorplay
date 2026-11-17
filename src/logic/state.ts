@@ -722,7 +722,6 @@ export function reduce(state: AppState, action: Action): AppState {
       return { ...state, issues: state.issues.filter((i) => i.id !== action.id) };
     }
     case 'placeFurniture': {
-      if (!can(state.role, 'furnish')) return state;
       const { catalogId, x, z, rotationDeg, roomId } = action;
       if (typeof catalogId !== 'string' || !CATALOG_ID_PATTERN.test(catalogId)) return state;
       if (!isPose(x, z, rotationDeg) || !isRoomId(roomId)) return state;
@@ -739,7 +738,6 @@ export function reduce(state: AppState, action: Action): AppState {
       };
     }
     case 'moveFurniture': {
-      if (!can(state.role, 'furnish')) return state;
       const { id, x, z, rotationDeg, roomId } = action;
       if (!isPose(x, z, rotationDeg) || !isRoomId(roomId)) return state;
       const index = state.furniture.findIndex((p) => p.id === id);
@@ -758,7 +756,6 @@ export function reduce(state: AppState, action: Action): AppState {
       };
     }
     case 'removeFurniture': {
-      if (!can(state.role, 'furnish')) return state;
       const index = state.furniture.findIndex((p) => p.id === action.id);
       if (index < 0) return state;
       return {
@@ -768,7 +765,7 @@ export function reduce(state: AppState, action: Action): AppState {
       };
     }
     case 'undo': {
-      if (state.history.length === 0 || !can(state.role, 'furnish')) return state;
+      if (state.history.length === 0) return state;
       const last = state.history[state.history.length - 1];
       return { ...state, furniture: last.furniture, history: state.history.slice(0, -1) };
     }
@@ -780,7 +777,6 @@ export function reduce(state: AppState, action: Action): AppState {
       return { ...state, furniture, nextInstance };
     }
     case 'stageFurniture': {
-      if (!can(state.role, 'furnish')) return state;
       if (!Array.isArray(action.pieces) || typeof action.label !== 'string' || action.label.length === 0) return state;
       const furniture = sanitizePieces(action.pieces);
       if (furniture.length === 0 && state.furniture.length === 0) return state;

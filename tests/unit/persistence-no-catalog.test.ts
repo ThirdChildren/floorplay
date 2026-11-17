@@ -84,7 +84,7 @@ describe('restore without a catalog', () => {
 
   it('keeps nextInstance whole, so a parked id is never handed out again', () => {
     const picked = mustPick(serializeForSave(busy()), withoutCatalog());
-    const state = run(initial(), restoreSaved(picked), setRole('visitor'), placeFurniture('chair', 1, 1, 0, 'living'));
+    const state = run(initial(), restoreSaved(picked), placeFurniture('chair', 1, 1, 0, 'living'));
     expect(state.furniture.map((p) => p.id)).toEqual(['furniture:chair#2']);
   });
 

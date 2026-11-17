@@ -244,14 +244,10 @@ start screen, the tabletop model in passthrough, real-scale viewpoints and walki
 To check on the Quest: Mine is empty until an object is added from My room; a scanned bed, couch, table and
 storage unit show the matching catalog model (not a block) at the measured size, both in the model and in My room.
 
-## Tenant cannot move furniture, delete archived issues (2026-11-17)
+## Delete archived issues (2026-11-17)
 
 Tested only in the IWER emulator (see `qa/reports/TENANT-2026-11-17.md`). To check on the Quest:
 
 | Milestone | Item | Priority | Added on | Device result |
 |---|---|---|---|---|
-| TENANT | As tenant, a pinch on a placed piece (hand tracking) does not pick it up, and a long pinch (0.8 s) on top of a piece still opens the new-issue form at that spot | high | 2026-11-17 | pending |
-| TENANT | As tenant, the palm menu and the Menu button show "View only" with no cards and a faint Undo, Recenter and "Back to home" still work, and no "Drop it in the house" coach appears | high | 2026-11-17 | pending |
-| TENANT | Role switch in the Issues panel (visitor to tenant and back) applies at once: pieces can no longer be picked up as tenant, and can be again as visitor | medium | 2026-11-17 | pending |
-| TENANT | In the My room view (mixed reality), a tenant cannot take or add a virtual piece | medium | 2026-11-17 | pending |
 | TENANT | Confirm a resolved issue, open it from History: the Delete button (4 cm high) is easy to hit with a pinch, the second press ("Press again to delete") is not hit by accident, the issue is gone after reopening the app | high | 2026-11-17 | pending |
