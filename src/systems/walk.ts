@@ -246,6 +246,11 @@ export function suspendWalk(): void {
   ctx.vignette.set(0);
 }
 
+/** True while the row gesture is in use: a fist of a hand qualifies or the body still has speed. The pointing gesture waits for it to be over. */
+export function isRowActive(): boolean {
+  return row.speed > 0 || row.left.qualified || row.right.qualified;
+}
+
 /** Where the body is on the plan now (a copy). */
 export function walkPosition(): { x: number; z: number; yawDeg: number } {
   return { x: roundMm(body.x), z: roundMm(body.z), yawDeg: wrapDegrees(reference.yawRad * RAD_TO_DEG - lastHeadYawDeg) };

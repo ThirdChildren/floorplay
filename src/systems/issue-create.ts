@@ -89,6 +89,7 @@ let context: IssueCreateContext | null = null;
 let draft: IssueDraft | null = null;
 let cancelNow: ((reason: DraftCancelReason) => void) | null = null;
 let consumeNow: (() => IssueDraft | null) | null = null;
+let startNow: ((hand: Hand, anchor: IssueAnchor) => boolean) | null = null;
 
 /** The draft of the new issue the long pinch made, or null (the form of T4.7 reads it; it is never written from outside). */
 export function getDraft(): Readonly<IssueDraft> | null {
@@ -106,6 +107,14 @@ export function cancelDraft(reason: DraftCancelReason): void {
 /** Takes the draft away for the form that sends it (T4.7): returns it, removes the ghost and logs nothing. Null when there is none. */
 export function consumeDraft(): IssueDraft | null {
   return consumeNow ? consumeNow() : null;
+}
+
+/**
+ * Opens the new-issue form at `anchor` as the long pinch does (a draft, the ghost pin, the Issues panel on `new`), for the pointing gesture
+ * (src/systems/point-issue.ts). Returns false, and does nothing, when the role may not create issues or a draft is already open.
+ */
+export function startIssueAt(hand: Hand, anchor: IssueAnchor): boolean {
+  return startNow ? startNow(hand, anchor) : false;
 }
 
 /** Registers the long pinch. Register it AFTER the menu and the panels and BEFORE the grab of the pieces. */
@@ -141,6 +150,7 @@ export class IssueCreateSystem extends createSystem({}) {
   init(): void {
     cancelNow = (reason) => this.cancelAll(reason);
     consumeNow = () => this.consume();
+    startNow = (hand, anchor) => this.startAt(hand, anchor);
     this.cleanupFuncs.push(
       onPinchStart((hand) => this.onPinch(hand)),
       onPinchEnd((hand) => this.onPinchEnd(hand)),
@@ -154,6 +164,7 @@ export class IssueCreateSystem extends createSystem({}) {
       () => {
         cancelNow = null;
         consumeNow = null;
+        startNow = null;
         this.clearGhost();
         draft = null;
       },
@@ -334,6 +345,18 @@ export class IssueCreateSystem extends createSystem({}) {
       return;
     }
     slog(formatHoldFired(hand, now - this.startedAt));
+    this.openForm(hand, anchor, ctx);
+    resetLongPress(this.machine);
+    this.anchor = null;
+    // The pinch goes on until the user lets go; it is not followed any more (the claim keeps the others away).
+    this.mode = 'off';
+  }
+
+  /**
+   * Makes the draft of `anchor` and opens the Issues panel on the form `new` (the long pinch and the pointing gesture end here). The ghost
+   * pin stays at the anchor, full size, until the form reports or cancels. Cancels the draft again when the panel cannot open.
+   */
+  private openForm(hand: Hand, anchor: IssueAnchor, ctx: IssueCreateContext): void {
     draft = draftFromAnchor(anchor);
     this.panelSeen = false;
     setPinDraft(draft.position, 1);
@@ -348,10 +371,13 @@ export class IssueCreateSystem extends createSystem({}) {
       // The panel could not open (no session, suspended): there is nowhere to fill the draft.
       this.cancelAll('user');
     }
-    resetLongPress(this.machine);
-    this.anchor = null;
-    // The pinch goes on until the user lets go; it is not followed any more (the claim keeps the others away).
-    this.mode = 'off';
+  }
+
+  private startAt(hand: Hand, anchor: IssueAnchor): boolean {
+    const ctx = context;
+    if (!ctx || draft !== null || !can(ctx.store.get().role, 'create')) return false;
+    this.openForm(hand, anchor, ctx);
+    return draft !== null;
   }
 
   /** The names the form shows: the fixture of the draft (its sentence says `The washing machine ...`) and the room. */

@@ -70,6 +70,8 @@ import { createSun } from './systems/sun';
 import { createViewpoint } from './systems/viewpoint';
 import { createWalk } from './systems/walk';
 import { attachWalkHook } from './debug/walk-hook';
+import { attachPointHook } from './debug/point-hook';
+import { createPointIssue } from './systems/point-issue';
 import { isRealScale } from './systems/view-mode';
 import { chooseMrEntry, mixedRealityOptions, watchMrSessionRefusal } from './systems/mixed-reality';
 import { withoutSessionOffer } from './systems/xr-entry';
@@ -369,6 +371,9 @@ async function start(): Promise<void> {
     // The pins of the issues (T4.4): one instanced mesh and a light entity per visible issue, after the viewpoint markers.
     createPins(world, store, result.house, built.entity, miniature.root, infoPoints);
     if (params.debug) attachPinDraftKey(result.house);
+    // Pointing at a spot for one second opens the new-issue form there (the tenant): after the long pinch and the pins, whose form and ghost it uses.
+    createPointIssue(world, store, result.house, miniature.root.object3D ?? null, merged ? merged.items : []);
+    if (params.debug) attachPointHook();
     // After the menu, the grab and the markers: their pinch listeners run first, so a pinch on a menu item, a piece or a marker is never a pan.
     createMiniaturePan(world, store, result.house);
     // Last: it cancels what the systems above hold when the session is hidden, blurred or ended (D30).

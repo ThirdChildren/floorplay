@@ -202,6 +202,11 @@ export const strings = {
     /** Hand joints are not available (controllers only): the walk cannot be driven; the viewpoints still work. */
     needsHands: 'Walking needs hand tracking. Put the controllers down.',
   },
+  /** Pointing at a spot to report an issue (the tenant). */
+  point: {
+    /** Shown a few times (not every session) to the tenant: one short line, plain ASCII. */
+    hint: 'Point at a spot for 1 second to report an issue',
+  },
   /** The mixed reality mode (`?mr=1`, plan MR): the toggle between the model and the real room, and the card of a real object. */
   room: {
     /** The toggle in the model view; in the room view it reads `toModel`. */
