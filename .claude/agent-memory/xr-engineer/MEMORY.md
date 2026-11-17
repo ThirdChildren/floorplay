@@ -38,3 +38,4 @@
 - [Walk by rowing with both fists](walk-row.md) — on from the first viewpoint entry (no Walk button); fist thresholds, IWER fist pose, view-state decision, PC drive recipe
 - [My room in the button column](room-column-button.md) — slot shared via button-column.ts (now the 4th floor, above View); room view keeps the head pair; 6 cm room buttons
 - [Back to home](back-to-home.md) — menu header control that only ends the session; header split, IWER recipe, pinch calibrations
+- [Pointing gesture, tenant furnishing, Mine removal](point-and-mine-removal.md) — 1 s index-finger dwell opens the new-issue form (also at real scale), pure logic files, IWER `point` pose recipe (right hand mirrors x), Issues panel real-scale trap, `removedScanned` store + Manage/Done cards
