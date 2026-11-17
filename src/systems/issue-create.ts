@@ -364,7 +364,7 @@ export class IssueCreateSystem extends createSystem({}) {
     // The room was selected at the `selectstart` (its RayInteractable): the new issue is about a spot, not a room.
     const selected = ctx.store.get().selectedRoomId;
     if (selected !== null) ctx.store.dispatch(selectRoom(selected));
-    openIssuePanel(hand);
+    openIssuePanel(hand, true);
     if (isIssuePanelOpen()) startIssueForm(createIssueForm(draft, this.subjectOf(draft, ctx.house)));
     showIssueScreen('new');
     if (!isIssuePanelOpen()) {

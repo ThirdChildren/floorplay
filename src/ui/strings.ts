@@ -164,7 +164,7 @@ export const strings = {
      */
     mine: {
       manage: 'Manage',
-      manageHint: ['Remove or restore', 'Edit list'],
+      manageHint: ['Remove, restore', 'Edit list'],
       done: 'Done',
       doneHint: ['Back to Mine', 'Back'],
       removeHint: ['Press to remove', 'Remove'],

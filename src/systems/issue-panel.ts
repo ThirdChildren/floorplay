@@ -141,7 +141,7 @@ import { panelFontSupports } from '../ui/fonts';
 import { onPinchStart, pinchClaims, pinchPoint, type Hand } from './pinch-input';
 import { runAgentStaging } from './furniture';
 import { pickPinAt, setPinRing } from './pins';
-import { isModelHidden, isViewTransitioning } from './view-mode';
+import { isModelHidden, isRoomView, isViewTransitioning } from './view-mode';
 
 /** The texts of the list (src/ui/strings.ts): the logic builds the rows from them. */
 const LIST_TEXTS: ListTexts = strings.issues.list;
@@ -278,10 +278,11 @@ export function getIssueScreen(): IssueScreen | null {
 /**
  * Opens the panel pinned in front of the user at `home`, closing the menu if one is open (one panel at a time). `hand` is
  * the hand that pinched the button (nothing for a development key). Does nothing when it is already open, outside a
- * session or while the session is suspended.
+ * session or while the session is suspended. At real scale it opens only `forNewIssue` (the form that the pointing gesture starts there:
+ * it needs no model, and its pin shows when the table-top model is back).
  */
-export function openIssuePanel(hand?: Hand): void {
-  active?.open(hand ?? null);
+export function openIssuePanel(hand?: Hand, forNewIssue = false): void {
+  active?.open(hand ?? null, forNewIssue);
 }
 
 /** Closes the panel (`via` says why: it is in the log line). Does nothing when it is closed. */
@@ -328,6 +329,8 @@ interface Slot extends PickSlot {
 }
 
 export class IssuePanelSystem extends createSystem({}) {
+  /** The panel was opened at real scale for a new issue (the pointing gesture): it stays open there while the form is on screen. */
+  private formAtRealScale = false;
   private suspended = false;
   private readonly point = new Vector3();
   private readonly spot = { x: 0, y: 0, z: 0 };
@@ -401,18 +404,20 @@ export class IssuePanelSystem extends createSystem({}) {
     this.suspended = false;
   }
 
-  open(hand: Hand | null): void {
+  open(hand: Hand | null, forNewIssue = false): void {
     const ctx = context;
     if (!ctx || ctx.panel.isOpen) return;
     if (this.suspended || !this.world.renderer.xr.isPresenting) {
       slog('issues panel unavailable reason=no-session');
       return;
     }
-    // The panel belongs to the table-top model (its pins and fixtures): never opened at real scale or while the view changes.
-    if (isModelHidden() || isViewTransitioning()) {
+    // The panel belongs to the table-top model (its pins and fixtures): never opened at real scale (but for a new issue) or in the room
+    // view, nor while the view changes.
+    if ((isModelHidden() && !(forNewIssue && !isRoomView())) || isViewTransitioning()) {
       slog('issues panel unavailable reason=real-scale');
       return;
     }
+    this.formAtRealScale = forNewIssue && isModelHidden();
     // One panel at a time: the menu (palm or pinned) and the View panel that are open close first, in this frame.
     panelOpening('issues');
     ctx.navigator.reset();
@@ -426,6 +431,7 @@ export class IssuePanelSystem extends createSystem({}) {
   close(via: IssuePanelCloseVia): void {
     const ctx = context;
     if (!ctx || !ctx.panel.isOpen) return;
+    this.formAtRealScale = false;
     ctx.panel.close();
     this.disposeAnchors();
     ctx.navigator.reset();
@@ -725,7 +731,9 @@ export class IssuePanelSystem extends createSystem({}) {
     }
     // A pinch on a viewpoint marker takes the user to real scale with the panel open (T4.6a doubt, T4.11): the panel is closed from
     // the moment the fade starts, so no panel is left in the real-size house with controls for a model that is not there.
-    if (isModelHidden() || isViewTransitioning()) {
+    // The one exception is the form of a new issue that the pointing gesture started at real scale: it stays while it is on screen.
+    const keepForm = this.formAtRealScale && ctx.navigator.screen === 'new' && !isRoomView();
+    if ((isModelHidden() && !keepForm) || isViewTransitioning()) {
       this.close('view');
       return;
     }

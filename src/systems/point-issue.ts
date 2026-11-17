@@ -100,9 +100,12 @@ const HINT_SECONDS = 8;
 /** The hint waits this long after the tenant is in a session (seconds), so it does not meet the first minute of onboarding. */
 const HINT_DELAY_SECONDS = 6;
 const HINT_STORAGE_KEY = 'soglia:v1:point-hint';
-/** The hint sits this far ahead of the head, a little under the eyes (inside the central cone, rule 8). */
+/**
+ * The hint sits this far ahead of the head and a little ABOVE the eyes (inside the central cone, rule 8): the menu hint ("Palm up for
+ * the menu") is lower, above the model, and the two must not cover each other.
+ */
 const HINT_AHEAD = 0.65;
-const HINT_BELOW = 0.12;
+const HINT_BELOW = -0.03;
 /** A pointing anchor snaps to a fixture with the radius of the table-top model (0.4 m of the house), at any scale. */
 const SNAP_SCALE = 0.05;
 
@@ -174,8 +177,12 @@ export function pointStatus(): {
   right: string;
   hasHit: boolean;
   hit: { x: number; y: number; z: number; surface: string };
+  /** The fingertip and the filtered direction of the right hand (world), for the QA. */
+  ray: { ox: number; oy: number; oz: number; dx: number; dy: number; dz: number };
 } {
+  const s = states.right.qualified || !states.left.qualified ? states.right : states.left;
   return {
+    ray: { ox: round3(s.ox), oy: round3(s.oy), oz: round3(s.oz), dx: round3(s.dx), dy: round3(s.dy), dz: round3(s.dz) },
     phase: dwell.phase,
     progress: Math.round(dwellProgress(dwell) * 1000) / 1000,
     left: states.left.reason,
@@ -529,11 +536,18 @@ export class PointIssueSystem extends createSystem({}) {
     void dt;
     if (this.hintStarted < 0) {
       if (this.hintDone || !can(role, 'create') || !this.seenHands || this.sessionSeconds < HINT_DELAY_SECONDS) return;
+      // Not during the first-use onboarding (its ghost hand and prompts own the middle of the view).
+      if (ctx.store.get().prefs.onboardingStep !== 'done') return;
       if (hintCount() >= HINT_TIMES) {
         this.hintDone = true;
         return;
       }
       if (getDraft() !== null || isIssuePanelOpen() || getPalmMenuPanel() !== null || isViewPanelOpen() || isRoomView()) return;
+      if (posing || dwell.phase !== 'idle') {
+        // Already pointing: nobody needs the hint, and it does not count as shown.
+        this.hintDone = true;
+        return;
+      }
       bumpHintCount();
       this.hintStarted = this.sessionSeconds;
       ctx.hint.setText(strings.point.hint);
