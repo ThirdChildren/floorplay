@@ -186,6 +186,7 @@ export type Action =
       readonly nowIso: string;
       readonly note?: string;
     }
+  | { readonly type: 'deleteIssue'; readonly id: string }
   | { readonly type: 'setMoveIn'; readonly visible: boolean }
   | { readonly type: 'setCoach'; readonly step: CoachStep }
   | { readonly type: 'setContrast'; readonly on: boolean }
@@ -292,6 +293,14 @@ export function transitionIssue(id: string, action: IssueAction, nowIso: string,
   return note === undefined
     ? { type: 'transitionIssue', id, action, nowIso }
     : { type: 'transitionIssue', id, action, nowIso, note };
+}
+/**
+ * Deletes the issue `id` for good (and with it its pin), as the role of the store: only an `archived` `issue` entry, only for a role
+ * with the `delete` permission (`can`). On any denial nothing changes. `nextIssue` and `issuesSeeded` are untouched, so the id is never
+ * handed out again and the demo seed is never put back.
+ */
+export function deleteIssue(id: string): Action {
+  return { type: 'deleteIssue', id };
 }
 /** Sets the sun time (D54). Text that is not a real `YYYY-MM-DDTHH:MM` is ignored; the same time again changes nothing. Not undoable. */
 export function setSunTime(sunTime: string): Action {
@@ -707,7 +716,13 @@ export function reduce(state: AppState, action: Action): AppState {
       if (!result.ok) return state;
       return { ...state, issues: state.issues.map((i) => (i.id === action.id ? result.issue : i)) };
     }
+    case 'deleteIssue': {
+      const issue = state.issues.find((i) => i.id === action.id);
+      if (issue === undefined || !can(state.role, 'delete', issue)) return state;
+      return { ...state, issues: state.issues.filter((i) => i.id !== action.id) };
+    }
     case 'placeFurniture': {
+      if (!can(state.role, 'furnish')) return state;
       const { catalogId, x, z, rotationDeg, roomId } = action;
       if (typeof catalogId !== 'string' || !CATALOG_ID_PATTERN.test(catalogId)) return state;
       if (!isPose(x, z, rotationDeg) || !isRoomId(roomId)) return state;
@@ -724,6 +739,7 @@ export function reduce(state: AppState, action: Action): AppState {
       };
     }
     case 'moveFurniture': {
+      if (!can(state.role, 'furnish')) return state;
       const { id, x, z, rotationDeg, roomId } = action;
       if (!isPose(x, z, rotationDeg) || !isRoomId(roomId)) return state;
       const index = state.furniture.findIndex((p) => p.id === id);
@@ -742,6 +758,7 @@ export function reduce(state: AppState, action: Action): AppState {
       };
     }
     case 'removeFurniture': {
+      if (!can(state.role, 'furnish')) return state;
       const index = state.furniture.findIndex((p) => p.id === action.id);
       if (index < 0) return state;
       return {
@@ -751,7 +768,7 @@ export function reduce(state: AppState, action: Action): AppState {
       };
     }
     case 'undo': {
-      if (state.history.length === 0) return state;
+      if (state.history.length === 0 || !can(state.role, 'furnish')) return state;
       const last = state.history[state.history.length - 1];
       return { ...state, furniture: last.furniture, history: state.history.slice(0, -1) };
     }
@@ -763,6 +780,7 @@ export function reduce(state: AppState, action: Action): AppState {
       return { ...state, furniture, nextInstance };
     }
     case 'stageFurniture': {
+      if (!can(state.role, 'furnish')) return state;
       if (!Array.isArray(action.pieces) || typeof action.label !== 'string' || action.label.length === 0) return state;
       const furniture = sanitizePieces(action.pieces);
       if (furniture.length === 0 && state.furniture.length === 0) return state;

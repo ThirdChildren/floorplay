@@ -160,6 +160,8 @@ export const strings = {
     },
     /** Shown in the header when the catalog is missing; one line at 2.6 cm text in the left part of the header (17.6 cm wide, "Back to home" takes the rest). */
     catalogUnavailable: 'No catalog',
+    /** Shown in the header instead of the title for a role that may not furnish (the tenant): short, the header is 17.6 cm wide at 2.6 cm text. */
+    locked: 'View only',
     /** The fixed buttons beside the model (T3.3b): they open and close the pinned menu with one hand. */
     button: 'Menu',
     /** The page indicator between the two arrows of the bar: "1/3" (short: the cell is 5.4 cm wide at 2.4 cm text). */
@@ -337,6 +339,9 @@ export const strings = {
       },
       /** The buttons: only the ones the role may press on this issue exist. */
       actions: { 'take-on': 'Take on', resolve: 'Resolved', confirm: 'Confirm', reopen: 'Reopen' },
+      /** The button of an archived issue (tenant and landlord): the first press asks, the second press deletes it for good. */
+      delete: 'Delete',
+      deleteConfirm: 'Press again to delete',
       more: (count: number): string => `+${count} more`,
       /** Title and status word of the detail of a move-in entry (a `baseline`: not an issue, so no Open / Resolved). */
       moveIn: 'Move-in',

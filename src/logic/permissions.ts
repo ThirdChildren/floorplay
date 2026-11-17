@@ -16,6 +16,8 @@ export const PERMISSION_ACTIONS = [
   'view-move-in',
   'view-info',
   'stage',
+  'furnish',
+  'delete',
   'change-role',
 ] as const;
 export type PermissionAction = (typeof PERMISSION_ACTIONS)[number];
@@ -37,6 +39,10 @@ export const PERMISSION_TABLE: Readonly<Record<PermissionAction, readonly Role[]
   'view-move-in': ['tenant', 'landlord'],
   'view-info': ['visitor', 'agent'],
   stage: ['agent'],
+  // Picking up, moving, turning, adding and removing furniture (and Undo of those). Every role but the tenant, who only reports issues.
+  furnish: ['visitor', 'agent', 'landlord'],
+  // Deleting an issue for good: tenant and landlord, and only once the issue is archived (see `can`).
+  delete: ['tenant', 'landlord'],
   'change-role': ['visitor', 'agent', 'tenant', 'landlord'],
 };
 
@@ -68,11 +74,14 @@ export function roleAllows(role: Role, action: PermissionAction): boolean {
 
 /**
  * May this role do this action? With `issue` given, a transition also needs an `issue` entry in the status
- * the transition starts from (so `can('landlord', 'resolve', openIssue)` is false). Without `issue`, only
- * the role is checked, which is what a button that appears for a role needs.
+ * the transition starts from (so `can('landlord', 'resolve', openIssue)` is false), and `delete` needs an
+ * `issue` entry that is `archived`. Without `issue`, only the role is checked, which is what a button that
+ * appears for a role needs.
  */
 export function can(role: Role, action: PermissionAction, issue?: Pick<Issue, 'kind' | 'status'>): boolean {
   if (!roleAllows(role, action)) return false;
-  if (issue === undefined || !isTransitionAction(action)) return true;
+  if (issue === undefined) return true;
+  if (action === 'delete') return issue.kind === 'issue' && issue.status === 'archived';
+  if (!isTransitionAction(action)) return true;
   return issue.kind === 'issue' && issue.status === TRANSITION_FROM[action];
 }

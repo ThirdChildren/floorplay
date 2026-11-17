@@ -22,13 +22,15 @@ const EXPECTED: Record<PermissionAction, Role[]> = {
   'view-move-in': ['tenant', 'landlord'],
   'view-info': ['visitor', 'agent'],
   stage: ['agent'],
+  furnish: ['visitor', 'agent', 'landlord'],
+  delete: ['tenant', 'landlord'],
   'change-role': ['visitor', 'agent', 'tenant', 'landlord'],
 };
 
 describe('permission table', () => {
-  it('covers the four roles and the ten actions', () => {
+  it('covers the four roles and the twelve actions', () => {
     expect(ROLES).toHaveLength(4);
-    expect(PERMISSION_ACTIONS).toHaveLength(10);
+    expect(PERMISSION_ACTIONS).toHaveLength(12);
     expect(Object.keys(PERMISSION_TABLE).sort()).toEqual([...PERMISSION_ACTIONS].sort());
   });
 
@@ -44,12 +46,12 @@ describe('permission table', () => {
 
   it('gives the visitor the info points and the role change, nothing about issues', () => {
     const allowed = PERMISSION_ACTIONS.filter((a) => can('visitor', a));
-    expect(allowed).toEqual(['view-info', 'change-role']);
+    expect(allowed).toEqual(['view-info', 'furnish', 'change-role']);
   });
 
   it('gives the agent the info points, the staging and the role change, nothing about issues', () => {
     const allowed = PERMISSION_ACTIONS.filter((a) => can('agent', a));
-    expect(allowed).toEqual(['view-info', 'stage', 'change-role']);
+    expect(allowed).toEqual(['view-info', 'stage', 'furnish', 'change-role']);
   });
 
   it('never shows the pins of the issues and the info points to the same role (no screen has both)', () => {
@@ -68,7 +70,7 @@ describe('permission table', () => {
 
   it('rejects an unknown role or action', () => {
     expect(can('owner' as Role, 'create')).toBe(false);
-    expect(can('tenant', 'delete' as PermissionAction)).toBe(false);
+    expect(can('tenant', 'remove' as PermissionAction)).toBe(false);
     expect(can('tenant', '__proto__' as PermissionAction)).toBe(false);
     expect(can('tenant', 'constructor' as PermissionAction)).toBe(false);
   });
@@ -101,6 +103,54 @@ describe('can with an issue', () => {
   it('ignores the issue for actions that are not transitions', () => {
     expect(can('tenant', 'create', { kind: 'baseline' })).toBe(true);
     expect(can('landlord', 'view-pins', { kind: 'info' })).toBe(true);
+  });
+});
+
+describe('furnish (the tenant cannot move furniture)', () => {
+  it('is allowed to every role but the tenant', () => {
+    expect(ROLES.filter((role) => can(role, 'furnish'))).toEqual(['visitor', 'agent', 'landlord']);
+    expect(can('tenant', 'furnish')).toBe(false);
+  });
+
+  it('does not depend on an issue', () => {
+    expect(can('tenant', 'furnish', { kind: 'issue', status: 'open' })).toBe(false);
+    expect(can('visitor', 'furnish', { kind: 'issue', status: 'open' })).toBe(true);
+  });
+
+  it('leaves the tenant what it had: the pins, the reports and the move-in', () => {
+    const allowed = PERMISSION_ACTIONS.filter((a) => can('tenant', a));
+    expect(allowed).toEqual(['view-pins', 'create', 'confirm', 'reopen', 'view-move-in', 'delete', 'change-role']);
+  });
+});
+
+describe('delete (archived issues only)', () => {
+  it('is for the tenant and the landlord', () => {
+    expect(ROLES.filter((role) => can(role, 'delete'))).toEqual(['tenant', 'landlord']);
+  });
+
+  it.each([
+    ['tenant', 'archived', true],
+    ['landlord', 'archived', true],
+    ['tenant', 'open', false],
+    ['tenant', 'in_progress', false],
+    ['tenant', 'resolved', false],
+    ['landlord', 'open', false],
+    ['landlord', 'in_progress', false],
+    ['landlord', 'resolved', false],
+    ['visitor', 'archived', false],
+    ['agent', 'archived', false],
+  ] as const)('%s delete on %s is %s', (role, status, ok) => {
+    expect(can(role, 'delete', { kind: 'issue', status })).toBe(ok);
+  });
+
+  it('is false for a move-in or info entry, and for an issue without a status', () => {
+    expect(can('tenant', 'delete', { kind: 'baseline' })).toBe(false);
+    expect(can('landlord', 'delete', { kind: 'info' })).toBe(false);
+    expect(can('tenant', 'delete', { kind: 'issue' })).toBe(false);
+  });
+
+  it('is not a status transition', () => {
+    expect(isTransitionAction('delete')).toBe(false);
   });
 });
 
